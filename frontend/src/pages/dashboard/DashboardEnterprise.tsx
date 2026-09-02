@@ -4,6 +4,7 @@ import { updateEnterprise } from '@/api/userEnterprise';
 import { Input } from '@/components/ui/Field';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { MoveRequest } from '@/components/dashboard/MoveRequest';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 
@@ -57,7 +58,8 @@ export function DashboardEnterprise() {
   }
 
   return (
-    <Card className="max-w-2xl p-6">
+    <div className="max-w-2xl">
+    <Card className="p-6">
       <h2 id="dash-enterprise__title" className="dash-enterprise__title mb-5 font-semibold text-ink-900">Información de la empresa</h2>
       <form onSubmit={handleSubmit} id="dash-enterprise__form" className="dash-enterprise__form space-y-4">
         <Input label="Nombre de la empresa / mercado" required value={companyName} onChange={(e) => setCompanyName(e.target.value)} />
@@ -76,5 +78,9 @@ export function DashboardEnterprise() {
         <Button type="submit" loading={submitting}>Guardar cambios</Button>
       </form>
     </Card>
+
+    {/* Fuera del formulario a propósito: no se guarda con lo demás, se pide. */}
+    {enterprise && <MoveRequest enterprise={enterprise} />}
+    </div>
   );
 }
