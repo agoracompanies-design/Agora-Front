@@ -18,6 +18,9 @@ interface FiltersPanelProps {
   onSortOrder: (v: SortOrder) => void;
   moneda: MonedaPrincipal;
   onMoneda: (v: MonedaPrincipal) => void;
+  /** En qué moneda se leen el mínimo y el máximo. */
+  monedaPrecio: MonedaPrincipal;
+  onMonedaPrecio: (v: MonedaPrincipal) => void;
   inStockOnly: boolean;
   onInStockOnly: (v: boolean) => void;
   nearMe: boolean;
@@ -76,10 +79,27 @@ function identificador(texto: string) {
     .replace(/^-|-$/g, '');
 }
 
-function Grupo({ nombre, titulo, children }: { nombre: string; titulo: string; children: ReactNode }) {
+function Grupo({
+  nombre,
+  titulo,
+  extra,
+  children,
+}: {
+  nombre: string;
+  titulo: string;
+  /** Lo que va pegado al rótulo, como el selector de moneda del precio. */
+  extra?: ReactNode;
+  children: ReactNode;
+}) {
   return (
     <section id={`filters__group--${nombre}`} className="filters__group">
-      <h3 id={`filters__legend--${nombre}`} className="filters__legend mb-2 text-[11px] font-semibold uppercase tracking-wide text-ink-500">{titulo}</h3>
+      <h3
+        id={`filters__legend--${nombre}`}
+        className="filters__legend mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-ink-500"
+      >
+        {titulo}
+        {extra}
+      </h3>
       {children}
     </section>
   );
@@ -94,6 +114,8 @@ export function FiltersPanel({
   onSortOrder,
   moneda,
   onMoneda,
+  monedaPrecio,
+  onMonedaPrecio,
   inStockOnly,
   onInStockOnly,
   nearMe,
@@ -129,7 +151,29 @@ export function FiltersPanel({
         )}
       </header>
 
-      <Grupo nombre={uid('price')} titulo="Precio en CUP">
+      <Grupo
+        nombre={uid('price')}
+        titulo="Precio en"
+        extra={
+          <span id={uid('filters__price-currency')} className="filters__price-currency inline-flex gap-1">
+            {(['CUP', 'USD'] as const).map((m) => (
+              <button
+                key={m}
+                type="button"
+                aria-pressed={monedaPrecio === m}
+                onClick={() => onMonedaPrecio(m)}
+                id={uid(`filters__price-currency-${m.toLowerCase()}`)}
+                className={cn(
+                  'filters__price-currency-option rounded px-1.5 py-0.5 text-[10px] font-semibold tracking-wide transition-colors',
+                  monedaPrecio === m ? 'bg-primary text-white' : 'text-ink-500 hover:text-ink-900',
+                )}
+              >
+                {m}
+              </button>
+            ))}
+          </span>
+        }
+      >
         <div id={uid('filters__price')} className="filters__price flex items-center gap-2">
           <input
             inputMode="numeric"

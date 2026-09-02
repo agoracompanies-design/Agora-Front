@@ -91,6 +91,10 @@ export function ExplorePage() {
   const [inStockOnly, setInStockOnly] = useState(() => searchParams.get('stock') === '1');
   const [category, setCategory] = useState<string | null>(() => searchParams.get('cat'));
   const [sortOrder, setSortOrder] = useState<SortOrder>(() => (searchParams.get('sort') === 'desc' ? 'desc' : 'asc'));
+  // En qué moneda se leen el mínimo y el máximo del rango.
+  const [monedaPrecio, setMonedaPrecio] = useState<MonedaPrincipal>(() =>
+    searchParams.get('monedaPrecio') === 'USD' ? 'USD' : 'CUP',
+  );
   const [moneda, setMoneda] = useState<MonedaPrincipal>(() => (searchParams.get('moneda') === 'CUP' ? 'CUP' : 'USD'));
   const [page, setPage] = useState(() => Number(searchParams.get('page')) || 1);
 
@@ -110,10 +114,11 @@ export function ExplorePage() {
     if (category) params.cat = category;
     if (sortOrder === 'desc') params.sort = 'desc';
     if (moneda === 'CUP') params.moneda = 'CUP';
+    if (monedaPrecio === 'USD') params.monedaPrecio = 'USD';
     if (page > 1) params.page = String(page);
     setSearchParams(params, { replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, minPrice, maxPrice, inStockOnly, category, sortOrder, moneda, page]);
+  }, [search, minPrice, maxPrice, inStockOnly, category, sortOrder, moneda, monedaPrecio, page]);
 
   // Mirror the URL back into state: the component doesn't remount when a
   // navbar link (e.g. "Más populares") points at "/" with different query
@@ -122,6 +127,7 @@ export function ExplorePage() {
   useEffect(() => {
     setSearch(searchParams.get('q') ?? '');
     setMoneda(searchParams.get('moneda') === 'CUP' ? 'CUP' : 'USD');
+    setMonedaPrecio(searchParams.get('monedaPrecio') === 'USD' ? 'USD' : 'CUP');
     setMinPrice(searchParams.get('min') ?? '');
     setMaxPrice(searchParams.get('max') ?? '');
     setInStockOnly(searchParams.get('stock') === '1');
@@ -139,8 +145,6 @@ export function ExplorePage() {
       // categoría, así que se trae el catálogo y se pagina aquí. Si no, buscar
       // «arroz» solo miraba dentro de la página que tocara.
       limit: CATALOGO_MAX,
-      minPrice: minPrice ? Number(minPrice) : undefined,
-      maxPrice: maxPrice ? Number(maxPrice) : undefined,
       latitude: nearMe?.lat,
       longitude: nearMe?.lng,
       radius: nearMe ? radiusKm : undefined,
@@ -220,6 +224,20 @@ export function ExplorePage() {
           p.category.toLowerCase().includes(q),
       );
     }
+    // El rango se aplica aquí y no en el servidor: el backend lo compara
+    // siempre contra priceCup, así que en USD daría resultados de otra moneda.
+    const enLaMoneda = (p: Product) => (monedaPrecio === 'USD' ? p.priceUsd : p.priceCup);
+    if (minPrice || maxPrice) {
+      // Sin precio en esa moneda no hay nada que comparar: queda fuera. Darle
+      // un infinito lo colaba en cualquier mínimo, que es peor que excluirlo.
+      list = list.filter((p) => {
+        const valor = enLaMoneda(p);
+        if (valor === null || valor === undefined) return false;
+        if (minPrice && valor < Number(minPrice)) return false;
+        if (maxPrice && valor > Number(maxPrice)) return false;
+        return true;
+      });
+    }
     if (category) list = list.filter((p) => p.category === category);
     if (inStockOnly) list = list.filter((p) => p.stock);
     // CUP y USD son independientes y no hay tasa de cambio, así que comparar
@@ -238,7 +256,7 @@ export function ExplorePage() {
       const pb = enMoneda(b, m) ?? 0;
       return sortOrder === 'asc' ? pa - pb : pb - pa;
     });
-  }, [rawProducts, search, category, inStockOnly, sortOrder, moneda]);
+  }, [rawProducts, search, category, inStockOnly, sortOrder, moneda, minPrice, maxPrice, monedaPrecio]);
 
   function locateMe() {
     if (!navigator.geolocation) {
@@ -289,6 +307,8 @@ export function ExplorePage() {
     sortOrder,
     moneda,
     onMoneda: setMoneda,
+    monedaPrecio,
+    onMonedaPrecio: setMonedaPrecio,
     onSortOrder: setSortOrder,
     inStockOnly,
     onInStockOnly: setInStockOnly,
@@ -325,7 +345,7 @@ export function ExplorePage() {
           {/* El panel ocupa el alto de la ventana menos la cabecera, con 20px de aire
               arriba y abajo para no pegarse a nada. Queda fijo mientras se recorre
               el catálogo. */}
-          <aside id="explore__sidebar" className="explore__sidebar hidden lg:sticky lg:top-[81px] lg:flex lg:flex-col lg:w-64 shrink-0 gap-4">
+          <aside id="explore__sidebar" className="explore__sidebar hidden lg:sticky lg:top-[81px] lg:flex lg:flex-col lg:w-[264px] shrink-0 gap-4">
             <div id="explore__filters-card" className="explore__filters-card rounded-2xl border border-ink-200 bg-ink-50 p-4">
               <FiltersPanel {...filtersProps} ambito="aside" />
             </div>
