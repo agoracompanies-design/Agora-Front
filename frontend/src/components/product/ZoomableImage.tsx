@@ -48,7 +48,10 @@ export function ZoomableImage({ src, alt }: { src: string; alt: string }) {
         ref={marco}
         id="product-detail__frame"
         className={cn(
-          'product-detail__frame relative aspect-square w-full overflow-hidden rounded-2xl bg-ink-100',
+          // Alto atado al viewport en vez de cuadrado: en una pantalla de
+          // portátil, un cuadrado del ancho de la columna se sale por abajo y
+          // obliga a hacer scroll para ver la foto entera.
+          'product-detail__frame relative h-[58vh] max-h-[540px] min-h-[240px] w-full overflow-hidden rounded-2xl bg-ink-100',
           conLupa && 'z-40 ring-2 ring-primary',
         )}
       >
@@ -92,7 +95,7 @@ export function ZoomableImage({ src, alt }: { src: string; alt: string }) {
           <span
             id="zoom__hint"
             aria-hidden="true"
-            className="zoom__hint pointer-events-none absolute bottom-3 right-3 inline-flex items-center gap-1.5 rounded-full bg-ink-950/70 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur-sm"
+            className="zoom__hint pointer-events-none absolute bottom-3 left-1/2 -translate-x-1/2 inline-flex items-center gap-1.5 rounded-full bg-ink-950/70 px-2.5 py-1 text-[11px] font-medium text-white backdrop-blur-sm"
           >
             <ZoomIn size={12} /> Pulsa para ampliar
           </span>
