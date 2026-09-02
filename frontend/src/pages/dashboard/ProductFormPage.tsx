@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { PageSpinner } from '@/components/ui/Spinner';
 import { CategoryPicker } from '@/components/dashboard/CategoryPicker';
+import { UnitPicker } from '@/components/dashboard/UnitPicker';
 import { NewCategoryDialog } from '@/components/dashboard/NewCategoryDialog';
 import { SendRequestDialog } from '@/components/dashboard/SendRequestDialog';
 import { CATEGORIA_TEMPORAL, pedirCategoria } from '@/lib/solicitudes-categoria';
@@ -161,7 +162,7 @@ export function ProductFormPage() {
           </div>
 
           <div id="product-form__meta-row" className="product-form__meta-row grid grid-cols-2 gap-3">
-            <Input label="Unidad" required value={unit} onChange={(e) => setUnit(e.target.value)} placeholder="kg, unidad, libra…" />
+            <UnitPicker value={unit} onChange={setUnit} />
             <CategoryPicker
               value={category}
               onChange={(v) => {
