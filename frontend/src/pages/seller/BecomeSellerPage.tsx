@@ -7,6 +7,7 @@ import { useToast } from '@/context/ToastContext';
 import { createEnterprise } from '@/api/userEnterprise';
 import { createSubscription } from '@/api/subscription';
 import { Input } from '@/components/ui/Field';
+import { LARGO, normalizarWeb, pareceCorreo, pareceTelefono, pareceWeb, soloDigitos, soloTelefono, texto } from '@/lib/validacion';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { PageSpinner } from '@/components/ui/Spinner';
@@ -64,12 +65,26 @@ export function BecomeSellerPage() {
 
   async function handleCreateEnterprise(e: FormEvent) {
     e.preventDefault();
+    // Lo que no se puede juzgar tecleando —si el correo está entero, si el
+    // teléfono tiene cifras suficientes— se mira aquí, antes de salir.
+    if (!pareceCorreo(email)) {
+      notify('Revisa el correo de contacto: falta el @ o el dominio', 'error');
+      return;
+    }
+    if (!pareceTelefono(phone)) {
+      notify('El teléfono necesita al menos seis cifras', 'error');
+      return;
+    }
+    if (!pareceWeb(website)) {
+      notify('El sitio web no parece una dirección válida', 'error');
+      return;
+    }
     setSubmitting(true);
     try {
       await createEnterprise({
         companyName,
         address: { street, city, state, zipCode, country },
-        contact: { email, phone, website: website || undefined },
+        contact: { email: email.trim(), phone: phone.trim(), website: normalizarWeb(website) || undefined },
       });
       await refreshSellerStatus();
       notify('Empresa registrada correctamente');
@@ -119,19 +134,19 @@ export function BecomeSellerPage() {
       {step === 1 && (
         <Card className="p-6">
           <form onSubmit={handleCreateEnterprise} id="sell__form" className="sell__form space-y-4">
-            <Input label="Nombre de la empresa / mercado" required value={companyName} onChange={(e) => setCompanyName(e.target.value)} placeholder="Mercado La Esquina" />
+            <Input label="Nombre de la empresa / mercado" required maxLength={LARGO.empresa} value={companyName} onChange={(e) => setCompanyName(texto(e.target.value, LARGO.empresa))} placeholder="Mercado La Esquina" />
             <div id="sell__address-row" className="sell__address-row grid grid-cols-2 gap-3">
-              <Input label="Calle" required value={street} onChange={(e) => setStreet(e.target.value)} />
-              <Input label="Ciudad" required value={city} onChange={(e) => setCity(e.target.value)} />
-              <Input label="Provincia / Estado" required value={state} onChange={(e) => setState(e.target.value)} />
-              <Input label="Código postal" required value={zipCode} onChange={(e) => setZipCode(e.target.value)} />
+              <Input label="Calle" required autoComplete="address-line1" maxLength={LARGO.direccion} value={street} onChange={(e) => setStreet(texto(e.target.value, LARGO.direccion))} />
+              <Input label="Ciudad" required autoComplete="address-level2" maxLength={LARGO.ciudad} value={city} onChange={(e) => setCity(texto(e.target.value, LARGO.ciudad))} />
+              <Input label="Provincia / Estado" required autoComplete="address-level1" maxLength={LARGO.ciudad} value={state} onChange={(e) => setState(texto(e.target.value, LARGO.ciudad))} />
+              <Input label="Código postal" required inputMode="numeric" autoComplete="postal-code" value={zipCode} onChange={(e) => setZipCode(soloDigitos(e.target.value))} />
             </div>
-            <Input label="País" required value={country} onChange={(e) => setCountry(e.target.value)} />
+            <Input label="País" required autoComplete="country-name" maxLength={LARGO.pais} value={country} onChange={(e) => setCountry(texto(e.target.value, LARGO.pais))} />
             <div id="sell__contact-row" className="sell__contact-row grid grid-cols-2 gap-3">
-              <Input label="Email de contacto" type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
-              <Input label="Teléfono" required value={phone} onChange={(e) => setPhone(e.target.value)} />
+              <Input label="Email de contacto" type="email" required autoComplete="email" maxLength={LARGO.correo} value={email} onChange={(e) => setEmail(e.target.value.trimStart())} />
+              <Input label="Teléfono" required type="tel" inputMode="tel" autoComplete="tel" placeholder="+53 5 555 5555" value={phone} onChange={(e) => setPhone(soloTelefono(e.target.value))} />
             </div>
-            <Input label="Sitio web (opcional)" value={website} onChange={(e) => setWebsite(e.target.value)} />
+            <Input label="Sitio web (opcional)" type="url" inputMode="url" placeholder="mitienda.cu" maxLength={LARGO.web} value={website} onChange={(e) => setWebsite(e.target.value.trim())} />
             <Button type="submit" className="w-full" size="lg" loading={submitting}>
               Continuar
             </Button>

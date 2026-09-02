@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/Field';
 import { PasswordField } from '@/components/ui/PasswordField';
 import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/context/AuthContext';
+import { soloUsuario } from '@/lib/validacion';
 
 export function LoginPage() {
   const { login } = useAuth();
@@ -51,7 +52,7 @@ export function LoginPage() {
           autoFocus
           autoComplete="username"
           value={username}
-          onChange={(e) => setUsername(e.target.value)}
+          onChange={(e) => setUsername(soloUsuario(e.target.value))}
           placeholder="tu_usuario"
         />
         <PasswordField

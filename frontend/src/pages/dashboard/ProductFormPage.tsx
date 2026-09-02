@@ -5,6 +5,7 @@ import { ArrowLeft, ImagePlus, ImageOff } from 'lucide-react';
 import { createProduct, getProduct, productImageUrl, updateProduct } from '@/api/product';
 import { Input, TextArea } from '@/components/ui/Field';
 import { PriceField } from '@/components/ui/PriceField';
+import { LARGO, texto } from '@/lib/validacion';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { PageSpinner } from '@/components/ui/Spinner';
@@ -186,7 +187,7 @@ export function ProductFormPage() {
             </label>
           )}
 
-          <Input label="Nombre" required value={name} onChange={(e) => setName(e.target.value)} placeholder="Café molido" />
+          <Input label="Nombre" required maxLength={LARGO.producto} value={name} onChange={(e) => setName(texto(e.target.value, LARGO.producto))} placeholder="Café molido" />
 
           <div id="product-form__price-row" className="product-form__price-row grid grid-cols-2 gap-3">
             <PriceField label="Precio (CUP)" value={priceCup} onChange={setPriceCup} placeholder="0.00" />
@@ -205,7 +206,7 @@ export function ProductFormPage() {
             />
           </div>
 
-          <TextArea label="Descripción" required rows={4} value={description} onChange={(e) => setDescription(e.target.value)} />
+          <TextArea label="Descripción" required rows={4} maxLength={LARGO.descripcion} value={description} onChange={(e) => setDescription(e.target.value.slice(0, LARGO.descripcion))} />
 
           <label className="flex items-center gap-2.5 cursor-pointer">
             <input type="checkbox" checked={stock} onChange={(e) => setStock(e.target.checked)} className="h-4 w-4 accent-primary" />

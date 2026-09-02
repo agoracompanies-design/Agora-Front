@@ -5,6 +5,7 @@ import { ArrowLeft } from 'lucide-react';
 import { createService, getService, updateService } from '@/api/service';
 import { Input, TextArea } from '@/components/ui/Field';
 import { PriceField } from '@/components/ui/PriceField';
+import { LARGO, texto } from '@/lib/validacion';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { PageSpinner } from '@/components/ui/Spinner';
@@ -82,12 +83,12 @@ export function ServiceFormPage() {
       <Card className="p-6">
         <h2 id="service-form__title" className="service-form__title mb-5 font-semibold text-ink-900">{isEditing ? 'Editar servicio' : 'Publicar servicio'}</h2>
         <form onSubmit={handleSubmit} id="service-form__form" className="service-form__form space-y-4">
-          <Input label="Nombre" required value={name} onChange={(e) => setName(e.target.value)} placeholder="Mensajería express" />
+          <Input label="Nombre" required maxLength={LARGO.producto} value={name} onChange={(e) => setName(texto(e.target.value, LARGO.producto))} placeholder="Mensajería express" />
           <div id="service-form__price-row" className="service-form__price-row grid grid-cols-2 gap-3">
             <PriceField label="Precio (CUP)" value={priceCup} onChange={setPriceCup} placeholder="0.00" />
             <PriceField label="Precio (USD)" value={priceUsd} onChange={setPriceUsd} placeholder="0.00" />
           </div>
-          <TextArea label="Descripción" required rows={4} value={description} onChange={(e) => setDescription(e.target.value)} />
+          <TextArea label="Descripción" required rows={4} maxLength={LARGO.descripcion} value={description} onChange={(e) => setDescription(e.target.value.slice(0, LARGO.descripcion))} />
           <Button type="submit" className="w-full" size="lg" loading={submitting}>
             {isEditing ? 'Guardar cambios' : 'Publicar servicio'}
           </Button>
