@@ -6,6 +6,7 @@ import { useProductRatings } from '@/hooks/useProductRatings';
 import type { Product } from '@/types';
 import { RatingStars } from '@/components/ui/RatingStars';
 import { SegmentedToggle } from '@/components/ui/SegmentedToggle';
+import { InfoTip } from '@/components/ui/InfoTip';
 import { deleteProduct, productImageUrl } from '@/api/product';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Card';
@@ -132,9 +133,10 @@ export function DashboardProducts() {
             Ordenar por
           </span>
           <SegmentedToggle id="dash-products__sort-options" options={criterios} value={criterio} onChange={elegirCriterio} />
-          <span id="dash-products__sort-hint" className="dash-products__sort-hint text-xs text-ink-400">
-            Vuelve a pulsarlo para invertirlo
-          </span>
+          <InfoTip className="dash-products__sort-help ml-auto">
+            Pulsa otra vez el criterio activo para darle la vuelta. En precio, cambia entre USD y CUP
+            primero.
+          </InfoTip>
         </div>
       )}
 
