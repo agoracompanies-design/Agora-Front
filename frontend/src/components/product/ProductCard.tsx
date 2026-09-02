@@ -8,6 +8,12 @@ import { useFavorites } from '@/context/FavoritesContext';
 interface ProductCardProps {
   product: Product;
   /**
+   * Qué precio enseñar cuando el producto tiene los dos. Es la moneda por la
+   * que se está ordenando: si la tarjeta mostrara la otra, el precio no
+   * explicaría el sitio que ocupa en la rejilla.
+   */
+  moneda?: 'USD' | 'CUP';
+  /**
    * Marca la tarjeta entera cuando el producto está agotado. Se usa en la lista
    * de favoritos: ahí el producto se guardó estando disponible, así que hay que
    * avisar de que ya no lo está sin obligar a leer el badge pequeño.
@@ -15,13 +21,17 @@ interface ProductCardProps {
   avisarAgotado?: boolean;
 }
 
-export function ProductCard({ product, avisarAgotado = false }: ProductCardProps) {
+export function ProductCard({ product, moneda: preferida = 'USD', avisarAgotado = false }: ProductCardProps) {
   const imageUrl = productImageUrl(product.image);
   // Los dos precios son independientes: un negocio puede poner solo uno, o
-  // ambos con descuento por pagar en divisa. La tarjeta enseña uno y dice cuál.
-  const enUsd = product.priceUsd !== null && product.priceUsd !== undefined;
-  const precio = enUsd ? formatAmount(product.priceUsd) : formatAmount(product.priceCup);
-  const moneda = enUsd ? 'USD' : 'CUP';
+  // ambos con descuento por pagar en divisa. Se enseña el de la moneda pedida
+  // y, si el producto no lo tiene, el otro; la etiqueta dice cuál es.
+  const hay = (m: 'USD' | 'CUP') => {
+    const valor = m === 'USD' ? product.priceUsd : product.priceCup;
+    return valor !== null && valor !== undefined;
+  };
+  const moneda = hay(preferida) ? preferida : preferida === 'USD' ? 'CUP' : 'USD';
+  const precio = formatAmount(moneda === 'USD' ? product.priceUsd : product.priceCup);
   const { isFavorite, toggleFavorite } = useFavorites();
   const favorite = isFavorite(product.idProduct);
   const agotadoResaltado = avisarAgotado && !product.stock;
@@ -86,12 +96,12 @@ export function ProductCard({ product, avisarAgotado = false }: ProductCardProps
         {product.description && (
           <p id={`product__description--${product.idProduct}`} className="product__description line-clamp-1 text-xs text-ink-500">{product.description}</p>
         )}
-        <p id={`product__price--${product.idProduct}`} className="product__price mt-auto flex items-baseline gap-1.5 text-base font-bold text-ink-900">
+        <p id={`product__price--${product.idProduct}`} className="product__price mt-auto flex items-center gap-1.5 text-base font-bold text-ink-900">
           {precio ?? 'Consultar precio'}
           {precio && (
             <span
               id={`product__currency--${product.idProduct}`}
-              className="product__currency rounded bg-ink-100 px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-ink-600"
+              className="product__currency rounded bg-ink-100 px-1.5 py-0.5 text-[10px] font-semibold leading-none tracking-wide text-ink-600"
             >
               {moneda}
             </span>

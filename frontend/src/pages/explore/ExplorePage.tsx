@@ -25,7 +25,7 @@ import { DiscoveryRow } from '@/components/home/DiscoveryRow';
 import { HowItWorks } from '@/components/home/HowItWorks';
 import { Membership } from '@/components/home/Membership';
 import { FiltersPanel } from '@/components/explore/FiltersPanel';
-import type { SortOrder } from '@/components/explore/FiltersPanel';
+import type { MonedaPrincipal, SortOrder } from '@/components/explore/FiltersPanel';
 import { useToast } from '@/context/ToastContext';
 import { useAuth } from '@/context/AuthContext';
 import { useCategories } from '@/hooks/useCategories';
@@ -93,6 +93,7 @@ export function ExplorePage() {
   const [inStockOnly, setInStockOnly] = useState(() => searchParams.get('stock') === '1');
   const [category, setCategory] = useState<string | null>(() => searchParams.get('cat'));
   const [sortOrder, setSortOrder] = useState<SortOrder>(() => (searchParams.get('sort') === 'desc' ? 'desc' : 'asc'));
+  const [moneda, setMoneda] = useState<MonedaPrincipal>(() => (searchParams.get('moneda') === 'CUP' ? 'CUP' : 'USD'));
   const [page, setPage] = useState(() => Number(searchParams.get('page')) || 1);
 
   const [nearMe, setNearMe] = useState<{ lat: number; lng: number } | null>(null);
@@ -112,10 +113,11 @@ export function ExplorePage() {
     if (inStockOnly) params.stock = '1';
     if (category) params.cat = category;
     if (sortOrder === 'desc') params.sort = 'desc';
+    if (moneda === 'CUP') params.moneda = 'CUP';
     if (page > 1) params.page = String(page);
     setSearchParams(params, { replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, minPrice, maxPrice, popularOnly, inStockOnly, category, sortOrder, page]);
+  }, [search, minPrice, maxPrice, popularOnly, inStockOnly, category, sortOrder, moneda, page]);
 
   // Mirror the URL back into state: the component doesn't remount when a
   // navbar link (e.g. "Más populares") points at "/" with different query
@@ -123,6 +125,7 @@ export function ExplorePage() {
   // set before navigating.
   useEffect(() => {
     setSearch(searchParams.get('q') ?? '');
+    setMoneda(searchParams.get('moneda') === 'CUP' ? 'CUP' : 'USD');
     setMinPrice(searchParams.get('min') ?? '');
     setMaxPrice(searchParams.get('max') ?? '');
     setPopularOnly(searchParams.get('pop') === '1');
@@ -232,11 +235,23 @@ export function ExplorePage() {
     }
     if (category) list = list.filter((p) => p.category === category);
     if (inStockOnly) list = list.filter((p) => p.stock);
-    // Orden por precio real. Antes se invertía la lista, que solo coincide con
-    // ordenar si el servidor ya la devolvía ordenada.
-    const precio = (p: Product) => p.priceUsd ?? p.priceCup ?? 0;
-    return [...list].sort((a, b) => (sortOrder === 'asc' ? precio(a) - precio(b) : precio(b) - precio(a)));
-  }, [rawProducts, search, category, inStockOnly, sortOrder]);
+    // CUP y USD son independientes y no hay tasa de cambio, así que comparar
+    // 180 CUP con 8 USD no significa nada. Se agrupa: delante los que tienen
+    // precio en la moneda elegida, detrás el resto, y dentro de cada grupo sí
+    // se ordena por precio, que ahí sí es la misma unidad.
+    const enMoneda = (p: Product, m: MonedaPrincipal) => (m === 'USD' ? p.priceUsd : p.priceCup);
+    const otra: MonedaPrincipal = moneda === 'USD' ? 'CUP' : 'USD';
+    const tienePrincipal = (p: Product) => enMoneda(p, moneda) !== null && enMoneda(p, moneda) !== undefined;
+
+    return [...list].sort((a, b) => {
+      const aPrincipal = tienePrincipal(a);
+      if (aPrincipal !== tienePrincipal(b)) return aPrincipal ? -1 : 1;
+      const m = aPrincipal ? moneda : otra;
+      const pa = enMoneda(a, m) ?? 0;
+      const pb = enMoneda(b, m) ?? 0;
+      return sortOrder === 'asc' ? pa - pb : pb - pa;
+    });
+  }, [rawProducts, search, category, inStockOnly, sortOrder, moneda]);
 
   function locateMe() {
     if (!navigator.geolocation) {
@@ -283,6 +298,8 @@ export function ExplorePage() {
     onMinPrice: setMinPrice,
     onMaxPrice: setMaxPrice,
     sortOrder,
+    moneda,
+    onMoneda: setMoneda,
     onSortOrder: setSortOrder,
     popularOnly,
     onPopularOnly: setPopularOnly,
@@ -362,7 +379,7 @@ export function ExplorePage() {
               <div id="explore__results-body" className="explore__results-body flex min-h-0 flex-1 flex-col">
                 <div id="explore__grid" className="explore__grid grid min-h-0 grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 lg:flex-1 lg:grid-rows-2">
                   {productosDeLaPagina.map((product) => (
-                    <ProductCard key={product.idProduct} product={product} />
+                    <ProductCard key={product.idProduct} product={product} moneda={moneda} />
                   ))}
                 </div>
                 <div id="explore__pagination" className="explore__pagination mt-4 shrink-0">

@@ -1,9 +1,13 @@
-import { ArrowDownWideNarrow, ArrowUpNarrowWide, MapPin, PackageCheck, SlidersHorizontal, TrendingUp, X } from 'lucide-react';
+import { ArrowDownWideNarrow, ArrowUpNarrowWide, Banknote, DollarSign, MapPin, PackageCheck, SlidersHorizontal, TrendingUp, X } from 'lucide-react';
 import type { ReactNode } from 'react';
 import type { CategoryCount } from '@/hooks/useCategories';
 import { cn, soloPrecio } from '@/lib/utils';
 
 export type SortOrder = 'asc' | 'desc';
+/** Qué moneda manda al ordenar. Los dos precios son independientes y no hay
+ *  tasa de cambio, así que no se pueden comparar entre sí: lo que se hace es
+ *  poner delante los productos que tienen precio en la moneda elegida. */
+export type MonedaPrincipal = 'USD' | 'CUP';
 
 interface FiltersPanelProps {
   minPrice: string;
@@ -12,6 +16,8 @@ interface FiltersPanelProps {
   onMaxPrice: (v: string) => void;
   sortOrder: SortOrder;
   onSortOrder: (v: SortOrder) => void;
+  moneda: MonedaPrincipal;
+  onMoneda: (v: MonedaPrincipal) => void;
   popularOnly: boolean;
   onPopularOnly: (v: boolean) => void;
   inStockOnly: boolean;
@@ -88,6 +94,8 @@ export function FiltersPanel({
   onMaxPrice,
   sortOrder,
   onSortOrder,
+  moneda,
+  onMoneda,
   popularOnly,
   onPopularOnly,
   inStockOnly,
@@ -158,6 +166,18 @@ export function FiltersPanel({
             Más caro
           </Chip>
         </div>
+
+        {/* Va con lo anterior, no aparte: elegir moneda solo tiene sentido
+            acompañando al orden. Primero salen los productos con precio en
+            esta moneda; detrás, los de la otra. */}
+        <div id={uid('filters__currency')} className="filters__currency mt-2 flex flex-wrap gap-2">
+          <Chip id={uid('filters__currency-usd')} activo={moneda === 'USD'} onClick={() => onMoneda('USD')} icon={<DollarSign size={13} aria-hidden="true" />}>
+            USD primero
+          </Chip>
+          <Chip id={uid('filters__currency-cup')} activo={moneda === 'CUP'} onClick={() => onMoneda('CUP')} icon={<Banknote size={13} aria-hidden="true" />}>
+            CUP primero
+          </Chip>
+        </div>
       </Grupo>
 
       <Grupo nombre={uid('only')} titulo="Mostrar solo">
@@ -194,7 +214,7 @@ export function FiltersPanel({
 
       {categories.length > 0 && (
         <Grupo nombre={uid('category')} titulo="Categoría">
-          <div id={uid('filters__categories')} className="filters__categories flex flex-wrap gap-2">
+          <div id={uid('filters__categories')} className="filters__categories flex flex-wrap gap-x-2 gap-y-2.5">
             {categories.map(({ category: c, count }) => {
               const activa = activeCategory === c;
               // Sin nada elegido van todas a pleno color; al elegir una, esa se
