@@ -8,6 +8,7 @@ import { PriceField } from '@/components/ui/PriceField';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { PageSpinner } from '@/components/ui/Spinner';
+import { aWebp, pesoLegible } from '@/lib/imagen';
 import { CategoryPicker } from '@/components/dashboard/CategoryPicker';
 import { UnitPicker } from '@/components/dashboard/UnitPicker';
 import { NewCategoryDialog } from '@/components/dashboard/NewCategoryDialog';
@@ -44,6 +45,26 @@ export function ProductFormPage() {
   } | null>(null);
   const [stock, setStock] = useState(true);
   const [image, setImage] = useState<File | null>(null);
+  const [conversion, setConversion] = useState<{ antes: number; despues: number } | null>(null);
+  const [convirtiendo, setConvirtiendo] = useState(false);
+
+  // La foto se pasa a WebP aquí, antes de salir: se sube menos y, sobre todo,
+  // se descarga menos cada vez que alguien abre el catálogo.
+  async function elegirImagen(archivo: File | null) {
+    if (!archivo) {
+      setImage(null);
+      setConversion(null);
+      return;
+    }
+    setConvirtiendo(true);
+    try {
+      const { archivo: listo, antes, despues, convertida } = await aWebp(archivo);
+      setImage(listo);
+      setConversion(convertida ? { antes, despues } : null);
+    } finally {
+      setConvirtiendo(false);
+    }
+  }
   const [existingImage, setExistingImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(isEditing);
   const [submitting, setSubmitting] = useState(false);
@@ -148,9 +169,20 @@ export function ProductFormPage() {
                 <label id="product-form__image-button" className="product-form__image-button inline-flex cursor-pointer items-center gap-2 rounded-xl border border-ink-200 px-4 py-2 text-sm font-medium text-ink-700 hover:border-ink-400">
                   <ImagePlus size={15} />
                   {image ? 'Cambiar imagen' : 'Subir imagen'}
-                  <input type="file" accept="image/*" id="product-form__image-input" className="product-form__image-input hidden" onChange={(e) => setImage(e.target.files?.[0] ?? null)} />
+                  <input type="file" accept="image/*" id="product-form__image-input" className="product-form__image-input hidden" onChange={(e) => elegirImagen(e.target.files?.[0] ?? null)} />
                 </label>
               </div>
+
+              {convirtiendo && (
+                <p id="product-form__image-working" className="product-form__image-working mt-2 text-xs text-ink-500">
+                  Preparando la imagen…
+                </p>
+              )}
+              {conversion && !convirtiendo && (
+                <p id="product-form__image-saved" className="product-form__image-saved mt-2 text-xs text-ink-500">
+                  Convertida a WebP: {pesoLegible(conversion.antes)} → {pesoLegible(conversion.despues)}
+                </p>
+              )}
             </label>
           )}
 
