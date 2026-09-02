@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { ShoppingBag, Store } from 'lucide-react';
 import { AuthLayout, AuthLink } from '@/components/layout/AuthLayout';
 import { Input } from '@/components/ui/Field';
+import { PasswordField } from '@/components/ui/PasswordField';
 import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/context/AuthContext';
 import { createSubscription } from '@/api/subscription';
@@ -111,9 +112,8 @@ export function RegisterPage() {
           onChange={(e) => setUsername(e.target.value)}
           placeholder="tu_usuario"
         />
-        <Input
+        <PasswordField
           label="Contraseña"
-          type="password"
           required
           minLength={6}
           autoComplete="new-password"
@@ -122,9 +122,8 @@ export function RegisterPage() {
           onChange={(e) => setPassword(e.target.value)}
           placeholder="••••••••"
         />
-        <Input
+        <PasswordField
           label="Confirmar contraseña"
-          type="password"
           required
           autoComplete="new-password"
           value={confirmPassword}

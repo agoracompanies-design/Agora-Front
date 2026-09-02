@@ -3,6 +3,7 @@ import type { FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthLayout, AuthLink } from '@/components/layout/AuthLayout';
 import { Input } from '@/components/ui/Field';
+import { PasswordField } from '@/components/ui/PasswordField';
 import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/context/AuthContext';
 
@@ -53,9 +54,8 @@ export function LoginPage() {
           onChange={(e) => setUsername(e.target.value)}
           placeholder="tu_usuario"
         />
-        <Input
+        <PasswordField
           label="Contraseña"
-          type="password"
           required
           autoComplete="current-password"
           value={password}

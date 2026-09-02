@@ -6,7 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useMotion } from '@/context/MotionContext';
 import { useToast } from '@/context/ToastContext';
 import { updatePassword, deleteAccount } from '@/api/user';
-import { Input } from '@/components/ui/Field';
+import { PasswordField } from '@/components/ui/PasswordField';
 import { Button } from '@/components/ui/Button';
 import { Card, Badge } from '@/components/ui/Card';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
@@ -133,16 +133,14 @@ export function AccountPage() {
       <Card className="p-6">
         <h2 className="mb-4 font-semibold text-ink-900">Cambiar contraseña</h2>
         <form onSubmit={handlePasswordChange} className="space-y-4">
-          <Input
+          <PasswordField
             label="Contraseña actual"
-            type="password"
             required
             value={currentPassword}
             onChange={(e) => setCurrentPassword(e.target.value)}
           />
-          <Input
+          <PasswordField
             label="Nueva contraseña"
-            type="password"
             required
             minLength={6}
             value={newPassword}
