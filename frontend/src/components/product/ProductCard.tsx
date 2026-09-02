@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { Heart, ImageOff, Store } from 'lucide-react';
 import type { Product } from '@/types';
 import { productImageUrl } from '@/api/product';
-import { formatPrice, cn } from '@/lib/utils';
+import { formatAmount, cn } from '@/lib/utils';
 import { useFavorites } from '@/context/FavoritesContext';
 
 interface ProductCardProps {
@@ -17,7 +17,11 @@ interface ProductCardProps {
 
 export function ProductCard({ product, avisarAgotado = false }: ProductCardProps) {
   const imageUrl = productImageUrl(product.image);
-  const price = formatPrice(product.priceUsd, 'USD') ?? formatPrice(product.priceCup, 'CUP');
+  // Los dos precios son independientes: un negocio puede poner solo uno, o
+  // ambos con descuento por pagar en divisa. La tarjeta enseña uno y dice cuál.
+  const enUsd = product.priceUsd !== null && product.priceUsd !== undefined;
+  const precio = enUsd ? formatAmount(product.priceUsd) : formatAmount(product.priceCup);
+  const moneda = enUsd ? 'USD' : 'CUP';
   const { isFavorite, toggleFavorite } = useFavorites();
   const favorite = isFavorite(product.idProduct);
   const agotadoResaltado = avisarAgotado && !product.stock;
@@ -82,7 +86,17 @@ export function ProductCard({ product, avisarAgotado = false }: ProductCardProps
         {product.description && (
           <p id={`product__description--${product.idProduct}`} className="product__description line-clamp-1 text-xs text-ink-500">{product.description}</p>
         )}
-        <p id={`product__price--${product.idProduct}`} className="product__price mt-auto text-base font-bold text-ink-900">{price ?? 'Consultar precio'}</p>
+        <p id={`product__price--${product.idProduct}`} className="product__price mt-auto flex items-baseline gap-1.5 text-base font-bold text-ink-900">
+          {precio ?? 'Consultar precio'}
+          {precio && (
+            <span
+              id={`product__currency--${product.idProduct}`}
+              className="product__currency rounded bg-ink-100 px-1.5 py-0.5 text-[10px] font-semibold tracking-wide text-ink-600"
+            >
+              {moneda}
+            </span>
+          )}
+        </p>
         {product.userEnterprise && (
           <p id={`product__seller--${product.idProduct}`} className="product__seller flex items-center gap-1 text-xs text-ink-500">
             <Store size={11} className="shrink-0" aria-hidden="true" />

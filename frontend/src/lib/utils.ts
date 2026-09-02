@@ -6,6 +6,18 @@ export function cn(...inputs: ClassValue[]): string {
   return twMerge(clsx(inputs));
 }
 
+/**
+ * El número solo, sin moneda. Para cuando la moneda se dice aparte —en la
+ * tarjeta va como etiqueta— y repetirla en el texto sobraría.
+ */
+export function formatAmount(value: number | null | undefined): string | null {
+  if (value === null || value === undefined) return null;
+  return new Intl.NumberFormat('es-ES', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
+}
+
 export function formatPrice(value: number | null | undefined, currency: 'CUP' | 'USD'): string | null {
   if (value === null || value === undefined) return null;
   const formatted = new Intl.NumberFormat('es-ES', {

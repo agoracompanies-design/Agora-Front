@@ -60,9 +60,6 @@ export function Navbar() {
             <Link to="/?pop=1" className={navLinkClass({ isActive: false })}>
               Más populares
             </Link>
-            <Link to="/?stock=1" className={navLinkClass({ isActive: false })}>
-              Disponibles
-            </Link>
             {isSeller && (
               <NavLink to="/panel" className={navLinkClass}>
                 Mi negocio
@@ -202,9 +199,6 @@ export function Navbar() {
             </Link>
             <Link to="/?pop=1" onClick={() => setMobileOpen(false)} id="navbar__mobile-popular" className="navbar__mobile-popular rounded-lg px-3 py-2.5 text-sm font-medium text-ink-700 hover:bg-ink-50">
               Más populares
-            </Link>
-            <Link to="/?stock=1" onClick={() => setMobileOpen(false)} id="navbar__mobile-stock" className="navbar__mobile-stock rounded-lg px-3 py-2.5 text-sm font-medium text-ink-700 hover:bg-ink-50">
-              Disponibles
             </Link>
             <Link
               to="/favoritos"
