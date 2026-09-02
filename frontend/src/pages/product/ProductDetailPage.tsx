@@ -7,6 +7,7 @@ import type { Product, Rating } from '@/types';
 import { Badge } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { RatingStars } from '@/components/ui/RatingStars';
+import { ZoomableImage } from '@/components/product/ZoomableImage';
 import { PageSpinner } from '@/components/ui/Spinner';
 import { MapEmbed } from '@/components/ui/MapEmbed';
 import { AccordionItem } from '@/components/ui/Accordion';
@@ -90,15 +91,15 @@ export function ProductDetailPage() {
 
       <div id="product-detail__layout" className="product-detail__layout grid grid-cols-1 lg:grid-cols-5 gap-10">
         <div id="product-detail__media" className="product-detail__media lg:col-span-3">
-          <div id="product-detail__frame" className="product-detail__frame aspect-square w-full overflow-hidden rounded-2xl bg-ink-100">
-            {imageUrl ? (
-              <img src={imageUrl} alt={product.name} id="product-detail__image" className="product-detail__image h-full w-full object-cover" />
-            ) : (
+          {imageUrl ? (
+            <ZoomableImage src={imageUrl} alt={product.name} />
+          ) : (
+            <div id="product-detail__frame" className="product-detail__frame aspect-square w-full overflow-hidden rounded-2xl bg-ink-100">
               <div id="product-detail__placeholder" className="product-detail__placeholder flex h-full w-full items-center justify-center text-ink-300">
                 <ImageOff size={40} />
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
         <div id="product-detail__info" className="product-detail__info lg:col-span-2 flex flex-col gap-5">
