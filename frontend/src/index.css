@@ -43,6 +43,12 @@
   /* Estados: usados en los badges de disponibilidad de producto. Oscurecidos
      respecto al original (#06d6a0 daba 1,87:1 y #ef476f, 3,63:1) para que se
      lean sobre fondo claro. */
+  /* Las estrellas de calificación: el amarillo de siempre, con el borde en
+     naranja para que se recorten sobre fondo claro —un amarillo plano sobre
+     blanco casi desaparece— y no dependan del color de marca. */
+  --color-star: #fbbf24;
+  --color-star-edge: #ea9a00;
+
   --color-success: #047857;
   --color-danger: #c81e4a;
 
