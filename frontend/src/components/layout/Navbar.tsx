@@ -57,9 +57,6 @@ export function Navbar() {
             <NavLink to="/negocios" className={navLinkClass}>
               Negocios
             </NavLink>
-            <Link to="/?pop=1" className={navLinkClass({ isActive: false })}>
-              Más populares
-            </Link>
             {isSeller && (
               <NavLink to="/panel" className={navLinkClass}>
                 Mi negocio
@@ -196,9 +193,6 @@ export function Navbar() {
             </Link>
             <Link to="/negocios" onClick={() => setMobileOpen(false)} id="navbar__mobile-businesses" className="navbar__mobile-businesses rounded-lg px-3 py-2.5 text-sm font-medium text-ink-700 hover:bg-ink-50">
               Negocios
-            </Link>
-            <Link to="/?pop=1" onClick={() => setMobileOpen(false)} id="navbar__mobile-popular" className="navbar__mobile-popular rounded-lg px-3 py-2.5 text-sm font-medium text-ink-700 hover:bg-ink-50">
-              Más populares
             </Link>
             <Link
               to="/favoritos"

@@ -1,4 +1,4 @@
-import { ArrowDownWideNarrow, ArrowUpNarrowWide, Banknote, DollarSign, MapPin, PackageCheck, SlidersHorizontal, TrendingUp, X } from 'lucide-react';
+import { ArrowDownWideNarrow, ArrowUpNarrowWide, Banknote, DollarSign, MapPin, PackageCheck, SlidersHorizontal, X } from 'lucide-react';
 import type { ReactNode } from 'react';
 import type { CategoryCount } from '@/hooks/useCategories';
 import { cn, soloPrecio } from '@/lib/utils';
@@ -18,8 +18,6 @@ interface FiltersPanelProps {
   onSortOrder: (v: SortOrder) => void;
   moneda: MonedaPrincipal;
   onMoneda: (v: MonedaPrincipal) => void;
-  popularOnly: boolean;
-  onPopularOnly: (v: boolean) => void;
   inStockOnly: boolean;
   onInStockOnly: (v: boolean) => void;
   nearMe: boolean;
@@ -96,8 +94,6 @@ export function FiltersPanel({
   onSortOrder,
   moneda,
   onMoneda,
-  popularOnly,
-  onPopularOnly,
   inStockOnly,
   onInStockOnly,
   nearMe,
@@ -182,9 +178,6 @@ export function FiltersPanel({
 
       <Grupo nombre={uid('only')} titulo="Mostrar solo">
         <div id={uid('filters__only')} className="filters__only flex flex-wrap gap-2">
-          <Chip id={uid('filters__only-popular')} activo={popularOnly} onClick={() => onPopularOnly(!popularOnly)} icon={<TrendingUp size={13} aria-hidden="true" />}>
-            Populares
-          </Chip>
           <Chip id={uid('filters__only-stock')} activo={inStockOnly} onClick={() => onInStockOnly(!inStockOnly)} icon={<PackageCheck size={13} aria-hidden="true" />}>
             Disponibles
           </Chip>
