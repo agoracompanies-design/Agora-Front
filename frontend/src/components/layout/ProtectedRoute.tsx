@@ -1,4 +1,4 @@
-import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { PageSpinner } from '@/components/ui/Spinner';
 
@@ -9,12 +9,13 @@ import { PageSpinner } from '@/components/ui/Spinner';
  */
 export function ProtectedRoute() {
   const { isAuthenticated, isLoading } = useAuth();
-  const location = useLocation();
 
   if (isLoading) return <PageSpinner />;
   if (!isAuthenticated) {
-    // Se recuerda a dónde iba para volver ahí después de iniciar sesión.
-    return <Navigate to="/iniciar-sesion" state={{ from: location.pathname + location.search }} replace />;
+    // Sin recordar a dónde iba: ese destino sobrevivía al cambio de cuenta y
+    // quien entraba después aterrizaba en la última pantalla del anterior.
+    // Iniciar sesión lleva siempre a explorar.
+    return <Navigate to="/iniciar-sesion" replace />;
   }
   return <Outlet />;
 }
@@ -22,14 +23,12 @@ export function ProtectedRoute() {
 /** Rutas que solo tienen sentido sin sesión: entrar y crear cuenta. */
 export function SoloSinSesion() {
   const { isAuthenticated, isLoading } = useAuth();
-  const location = useLocation();
 
   if (isLoading) return <PageSpinner />;
   if (isAuthenticated) {
-    // Al iniciar sesión, este guardia se adelanta al `navigate` de la pantalla
-    // de acceso, así que es él quien tiene que respetar a dónde iba el usuario.
-    const destino = (location.state as { from?: string } | null)?.from ?? '/';
-    return <Navigate to={destino} replace />;
+    // Este guardia se adelanta al `navigate` de la pantalla de acceso, así que
+    // el destino lo fija él: siempre explorar.
+    return <Navigate to="/" replace />;
   }
   return <Outlet />;
 }
@@ -44,7 +43,6 @@ const SIN_SUSCRIPCION = ['/planes', '/vender', '/cuenta'];
 
 export function RequireSubscription() {
   const { tieneAcceso, isLoading } = useAuth();
-  const location = useLocation();
 
   if (isLoading) return <PageSpinner />;
   if (!tieneAcceso && !SIN_SUSCRIPCION.includes(location.pathname)) {

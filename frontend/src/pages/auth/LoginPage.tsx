@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { AuthLayout, AuthLink } from '@/components/layout/AuthLayout';
 import { Input } from '@/components/ui/Field';
 import { Button } from '@/components/ui/Button';
@@ -9,7 +9,6 @@ import { useAuth } from '@/context/AuthContext';
 export function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -22,8 +21,7 @@ export function LoginPage() {
     setLoading(true);
     try {
       await login(username, password);
-      const redirectTo = (location.state as { from?: string } | null)?.from ?? '/';
-      navigate(redirectTo, { replace: true });
+      navigate('/', { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo iniciar sesión');
     } finally {
