@@ -56,7 +56,7 @@ function Chip({
       onClick={onClick}
       aria-pressed={activo}
       className={cn(
-        'filters__chip inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors duration-200',
+        'filters__chip inline-flex cursor-pointer items-center gap-1.5 rounded-full px-[11px] py-[3px] text-[11px] font-medium transition-colors duration-200',
         activo ? 'bg-primary text-white' : 'bg-primary/15 text-ink-900 hover:bg-primary/25',
       )}
     >
@@ -111,7 +111,7 @@ export function FiltersPanel({
   /** Sufijo que distingue la copia de la columna de la de la hoja móvil. */
   const uid = (nombre: string) => `${nombre}--${ambito}`;
   const campo =
-    'h-9 w-full min-w-0 rounded-lg border border-ink-200 bg-ink-50 px-2.5 text-sm text-ink-900 placeholder:text-ink-400 outline-none focus:border-primary';
+    'h-[35px] w-full min-w-0 rounded-lg border border-ink-200 bg-ink-50 px-[9px] text-[13px] text-ink-900 placeholder:text-ink-400 outline-none focus:border-primary';
 
   return (
     <div id={uid('filters')} className="filters space-y-4">
@@ -122,7 +122,7 @@ export function FiltersPanel({
         {hasActiveFilters && (
           <button
             onClick={onClear}
-            id={uid('filters__clear')} className="filters__clear inline-flex items-center gap-1 text-xs font-medium text-ink-500 hover:text-ink-900"
+            id={uid('filters__clear')} className="filters__clear inline-flex items-center gap-1 text-[11px] font-medium text-ink-500 hover:text-ink-900"
           >
             <X size={12} aria-hidden="true" /> Limpiar
           </button>
@@ -220,12 +220,12 @@ export function FiltersPanel({
                   aria-pressed={activa}
                   id={uid(`category-chip--${identificador(c)}`)}
                   className={cn(
-                    'category-chip inline-flex cursor-pointer items-center gap-1.5 rounded-full py-1 pl-3 pr-1.5 text-xs font-medium transition-colors duration-200',
+                    'category-chip inline-flex cursor-pointer items-center gap-1.5 rounded-full py-[3px] pl-[11px] pr-[5px] text-[11px] font-medium transition-colors duration-200',
                     conEnfasis ? 'bg-primary text-white' : 'bg-primary/15 text-ink-900 hover:bg-primary/25',
                   )}
                 >
                   {c}
-                  <span id={uid(`category-chip__count--${identificador(c)}`)} className="category-chip__count rounded-full bg-white px-1.5 py-0.5 text-[10px] font-semibold text-neutral-900">
+                  <span id={uid(`category-chip__count--${identificador(c)}`)} className="category-chip__count rounded-full bg-white px-1.5 py-0.5 text-[9px] font-semibold text-neutral-900">
                     {count}
                   </span>
                 </button>
