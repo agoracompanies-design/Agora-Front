@@ -27,6 +27,7 @@ import type { MonedaPrincipal, SortOrder } from '@/components/explore/FiltersPan
 import { useToast } from '@/context/ToastContext';
 import { useAuth } from '@/context/AuthContext';
 import { useCategories } from '@/hooks/useCategories';
+import { useProductRatings } from '@/hooks/useProductRatings';
 
 const CAROUSEL_SLIDES: CarouselSlide[] = [
   {
@@ -267,6 +268,9 @@ export function ExplorePage() {
   const totalPages = Math.max(1, Math.ceil(visibleProducts.length / PAGE_SIZE));
   const paginaActual = Math.min(page, totalPages);
   const productosDeLaPagina = visibleProducts.slice((paginaActual - 1) * PAGE_SIZE, paginaActual * PAGE_SIZE);
+  // Solo las de esta página: las calificaciones se piden de una en una, y
+  // hacerlo para el catálogo entero serían doscientas peticiones por carga.
+  const calificaciones = useProductRatings(productosDeLaPagina);
   const hasActiveFilters = Boolean(minPrice || maxPrice || nearMe || category || inStockOnly);
 
   function clearFilters() {
@@ -317,7 +321,7 @@ export function ExplorePage() {
           </Button>
         </div>
 
-        <div id="explore__layout" className="explore__layout flex flex-col gap-8 lg:h-[calc(100vh-117px)] lg:flex-row lg:items-start">
+        <div id="explore__layout" className="explore__layout flex flex-col gap-8 lg:h-[calc(100vh-117px)] lg:flex-row lg:items-start lg:gap-[39px]">
           {/* El panel ocupa el alto de la ventana menos la cabecera, con 20px de aire
               arriba y abajo para no pegarse a nada. Queda fijo mientras se recorre
               el catálogo. */}
@@ -361,7 +365,12 @@ export function ExplorePage() {
               <div id="explore__results-body" className="explore__results-body flex min-h-0 flex-1 flex-col">
                 <div id="explore__grid" className="explore__grid grid min-h-0 grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 lg:flex-1 lg:grid-rows-2">
                   {productosDeLaPagina.map((product) => (
-                    <ProductCard key={product.idProduct} product={product} moneda={moneda} />
+                    <ProductCard
+                      key={product.idProduct}
+                      product={product}
+                      moneda={moneda}
+                      votos={calificaciones[product.idProduct]?.votos}
+                    />
                   ))}
                 </div>
                 <div id="explore__pagination" className="explore__pagination mt-4 shrink-0">

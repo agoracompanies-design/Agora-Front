@@ -5,6 +5,9 @@ import { productImageUrl } from '@/api/product';
 import { formatAmount, cn } from '@/lib/utils';
 import { useFavorites } from '@/context/FavoritesContext';
 
+/** Por debajo de estas calificaciones, un producto se considera recién llegado. */
+const VOTOS_PARA_ASENTARSE = 10;
+
 interface ProductCardProps {
   product: Product;
   /**
@@ -14,6 +17,11 @@ interface ProductCardProps {
    */
   moneda?: 'USD' | 'CUP';
   /**
+   * Cuántas veces lo han calificado. Con pocas, la nota no significa nada
+   * todavía y la tarjeta lo dice: es un producto nuevo, no uno malo.
+   */
+  votos?: number;
+  /**
    * Marca la tarjeta entera cuando el producto está agotado. Se usa en la lista
    * de favoritos: ahí el producto se guardó estando disponible, así que hay que
    * avisar de que ya no lo está sin obligar a leer el badge pequeño.
@@ -21,7 +29,7 @@ interface ProductCardProps {
   avisarAgotado?: boolean;
 }
 
-export function ProductCard({ product, moneda: preferida = 'USD', avisarAgotado = false }: ProductCardProps) {
+export function ProductCard({ product, moneda: preferida = 'USD', votos, avisarAgotado = false }: ProductCardProps) {
   const imageUrl = productImageUrl(product.image);
   // Los dos precios son independientes: un negocio puede poner solo uno, o
   // ambos con descuento por pagar en divisa. Se enseña el de la moneda pedida
@@ -35,6 +43,9 @@ export function ProductCard({ product, moneda: preferida = 'USD', avisarAgotado 
   const { isFavorite, toggleFavorite } = useFavorites();
   const favorite = isFavorite(product.idProduct);
   const agotadoResaltado = avisarAgotado && !product.stock;
+  // Las dos etiquetas comparten esquina, así que solo cabe una. Manda
+  // «Agotado»: no hay nada que presentar de algo que no se puede comprar.
+  const esNuevo = product.stock && votos !== undefined && votos < VOTOS_PARA_ASENTARSE;
 
   return (
     <Link
@@ -75,6 +86,15 @@ export function ProductCard({ product, moneda: preferida = 'USD', avisarAgotado 
             )}
           >
             Agotado
+          </span>
+        )}
+
+        {esNuevo && (
+          <span
+            id={`product__new--${product.idProduct}`}
+            className="product__new absolute left-2 top-2 rounded-full bg-white/90 px-2 py-0.5 text-[11px] font-semibold text-primary backdrop-blur-sm"
+          >
+            Nuevo
           </span>
         )}
 
