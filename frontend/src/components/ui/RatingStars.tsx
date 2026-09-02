@@ -28,7 +28,10 @@ export function RatingStars({ id, value, count, size = 15, interactive = false, 
             <Star
               size={size}
               className={cn(
-                star <= Math.round(value) ? 'fill-ink-900 text-ink-900' : 'fill-transparent text-ink-300',
+                // Por parte entera, no redondeando: con 4,7 se llenan cuatro.
+                // Redondeando, un 4,5 enseñaría cinco estrellas llenas, que es
+                // la nota perfecta y no es lo que tiene.
+                star <= Math.floor(value) ? 'fill-ink-900 text-ink-900' : 'fill-transparent text-ink-300',
                 interactive && 'transition-transform hover:scale-110',
               )}
             />
