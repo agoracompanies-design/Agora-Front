@@ -109,14 +109,6 @@
 @layer base {
   html {
     -webkit-font-smoothing: antialiased;
-
-    /* Al bajar por la vista de explorar hay un punto en el que el panel de
-       filtros y las dos filas de resultados quedan encajados bajo la cabecera.
-       Pasarse de ahí por unos píxeles deja el buscador a medio camino, así que
-       ese punto tira un poco: `proximity` engancha solo si sueltas cerca —no
-       secuestra el scroll como haría `mandatory`— y en el resto de la página no
-       hace nada, porque no hay más puntos declarados. */
-    scroll-snap-type: y proximity;
   }
 
   body {
@@ -336,11 +328,4 @@
       height: auto;
     }
   }
-}
-
-/* El punto de encaje del catálogo. El margen es la cabecera pegajosa: sin él,
-   el bloque encajaría por debajo de ella y las cards quedarían tapadas. */
-#explore__catalog {
-  scroll-snap-align: start;
-  scroll-margin-top: 64px;
 }
