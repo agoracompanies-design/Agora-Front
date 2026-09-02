@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { Check, Plus, Search } from 'lucide-react';
 import { useCategories } from '@/hooks/useCategories';
+import { CATEGORIA_TEMPORAL } from '@/lib/solicitudes-categoria';
 import { cn } from '@/lib/utils';
 
 /**
@@ -21,7 +22,16 @@ export function CategoryPicker({
   /** Se pide una que no existe: el aviso y la solicitud los lleva el formulario. */
   onCrearNueva: (categoria: string) => void;
 }) {
-  const { categories, isLoading } = useCategories();
+  const { categories: existentes, isLoading } = useCategories();
+
+  // «Otros» siempre se puede elegir, aunque esté vacía: es donde espera un
+  // producto cuya categoría todavía no está aprobada, y también la salida para
+  // lo que no encaja en ninguna. Las categorías salen del catálogo, así que sin
+  // productos dentro no aparecería sola.
+  const categories = useMemo(() => {
+    if (existentes.some((c) => c.category === CATEGORIA_TEMPORAL)) return existentes;
+    return [...existentes, { category: CATEGORIA_TEMPORAL, count: 0 }];
+  }, [existentes]);
   const [abierto, setAbierto] = useState(false);
   const campo = useRef<HTMLInputElement>(null);
 
@@ -107,7 +117,7 @@ export function CategoryPicker({
               >
                 <span className="category-picker__option-name truncate">{category}</span>
                 <span className="category-picker__option-count shrink-0 text-xs text-ink-500">
-                  {count} producto{count === 1 ? '' : 's'}
+                  {count === 0 ? 'sin productos' : `${count} producto${count === 1 ? '' : 's'}`}
                   {category === value && <Check size={13} className="ml-1.5 inline text-primary" aria-hidden="true" />}
                 </span>
               </button>
