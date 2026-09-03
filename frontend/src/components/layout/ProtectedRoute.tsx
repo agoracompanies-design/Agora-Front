@@ -1,4 +1,4 @@
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { PageSpinner } from '@/components/ui/Spinner';
 
@@ -43,6 +43,10 @@ const SIN_SUSCRIPCION = ['/planes', '/vender', '/cuenta'];
 
 export function RequireSubscription() {
   const { tieneAcceso, isLoading } = useAuth();
+  // `location.pathname` a secas era `window.location`, no la ruta reactiva de
+  // React Router: el navegador la sigue reportando bien tras un cambio de URL,
+  // pero el componente no queda suscrito a esos cambios como React espera.
+  const location = useLocation();
 
   if (isLoading) return <PageSpinner />;
   if (!tieneAcceso && !SIN_SUSCRIPCION.includes(location.pathname)) {
