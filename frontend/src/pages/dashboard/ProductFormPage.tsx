@@ -19,6 +19,7 @@ import { useNotifications } from '@/context/NotificationsContext';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { Link } from 'react-router-dom';
+import { categoriaPendiente, nombreDeCategoria } from '@/lib/categorias';
 
 export function ProductFormPage() {
   const { id } = useParams<{ id: string }>();
@@ -79,7 +80,8 @@ export function ProductFormPage() {
         setPriceUsd(product.priceUsd?.toString() ?? '');
         setDescription(product.description);
         setUnit(product.unit);
-        setCategory(product.category);
+        // Si su categoría sigue pendiente, se recupera lo que pidió, no «Otros».
+        setCategory(categoriaPendiente(product) ?? nombreDeCategoria(product));
         setStock(product.stock);
         setExistingImage(product.image);
       })

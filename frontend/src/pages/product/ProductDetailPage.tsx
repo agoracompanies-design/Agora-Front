@@ -17,6 +17,7 @@ import { useToast } from '@/context/ToastContext';
 import { useFavorites } from '@/context/FavoritesContext';
 import { hasPermission, Permissions } from '@/lib/permissions';
 import { addRecentlyViewed } from '@/lib/recentlyViewed';
+import { nombreDeCategoria } from '@/lib/categorias';
 
 export function ProductDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -106,7 +107,7 @@ export function ProductDetailPage() {
           <div>
             <div id="product-detail__topbar" className="product-detail__topbar mb-2 flex items-center justify-between gap-2">
               <div id="product-detail__tags" className="product-detail__tags flex items-center gap-2">
-                <Badge>{product.category}</Badge>
+                <Badge>{nombreDeCategoria(product)}</Badge>
                 {!product.stock && <Badge variant="danger">Agotado</Badge>}
               </div>
               <button

@@ -3,6 +3,7 @@ import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { Search, Store, X } from 'lucide-react';
 import { listProducts } from '@/api/product';
 import type { Product } from '@/types';
+import { nombreDeCategoria } from '@/lib/categorias';
 
 /**
  * Buscador de la cabecera.
@@ -45,7 +46,7 @@ export function HeaderSearch({ ambito = 'desktop' }: { ambito?: string }) {
     if (q.length < 2 || !catalogo) return [];
     const coincide = (v?: string) => (v ?? '').toLowerCase().includes(q);
     return catalogo
-      .filter((p) => coincide(p.name) || coincide(p.category) || coincide(p.userEnterprise?.companyName))
+      .filter((p) => coincide(p.name) || coincide(nombreDeCategoria(p)) || coincide(p.userEnterprise?.companyName))
       // Primero lo que empieza por lo tecleado: es lo que se suele buscar.
       .sort((a, b) => Number(b.name.toLowerCase().startsWith(q)) - Number(a.name.toLowerCase().startsWith(q)))
       .slice(0, 6);
@@ -143,7 +144,7 @@ export function HeaderSearch({ ambito = 'desktop' }: { ambito?: string }) {
                     </span>
                   )}
                 </span>
-                <span className="shrink-0 text-xs font-semibold text-ink-900">{p.category}</span>
+                <span className="shrink-0 text-xs font-semibold text-ink-900">{nombreDeCategoria(p)}</span>
               </button>
             </li>
           ))}

@@ -15,6 +15,7 @@ import { PageSpinner } from '@/components/ui/Spinner';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useToast } from '@/context/ToastContext';
 import { formatPrice } from '@/lib/utils';
+import { nombreDeCategoria } from '@/lib/categorias';
 
 /**
  * Criterios de orden del catálogo propio.
@@ -166,7 +167,7 @@ export function DashboardProducts() {
                     </td>
                     <td className="p-3">
                       <p className="font-medium text-ink-900">{product.name}</p>
-                      <p className="text-xs text-ink-500">{product.category}</p>
+                      <p className="text-xs text-ink-500">{nombreDeCategoria(product)}</p>
                     </td>
                     <td className="p-3 text-ink-700">
                       {moneda === 'CUP'

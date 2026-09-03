@@ -8,6 +8,7 @@ import { PageSpinner } from '@/components/ui/Spinner';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Button } from '@/components/ui/Button';
 import { useToast } from '@/context/ToastContext';
+import { nombreDeCategoria } from '@/lib/categorias';
 import { ApiError } from '@/api/client';
 
 /**
@@ -36,7 +37,7 @@ export function ModerationPage() {
     setSolicitudes(pendientes);
     listProducts({ limit: 200 })
       .then(({ products }) => {
-        const parados = products.filter((p) => p.category === CATEGORIA_TEMPORAL);
+        const parados = products.filter((p) => nombreDeCategoria(p) === CATEGORIA_TEMPORAL);
         setEnEspera(parados);
         // Cada producto arranca con la categoría que su negocio pidió.
         setPropuestas(

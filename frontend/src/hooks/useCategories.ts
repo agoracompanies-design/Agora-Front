@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { listProducts } from '@/api/product';
+import { nombreDeCategoria } from '@/lib/categorias';
 
 export interface CategoryCount {
   category: string;
@@ -23,8 +24,8 @@ export function useCategories() {
         if (cancelled) return;
         const counts = new Map<string, number>();
         for (const product of data.products) {
-          if (!product.category) continue;
-          counts.set(product.category, (counts.get(product.category) ?? 0) + 1);
+          const nombre = nombreDeCategoria(product);
+          counts.set(nombre, (counts.get(nombre) ?? 0) + 1);
         }
         const list = Array.from(counts.entries())
           .map(([category, count]) => ({ category, count }))

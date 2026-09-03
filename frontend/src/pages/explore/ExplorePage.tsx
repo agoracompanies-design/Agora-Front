@@ -28,6 +28,7 @@ import { useToast } from '@/context/ToastContext';
 import { useAuth } from '@/context/AuthContext';
 import { useCategories } from '@/hooks/useCategories';
 import { useProductRatings } from '@/hooks/useProductRatings';
+import { nombreDeCategoria } from '@/lib/categorias';
 
 const CAROUSEL_SLIDES: CarouselSlide[] = [
   {
@@ -221,7 +222,7 @@ export function ExplorePage() {
         (p) =>
           p.name.toLowerCase().includes(q) ||
           p.userEnterprise?.companyName.toLowerCase().includes(q) ||
-          p.category.toLowerCase().includes(q),
+          nombreDeCategoria(p).toLowerCase().includes(q),
       );
     }
     // El rango se aplica aquí y no en el servidor: el backend lo compara
@@ -238,7 +239,7 @@ export function ExplorePage() {
         return true;
       });
     }
-    if (category) list = list.filter((p) => p.category === category);
+    if (category) list = list.filter((p) => nombreDeCategoria(p) === category);
     if (inStockOnly) list = list.filter((p) => p.stock);
     // CUP y USD son independientes y no hay tasa de cambio, así que comparar
     // 180 CUP con 8 USD no significa nada. Se agrupa: delante los que tienen

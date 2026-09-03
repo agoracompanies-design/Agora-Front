@@ -91,7 +91,11 @@ export const MOCK_PRODUCTS: Product[] = SEEDS.map((seed) => ({
   description: seed.description,
   unit: 'unidad',
   stock: seed.stock,
-  category: seed.category,
+  // Las categorías son una tabla propia: los datos de muestra fabrican una
+  // aprobada por nombre, con un id estable para que no cambie entre recargas.
+  category: { id: `mock-cat-${seed.category.toLowerCase()}`, name: seed.category, approved: true },
+  categoryId: `mock-cat-${seed.category.toLowerCase()}`,
+  suggestedCategoryName: null,
   userEnterpriseId: MOCK_ENTERPRISES[seed.enterpriseIndex].idUserEnterprise,
   userEnterprise: MOCK_ENTERPRISES[seed.enterpriseIndex],
 }));

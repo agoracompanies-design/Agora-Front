@@ -36,6 +36,20 @@ export interface UserEnterprise {
   longitude: number | null;
 }
 
+/**
+ * Una categoría del catálogo. Desde el 2026-09-03 son una tabla propia en el
+ * backend: se crean con `approved: false` cuando alguien las sugiere y solo
+ * clasifican de verdad cuando un moderador las aprueba.
+ */
+export interface Category {
+  id: string;
+  name: string;
+  approved: boolean;
+  suggestedBy?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface Product {
   idProduct: string;
   name: string;
@@ -45,7 +59,17 @@ export interface Product {
   description: string;
   unit: string;
   stock: boolean;
-  category: string;
+  /**
+   * La categoría en la que el producto está publicado de verdad: la aprobada,
+   * o «Otros» mientras la suya espera revisión. Llega anidada desde la API.
+   */
+  category: Category | null;
+  categoryId: string | null;
+  /**
+   * El nombre que escribió quien publicó, cuando pidió una que no existía.
+   * Es solo rastro: el producto sigue en «Otros» hasta que se apruebe.
+   */
+  suggestedCategoryName: string | null;
   userEnterpriseId: string;
   userEnterprise?: UserEnterprise;
 }
