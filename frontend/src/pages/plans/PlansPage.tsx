@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { ShoppingBag } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
@@ -12,14 +12,17 @@ import { BUYER_PLAN, getTier } from '@/lib/plans';
 import type { BillingCycle } from '@/lib/plans';
 
 export function PlansPage() {
-  const { user, isAuthenticated, isLoading, isSeller, subscription, tieneAcceso, logout, refreshSellerStatus } = useAuth();
+  const { user, isAuthenticated, isLoading, isSeller, tieneAcceso, logout, refreshSellerStatus } = useAuth();
   const { notify } = useToast();
   const navigate = useNavigate();
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    if (subscription) navigate('/', { replace: true });
-  }, [subscription, navigate]);
+  // Antes había un efecto que, al detectar CUALQUIER suscripción activa —
+  // incluida la prueba—, echaba de aquí para atrás de inmediato. Eso dejaba
+  // muerto el enlace «Elegir membresía» del carrusel de promociones para
+  // cualquiera que ya tuviera algo: entraba y salía en el mismo instante, sin
+  // que el clic pareciera hacer nada. El caso de «me acabo de suscribir» ya lo
+  // resuelve `handleSubscribe` navegando a `/` explícitamente al terminar.
 
   if (isLoading) return <PageSpinner />;
   if (!isAuthenticated) return <Navigate to="/registrarse" replace />;
