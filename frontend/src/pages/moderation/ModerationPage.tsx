@@ -1,98 +1,93 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Check, ShieldCheck, Store, Tags, X } from 'lucide-react';
-import { listProducts, updateProduct } from '@/api/product';
-import type { Product } from '@/types';
-import { CATEGORIA_TEMPORAL, resolverSolicitud, solicitudesPendientes } from '@/lib/solicitudes-categoria';
-import type { SolicitudCategoria } from '@/lib/solicitudes-categoria';
+import { Check, Package, ShieldCheck, Tags, X } from 'lucide-react';
+import { approveCategory, deleteCategory, listPendingCategories, updateCategory } from '@/api/category';
+import { listProducts } from '@/api/product';
+import type { Category, Product } from '@/types';
+import { CATEGORIA_TEMPORAL, categoriaPendiente } from '@/lib/categorias';
 import { PageSpinner } from '@/components/ui/Spinner';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Button } from '@/components/ui/Button';
+import { InfoTip } from '@/components/ui/InfoTip';
 import { useToast } from '@/context/ToastContext';
-import { nombreDeCategoria } from '@/lib/categorias';
 import { ApiError } from '@/api/client';
 
 /**
- * Lo que ve el moderador: los productos que esperan en la categoría temporal.
+ * Las categorías que esperan revisión, tal como las guarda el backend.
  *
- * La lista sale del catálogo, no de las solicitudes. La solicitud llega por
- * WhatsApp y el moderador puede estar en otro navegador, pero un producto
- * parado en «Otros» se ve siempre. Si la solicitud está a mano, se usa para
- * rellenar la categoría que pidió el negocio.
+ * Antes esta pantalla adivinaba las solicitudes mirando qué productos estaban
+ * parados en «Otros»; desde que las categorías son una tabla propia, se leen de
+ * `/categories/pending`, que es la lista de verdad.
  *
- * El campo es editable a propósito: la categoría la escribe quien publica, y
- * «Mascota», «mascotas» o «Msacotas» son la misma estantería. Se corrige aquí,
- * antes de que exista.
+ * El nombre es editable a propósito: lo escribe quien publica, y «Mascota»,
+ * «mascotas» o «Msacotas» son la misma estantería. Se corrige aquí, antes de
+ * que la categoría exista de verdad.
  */
 export function ModerationPage() {
   const { notify } = useToast();
-  const [enEspera, setEnEspera] = useState<Product[]>([]);
-  const [solicitudes, setSolicitudes] = useState<SolicitudCategoria[]>([]);
-  const [propuestas, setPropuestas] = useState<Record<string, string>>({});
+  const [pendientes, setPendientes] = useState<Category[]>([]);
+  const [productos, setProductos] = useState<Product[]>([]);
+  const [nombres, setNombres] = useState<Record<string, string>>({});
   const [guardando, setGuardando] = useState('');
   const [cargando, setCargando] = useState(true);
+  const [sinPermiso, setSinPermiso] = useState(false);
 
   const cargar = useCallback(() => {
     setCargando(true);
-    const pendientes = solicitudesPendientes();
-    setSolicitudes(pendientes);
-    listProducts({ limit: 200 })
-      .then(({ products }) => {
-        const parados = products.filter((p) => nombreDeCategoria(p) === CATEGORIA_TEMPORAL);
-        setEnEspera(parados);
-        // Cada producto arranca con la categoría que su negocio pidió.
-        setPropuestas(
-          Object.fromEntries(
-            parados.map((p) => [
-              p.idProduct,
-              pendientes.find((s) => s.productoNombre === p.name)?.categoria ?? '',
-            ]),
-          ),
-        );
+    Promise.allSettled([listPendingCategories(), listProducts({ limit: 200 })])
+      .then(([categorias, catalogo]) => {
+        if (categorias.status === 'fulfilled') {
+          setPendientes(categorias.value);
+          setNombres(Object.fromEntries(categorias.value.map((c) => [c.id, c.name])));
+          setSinPermiso(false);
+        } else {
+          // `category:approve` no se concede por defecto: sin él esta pantalla
+          // no tiene nada que enseñar, y conviene decir por qué.
+          setSinPermiso(categorias.reason instanceof ApiError && categorias.reason.status === 403);
+          setPendientes([]);
+        }
+        setProductos(catalogo.status === 'fulfilled' ? catalogo.value.products : []);
       })
-      .catch(() => setEnEspera([]))
       .finally(() => setCargando(false));
   }, []);
 
   useEffect(cargar, [cargar]);
 
-  async function aprobar(producto: Product) {
-    const categoria = (propuestas[producto.idProduct] ?? '').trim();
-    if (categoria.length < 2) {
-      notify('Escribe la categoría con la que se publicará', 'error');
+  /** Los productos que salieron a «Otros» esperando justo esta categoría. */
+  const esperando = (nombre: string) =>
+    productos.filter((p) => categoriaPendiente(p)?.toLowerCase() === nombre.toLowerCase());
+
+  async function aprobar(categoria: Category) {
+    const nombre = (nombres[categoria.id] ?? '').trim();
+    if (nombre.length < 2) {
+      notify('Escribe el nombre con el que se creará', 'error');
       return;
     }
-    setGuardando(producto.idProduct);
+    setGuardando(categoria.id);
     try {
-      // Aprobar es, literalmente, mover el producto: la categoría existe en
-      // cuanto hay un producto en ella.
-      await updateProduct(producto.idProduct, { category: categoria });
-      const solicitud = solicitudes.find((s) => s.productoNombre === producto.name);
-      if (solicitud) resolverSolicitud(solicitud.id, 'aprobada', categoria);
-      notify(`«${producto.name}» pasó a «${categoria}»`);
+      // Primero la corrección de ortografía, si la hubo: hay que dejarla con su
+      // nombre definitivo antes de que empiece a clasificar.
+      if (nombre !== categoria.name) await updateCategory(categoria.id, { name: nombre });
+      await approveCategory(categoria.id);
+      notify(`«${nombre}» ya es una categoría del catálogo`);
       cargar();
     } catch (err) {
-      // `PATCH /products/:id` exige que el producto sea de tu propia empresa y
-      // no hace excepción con quien modera, así que mover uno ajeno da 403.
-      // Sin eso la moderación puede revisar pero no ejecutar.
-      const esAjeno = err instanceof ApiError && err.status === 403;
-      notify(
-        esAjeno
-          ? 'El backend no deja mover productos de otra empresa, ni siquiera moderando. Está pendiente de resolver con el equipo.'
-          : err instanceof Error
-            ? err.message
-            : 'No se pudo mover el producto',
-        'error',
-      );
+      notify(err instanceof Error ? err.message : 'No se pudo aprobar la categoría', 'error');
     } finally {
       setGuardando('');
     }
   }
 
-  function rechazar(producto: Product) {
-    const solicitud = solicitudes.find((s) => s.productoNombre === producto.name);
-    if (solicitud) resolverSolicitud(solicitud.id, 'rechazada');
-    notify(`«${producto.name}» se queda en ${CATEGORIA_TEMPORAL}`);
-    cargar();
+  async function descartar(categoria: Category) {
+    setGuardando(categoria.id);
+    try {
+      await deleteCategory(categoria.id);
+      notify(`«${categoria.name}» descartada`);
+      cargar();
+    } catch (err) {
+      notify(err instanceof Error ? err.message : 'No se pudo descartar', 'error');
+    } finally {
+      setGuardando('');
+    }
   }
 
   if (cargando) return <PageSpinner />;
@@ -112,74 +107,76 @@ export function ModerationPage() {
           Categorías por revisar
         </h1>
         <p id="moderation__subtitle" className="moderation__subtitle mt-1.5 text-sm text-ink-500">
-          Productos parados en {CATEGORIA_TEMPORAL} esperando categoría. Corrige el nombre antes de
-          crearla si hace falta: así no acaban «Mascotas» y «mascota» siendo dos estanterías.
+          Las que pidieron los negocios al publicar. Corrige el nombre antes de aprobarla si hace
+          falta: así no acaban «Mascotas» y «mascota» siendo dos estanterías.
         </p>
       </header>
 
-      {enEspera.length === 0 ? (
+      {sinPermiso ? (
+        <EmptyState
+          icon={<ShieldCheck size={20} />}
+          title="Tu cuenta no puede revisar categorías"
+          description="Hace falta el permiso «category:approve», que hoy no se concede automáticamente a nadie: tiene que asignarlo el equipo de backend."
+        />
+      ) : pendientes.length === 0 ? (
         <EmptyState
           icon={<Tags size={20} />}
           title="No hay nada esperando"
-          description={`Cuando un negocio pida una categoría que no existe, su producto aparecerá aquí en ${CATEGORIA_TEMPORAL}.`}
+          description="Cuando un negocio publique con una categoría que no existe, aparecerá aquí para revisarla."
         />
       ) : (
         <ul id="moderation__list" className="moderation__list space-y-3">
-          {enEspera.map((producto) => {
-            const solicitud = solicitudes.find((s) => s.productoNombre === producto.name);
+          {pendientes.map((categoria) => {
+            const enEspera = esperando(categoria.name);
             return (
               <li
-                key={producto.idProduct}
-                id={`moderation__item--${producto.idProduct}`}
+                key={categoria.id}
+                id={`moderation__item--${categoria.id}`}
                 className="moderation__item rounded-2xl border border-ink-200 bg-ink-50 p-5"
               >
                 <div className="moderation__item-head flex flex-wrap items-baseline justify-between gap-2">
-                  <h2 className="moderation__item-name font-medium text-ink-900">{producto.name}</h2>
-                  {producto.userEnterprise && (
-                    <p className="moderation__item-seller flex items-center gap-1.5 text-xs text-ink-500">
-                      <Store size={12} aria-hidden="true" /> {producto.userEnterprise.companyName}
-                    </p>
-                  )}
+                  <h2 className="moderation__item-name font-medium text-ink-900">«{categoria.name}»</h2>
+                  <p className="moderation__item-count flex items-center gap-1.5 text-xs text-ink-500">
+                    <Package size={12} aria-hidden="true" />
+                    {enEspera.length === 0
+                      ? 'sin productos esperando'
+                      : `${enEspera.length} producto${enEspera.length === 1 ? '' : 's'} en ${CATEGORIA_TEMPORAL}`}
+                  </p>
                 </div>
 
-                {producto.description && (
-                  <p className="moderation__item-description mt-1 line-clamp-2 text-sm text-ink-500">
-                    {producto.description}
-                  </p>
-                )}
-
-                {solicitud && (
-                  <p className="moderation__item-request mt-2 text-xs text-ink-500">
-                    Pedida por <span className="font-medium text-ink-800">{solicitud.usuario}</span>
-                    <span className="ml-1 text-ink-400">(id {solicitud.userId})</span>
+                {enEspera.length > 0 && (
+                  <p className="moderation__item-products mt-1 line-clamp-2 text-sm text-ink-500">
+                    {enEspera.map((p) => p.name).join(', ')}
                   </p>
                 )}
 
                 <label
-                  htmlFor={`moderation__category--${producto.idProduct}`}
-                  className="moderation__item-label mt-4 mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-500"
+                  htmlFor={`moderation__name--${categoria.id}`}
+                  className="moderation__item-label mt-4 mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-ink-500"
                 >
-                  Categoría con la que se publicará
+                  Nombre con el que se creará
+                  <InfoTip>
+                    Aprobarla la deja disponible en el catálogo, pero no mueve sola a los productos
+                    que la esperan: eso lo tiene que hacer cada negocio editando su producto.
+                  </InfoTip>
                 </label>
                 <div className="moderation__item-actions flex flex-wrap gap-2">
                   <input
-                    id={`moderation__category--${producto.idProduct}`}
-                    value={propuestas[producto.idProduct] ?? ''}
-                    onChange={(e) =>
-                      setPropuestas((p) => ({ ...p, [producto.idProduct]: e.target.value }))
-                    }
-                    placeholder="Mascotas"
+                    id={`moderation__name--${categoria.id}`}
+                    value={nombres[categoria.id] ?? ''}
+                    onChange={(e) => setNombres((n) => ({ ...n, [categoria.id]: e.target.value }))}
+                    maxLength={100}
                     className="moderation__item-input h-10 min-w-0 flex-1 rounded-xl border border-ink-200 bg-ink-50 px-3 text-sm text-ink-900 placeholder:text-ink-400 outline-none focus:border-primary"
                   />
                   <Button
                     icon={<Check size={15} />}
-                    loading={guardando === producto.idProduct}
-                    onClick={() => aprobar(producto)}
+                    loading={guardando === categoria.id}
+                    onClick={() => aprobar(categoria)}
                   >
-                    Crear y mover
+                    Aprobar
                   </Button>
-                  <Button variant="outline" icon={<X size={15} />} onClick={() => rechazar(producto)}>
-                    No crearla
+                  <Button variant="outline" icon={<X size={15} />} onClick={() => descartar(categoria)}>
+                    Descartar
                   </Button>
                 </div>
               </li>

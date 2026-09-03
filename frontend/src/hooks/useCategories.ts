@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { listProducts } from '@/api/product';
+import { listCategories } from '@/api/category';
+import type { Category } from '@/types';
 import { nombreDeCategoria } from '@/lib/categorias';
 
 export interface CategoryCount {
@@ -8,10 +10,12 @@ export interface CategoryCount {
 }
 
 /**
- * Derives the category list from a broad, unfiltered product sample.
- * The backend has no dedicated categories endpoint, so this fetches once
- * on mount rather than reusing the (paginated/filtered) results shown in
- * the main grid, which would under-represent categories.
+ * Las categorías que de verdad tienen algo dentro, con su cuenta.
+ *
+ * Sale del catálogo y no de `GET /categories` a propósito: en el panel de
+ * filtros solo estorban las categorías vacías —no llevan a ningún resultado— y
+ * el número al lado es justo lo que ayuda a elegir. Se pide una vez al montar,
+ * sin filtros ni paginación, para no contar de menos.
  */
 export function useCategories() {
   const [categories, setCategories] = useState<CategoryCount[]>([]);
@@ -32,6 +36,36 @@ export function useCategories() {
           .sort((a, b) => b.count - a.count);
         setCategories(list);
       })
+      .catch(() => setCategories([]))
+      .finally(() => !cancelled && setIsLoading(false));
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  return { categories, isLoading };
+}
+
+/**
+ * La lista real de categorías aprobadas, del backend.
+ *
+ * Esta sí sale de `GET /categories`: al publicar hay que poder elegir una
+ * aprobada aunque todavía no tenga productos, y sobre todo hay que evitar que
+ * alguien «sugiera» una que ya existe.
+ */
+export function useApprovedCategories() {
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    listCategories()
+      .then((todas) => {
+        if (cancelled) return;
+        setCategories(todas.filter((c) => c.approved).sort((a, b) => a.name.localeCompare(b.name, 'es')));
+      })
+      // Sin permiso o sin red se sigue pudiendo escribir la categoría a mano:
+      // el backend la resuelve igual con el nombre que se le mande.
       .catch(() => setCategories([]))
       .finally(() => !cancelled && setIsLoading(false));
     return () => {

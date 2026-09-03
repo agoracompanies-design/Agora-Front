@@ -1,7 +1,8 @@
 import { MessageCircle } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
-import { CATEGORIA_TEMPORAL, enlaceModeracion } from '@/lib/solicitudes-categoria';
+import { CATEGORIA_TEMPORAL } from '@/lib/categorias';
+import { enlaceModeracion } from '@/lib/solicitudes-categoria';
 
 /**
  * El producto ya está publicado; ahora hay que hacer llegar la solicitud.

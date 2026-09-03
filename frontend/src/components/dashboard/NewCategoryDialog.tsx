@@ -1,7 +1,7 @@
 import { AlertTriangle, Clock, PackageOpen } from 'lucide-react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
-import { CATEGORIA_TEMPORAL } from '@/lib/solicitudes-categoria';
+import { CATEGORIA_TEMPORAL } from '@/lib/categorias';
 
 /**
  * Lo que hay que contar antes de estrenar una categoría, porque no es lo mismo

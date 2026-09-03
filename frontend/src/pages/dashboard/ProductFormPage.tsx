@@ -14,7 +14,7 @@ import { CategoryPicker } from '@/components/dashboard/CategoryPicker';
 import { UnitPicker } from '@/components/dashboard/UnitPicker';
 import { NewCategoryDialog } from '@/components/dashboard/NewCategoryDialog';
 import { SendRequestDialog } from '@/components/dashboard/SendRequestDialog';
-import { CATEGORIA_TEMPORAL, pedirCategoria } from '@/lib/solicitudes-categoria';
+import { anotarCategoriaPedida } from '@/lib/solicitudes-categoria';
 import { useNotifications } from '@/context/NotificationsContext';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
@@ -39,6 +39,8 @@ export function ProductFormPage() {
   // temporal y la petición queda esperando aprobación.
   const [categoriaAPedir, setCategoriaAPedir] = useState('');
   const [categoriaPedida, setCategoriaPedida] = useState('');
+  /** La que pidió y sigue sin aprobarse, para poder decírselo al editar. */
+  const [pendiente, setPendiente] = useState<string | null>(null);
   const [porEnviar, setPorEnviar] = useState<{
     categoria: string;
     productoNombre: string;
@@ -80,8 +82,11 @@ export function ProductFormPage() {
         setPriceUsd(product.priceUsd?.toString() ?? '');
         setDescription(product.description);
         setUnit(product.unit);
-        // Si su categoría sigue pendiente, se recupera lo que pidió, no «Otros».
-        setCategory(categoriaPendiente(product) ?? nombreDeCategoria(product));
+        // Se precarga la categoría real, no la que se pidió: si el moderador ya
+        // la aprobó con el nombre corregido, volver a mandar el original crearía
+        // otra pendiente igual de mal escrita cada vez que se guarda.
+        setCategory(nombreDeCategoria(product));
+        setPendiente(categoriaPendiente(product));
         setStock(product.stock);
         setExistingImage(product.image);
       })
@@ -126,19 +131,17 @@ export function ProductFormPage() {
         });
         notify('Producto publicado');
       }
-      // La solicitud se registra al guardar, no al confirmar el diálogo: si el
-      // producto no llega a publicarse, no queda una petición huérfana.
+      // La sugerencia ya la registró el backend al recibir un nombre que no
+      // existe: aquí solo queda dejar constancia en la bandeja del negocio y
+      // ofrecerle avisar al moderador, porque el backend todavía no notifica
+      // a nadie de que hay algo pendiente.
       if (categoriaPedida && user) {
-        pedirCategoria({
+        anotarCategoriaPedida({
           userId: user.id,
-          usuario: user.username,
           categoria: categoriaPedida,
-          productoId: id ?? null,
           productoNombre: name,
         });
         recargarAvisos();
-        // La solicitud la manda el negocio por WhatsApp: se queda aquí hasta
-        // que la envíe o decida hacerlo luego.
         setPorEnviar({ categoria: categoriaPedida, productoNombre: name, usuario: user.username, userId: user.id });
         return;
       }
@@ -202,10 +205,16 @@ export function ProductFormPage() {
               value={category}
               onChange={(v) => {
                 setCategory(v);
-                if (categoriaPedida && v !== CATEGORIA_TEMPORAL) setCategoriaPedida('');
+                if (categoriaPedida && v !== categoriaPedida) setCategoriaPedida('');
               }}
               onCrearNueva={setCategoriaAPedir}
             />
+            {pendiente && (
+              <p id="product-form__pending" className="product-form__pending mt-1.5 text-xs text-ink-500">
+                Pediste «{pendiente}» y sigue esperando revisión. Si ya está aprobada, búscala aquí
+                arriba y elígela.
+              </p>
+            )}
           </div>
 
           <TextArea label="Descripción" required rows={4} maxLength={LARGO.descripcion} value={description} onChange={(e) => setDescription(e.target.value.slice(0, LARGO.descripcion))} />
@@ -235,8 +244,11 @@ export function ProductFormPage() {
         open={Boolean(categoriaAPedir)}
         onCancelar={() => setCategoriaAPedir('')}
         onConfirmar={() => {
+          // Se deja escrito el nombre que pidió: el backend lo resuelve —crea
+          // la categoría pendiente y publica en «Otros»—. Ponerle «Otros» aquí
+          // borraría la sugerencia antes de enviarla.
+          setCategory(categoriaAPedir);
           setCategoriaPedida(categoriaAPedir);
-          setCategory(CATEGORIA_TEMPORAL);
           setCategoriaAPedir('');
         }}
       />

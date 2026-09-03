@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { Check, Plus, Search } from 'lucide-react';
-import { useCategories } from '@/hooks/useCategories';
-import { CATEGORIA_TEMPORAL } from '@/lib/solicitudes-categoria';
+import { useApprovedCategories } from '@/hooks/useCategories';
+import { CATEGORIA_TEMPORAL } from '@/lib/categorias';
 import { cn } from '@/lib/utils';
 
 /**
@@ -22,15 +22,15 @@ export function CategoryPicker({
   /** Se pide una que no existe: el aviso y la solicitud los lleva el formulario. */
   onCrearNueva: (categoria: string) => void;
 }) {
-  const { categories: existentes, isLoading } = useCategories();
+  // Las aprobadas del backend, no las deducidas del catálogo: hay que poder
+  // elegir una que todavía no tenga productos, y no «sugerir» una que ya existe.
+  const { categories: existentes, isLoading } = useApprovedCategories();
 
-  // «Otros» siempre se puede elegir, aunque esté vacía: es donde espera un
-  // producto cuya categoría todavía no está aprobada, y también la salida para
-  // lo que no encaja en ninguna. Las categorías salen del catálogo, así que sin
-  // productos dentro no aparecería sola.
+  // «Otros» siempre a mano: es donde espera un producto cuya categoría está
+  // pendiente, y la salida para lo que no encaja en ninguna.
   const categories = useMemo(() => {
-    if (existentes.some((c) => c.category === CATEGORIA_TEMPORAL)) return existentes;
-    return [...existentes, { category: CATEGORIA_TEMPORAL, count: 0 }];
+    const nombres = existentes.map((c) => c.name);
+    return nombres.includes(CATEGORIA_TEMPORAL) ? nombres : [...nombres, CATEGORIA_TEMPORAL];
   }, [existentes]);
   const [abierto, setAbierto] = useState(false);
   const campo = useRef<HTMLInputElement>(null);
@@ -39,11 +39,11 @@ export function CategoryPicker({
   const coincidencias = useMemo(() => {
     const termino = escrito.toLowerCase();
     if (!termino) return categories;
-    return categories.filter((c) => c.category.toLowerCase().includes(termino));
+    return categories.filter((c) => c.toLowerCase().includes(termino));
   }, [categories, escrito]);
 
   // Escrita entera y ya existe: no hay nada que crear ni que sugerir.
-  const yaExiste = categories.some((c) => c.category.toLowerCase() === escrito.toLowerCase());
+  const yaExiste = categories.some((c) => c.toLowerCase() === escrito.toLowerCase());
   const puedeCrear = escrito.length >= 2 && !yaExiste && coincidencias.length === 0;
 
   function elegir(categoria: string) {
@@ -101,7 +101,7 @@ export function CategoryPicker({
           )}
 
           {!isLoading &&
-            coincidencias.map(({ category, count }) => (
+            coincidencias.map((category) => (
               <button
                 key={category}
                 type="button"
@@ -116,10 +116,7 @@ export function CategoryPicker({
                 className="category-picker__option flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm text-ink-900 hover:bg-ink-100"
               >
                 <span className="category-picker__option-name truncate">{category}</span>
-                <span className="category-picker__option-count shrink-0 text-xs text-ink-500">
-                  {count === 0 ? 'sin productos' : `${count} producto${count === 1 ? '' : 's'}`}
-                  {category === value && <Check size={13} className="ml-1.5 inline text-primary" aria-hidden="true" />}
-                </span>
+                {category === value && <Check size={13} className="shrink-0 text-primary" aria-hidden="true" />}
               </button>
             ))}
 
