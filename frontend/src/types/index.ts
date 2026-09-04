@@ -6,6 +6,11 @@ export interface AuthUser {
 
 export interface LoginResponse {
   accessToken: string;
+  /**
+   * Vale una semana y sirve para pedir un `accessToken` nuevo sin volver a
+   * escribir la contraseña. Viaja en el cuerpo, no en una cookie.
+   */
+  refreshToken: string;
   expiresIn: string;
   user: AuthUser;
 }

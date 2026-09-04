@@ -3,7 +3,14 @@ import type { ReactNode } from 'react';
 import * as authApi from '@/api/auth';
 import { getMyEnterprise } from '@/api/userEnterprise';
 import { estaVigente, getMyActiveSubscription } from '@/api/subscription';
-import { clearToken, getToken, setToken } from '@/api/client';
+import {
+  clearRefreshToken,
+  clearToken,
+  getToken,
+  registrarCierreDeSesion,
+  setRefreshToken,
+  setToken,
+} from '@/api/client';
 import type { AuthUser, UserEnterprise } from '@/types';
 import type { Subscription } from '@/api/subscription';
 import { daAccesoDeNegocio } from '@/lib/plans';
@@ -30,7 +37,8 @@ interface AuthContextValue {
   isAuthenticated: boolean;
   login: (username: string, password: string) => Promise<AuthUser>;
   register: (username: string, password: string) => Promise<void>;
-  logout: () => void;
+  /** Cierra la sesión aquí y revoca el refresco en el servidor. */
+  logout: () => Promise<void>;
   refreshSellerStatus: () => Promise<void>;
 }
 
@@ -87,6 +95,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(async (username: string, password: string) => {
     const response = await authApi.login(username, password);
     setToken(response.accessToken);
+    // Con esto se renueva el acceso sin volver a pedir la contraseña mientras
+    // dure; el interceptor lo usa solo cuando el de acceso caduca.
+    if (response.refreshToken) setRefreshToken(response.refreshToken);
     localStorage.setItem('agora_user', JSON.stringify(response.user));
     setUser(response.user);
     // Devuelto para quien lo necesite nada más entrar, como el alta de la
@@ -98,11 +109,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await authApi.register(username, password);
   }, []);
 
-  const logout = useCallback(() => {
+  /** Deja esta sesión como si nunca hubiera existido, aquí y en el servidor. */
+  const limpiarSesion = useCallback(() => {
     clearToken();
+    clearRefreshToken();
     localStorage.removeItem('agora_user');
     setUser(null);
   }, []);
+
+  const logout = useCallback(async () => {
+    // Se avisa al servidor para que revoque el token de refresco: sin esto,
+    // quien tuviera una copia podría seguir renovando durante una semana.
+    // Si la llamada falla —sin red, token ya caducado— se cierra igual: no
+    // tiene sentido dejar a alguien dentro porque el servidor no conteste.
+    try {
+      await authApi.logout();
+    } catch {
+      // Sin ruido: cerrar sesión no puede fallar de cara a quien lo pide.
+    }
+    limpiarSesion();
+  }, [limpiarSesion]);
+
+  // Cuando ni el refresco vale —caducó o lo revocaron desde otro sitio— el
+  // cliente avisa por aquí y la sesión se cierra sola.
+  useEffect(() => {
+    registrarCierreDeSesion(limpiarSesion);
+  }, [limpiarSesion]);
 
   const value = useMemo<AuthContextValue>(
     () => ({
