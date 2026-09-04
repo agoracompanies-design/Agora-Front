@@ -17,14 +17,7 @@ import { useToast } from '@/context/ToastContext';
 import { formatPrice } from '@/lib/utils';
 import { nombreDeCategoria } from '@/lib/categorias';
 
-/**
- * Criterios de orden del catálogo propio.
- *
- * Falta el que pediría cualquiera —por fecha de publicación—: `Product` no
- * guarda cuándo se publicó, y el catálogo llega siempre ordenado por precio,
- * así que tampoco hay un orden de inserción del que fiarse. Hace falta que el
- * backend exponga esa fecha; está anotado para la reunión.
- */
+/** Criterios de orden del catálogo propio. */
 type Criterio = 'alfabetico' | 'calificacion' | 'precio';
 type Direccion = 'asc' | 'desc';
 
