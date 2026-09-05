@@ -6,11 +6,17 @@ export interface Subscription {
   /**
    * A qué empresa pertenece la suscripción. En el diagrama acordado
    * `Subscription` se conecta con `User` y con `UserEnterprise`, y es esa
-   * conexión la que dice de qué tipo es el plan. El backend todavía no la
-   * implementa —`subscriptions` solo tiene `userId`—, así que llega vacío y
-   * hay que caer en el nombre. Ver `daAccesoDeNegocio`.
+   * conexión la que dice de qué tipo es el plan. Ya llega rellena en las
+   * suscripciones nuevas. Ver `daAccesoDeNegocio`.
    */
   userEnterpriseId?: string | null;
+  /**
+   * El mismo dato dicho de otra forma: `seller` si el usuario tenía empresa al
+   * contratar, `buyer` si no. Las suscripciones anteriores a que existiera la
+   * columna quedaron todas en `buyer`, incluidas las de vendedor, así que sola
+   * no basta para negar el acceso: se usa para concederlo, nunca para quitarlo.
+   */
+  planType?: string | null;
   name: string;
   cost: number;
   description: string | null;
