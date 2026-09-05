@@ -6,6 +6,12 @@ export const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:30
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
+  /**
+   * Sin esto el navegador no manda la cookie del token de refresco: la web y la
+   * API están en orígenes distintos (`:5173` y `:3000`), y ahí las cookies solo
+   * viajan si se piden. El servidor ya responde con `credentials: true`.
+   */
+  withCredentials: true,
 });
 
 const TOKEN_KEY = 'agora_token';
@@ -24,11 +30,15 @@ export function clearToken(): void {
 }
 
 /**
- * El token de refresco vive aquí porque el backend lo devuelve en el cuerpo del
- * login, no en una cookie. Guardarlo en `localStorage` es lo único que se puede
- * hacer desde el navegador con eso, pero conviene saber lo que implica: al
- * alcance de cualquier script de la página, y con una semana de validez por
- * delante. Con una cookie `httpOnly` no lo estaría; está pedido al equipo.
+ * El token de refresco se guarda aquí porque el backend, además de ponerlo en
+ * una cookie `httpOnly`, lo sigue devolviendo en el cuerpo del login, y de
+ * momento es la única vía que funciona: el servidor no llega a leer la cookie.
+ *
+ * `localStorage` es lo único que se puede hacer desde el navegador con un token
+ * que llega en el cuerpo, pero conviene saber lo que implica: al alcance de
+ * cualquier script de la página, y con una semana de validez por delante. En la
+ * cookie no lo estaría. Cuando el servidor la lea y deje de mandar el token en
+ * el cuerpo, esto se queda vacío y el refresco sigue funcionando igual.
  */
 export function getRefreshToken(): string | null {
   return localStorage.getItem(REFRESH_KEY);
@@ -84,16 +94,25 @@ let refrescando: Promise<string> | null = null;
 function refrescarToken(): Promise<string> {
   if (refrescando) return refrescando;
 
+  // Si no hay token guardado se pide igual: puede que el único que exista sea
+  // el de la cookie, que desde aquí no se puede leer pero el navegador manda.
   const refreshToken = getRefreshToken();
-  if (!refreshToken) return Promise.reject(new ApiError('Sin token de refresco', 401));
 
   // Con una instancia limpia: la de siempre añadiría el token caducado y
-  // volvería a entrar por este mismo interceptor.
+  // volvería a entrar por este mismo interceptor. `withCredentials` hay que
+  // repetirlo porque esta llamada no pasa por `apiClient`.
   refrescando = axios
-    .post<{ accessToken: string }>(`${API_BASE_URL}/auth/refresh`, { refreshToken })
+    .post<{ accessToken: string; refreshToken?: string }>(
+      `${API_BASE_URL}/auth/refresh`,
+      refreshToken ? { refreshToken } : {},
+      { withCredentials: true },
+    )
     .then((res) => {
       const nuevo = res.data.accessToken;
       setToken(nuevo);
+      // Si el servidor rota el token de refresco, quedarse con el viejo dejaría
+      // la sesión colgada en el siguiente intento.
+      if (res.data.refreshToken) setRefreshToken(res.data.refreshToken);
       return nuevo;
     })
     .finally(() => {
@@ -129,7 +148,13 @@ apiClient.interceptors.response.use(
     // Un 401 aquí casi siempre es el token caducado, no una sesión perdida: se
     // renueva y se repite la petición una sola vez. Si el refresco también
     // falla —caducó, o lo revocó un «cerrar sesión»— entonces sí se acabó.
-    if (status === 401 && peticion && !peticion._reintentada && !esDeAuth && getRefreshToken()) {
+    //
+    // Basta con que haya habido sesión para intentarlo: el token de refresco
+    // puede estar guardado o vivir solo en la cookie. Sin nada de eso no se
+    // intenta, para no añadir una petición perdida a cada 401 de quien ni
+    // siquiera ha entrado.
+    const huboSesion = Boolean(getRefreshToken() || getToken());
+    if (status === 401 && peticion && !peticion._reintentada && !esDeAuth && huboSesion) {
       peticion._reintentada = true;
       try {
         const nuevo = await refrescarToken();
