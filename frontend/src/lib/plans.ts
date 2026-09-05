@@ -70,20 +70,32 @@ export function esPlanDe(plan: PlanConfig, nombreSuscripcion: string | undefined
 }
 
 /**
+ * El plan que el backend da solo al crear la empresa: 30 días y coste cero. No
+ * viene enlazado con la empresa ni se llama como los planes de aquí, así que si
+ * no se reconociera por el nombre el negocio recién creado entraría en la
+ * aplicación sin poder abrir su propio panel.
+ */
+const PLAN_AL_CREAR_EMPRESA = 'Plan Inicial';
+
+/**
  * Si la suscripción abre la parte de administrar un negocio.
  *
  * El tipo de plan lo da la conexión: en el modelo acordado una `Subscription`
  * cuelga de un `User` o de un `UserEnterprise`, y la que cuelga de la empresa
- * es la de negocio. Mientras el backend no exponga esa relación —hoy la tabla
- * solo guarda `userId`— se reconoce por el nombre, que al contratar lleva el
- * ciclo pegado («Plan Vendedor Trimestral»); de ahí la comparación por prefijo.
- * Cuando llegue `userEnterpriseId`, esta función deja de mirar el nombre y no
- * hay que tocar nada más.
+ * es la de negocio. La columna ya existe, pero el backend la deja en `null`,
+ * así que sigue haciendo falta el nombre, que al contratar lleva el ciclo
+ * pegado («Plan Vendedor Trimestral»); de ahí la comparación por prefijo.
+ * Cuando `userEnterpriseId` venga relleno, esta función deja de mirar el nombre
+ * y no hay que tocar nada más.
  */
 export function daAccesoDeNegocio(suscripcion: PlanReconocible): boolean {
   if (typeof suscripcion === 'object' && suscripcion?.userEnterpriseId) return true;
   const nombre = typeof suscripcion === 'string' ? suscripcion : suscripcion?.name;
-  return esPlanDe(SELLER_PLAN, nombre) || esPlanDe(TRIAL_PLAN, nombre);
+  return (
+    esPlanDe(SELLER_PLAN, nombre) ||
+    esPlanDe(TRIAL_PLAN, nombre) ||
+    Boolean(nombre?.startsWith(PLAN_AL_CREAR_EMPRESA))
+  );
 }
 
 /** Lo mínimo que hace falta para reconocer un plan: la suscripción o su nombre. */

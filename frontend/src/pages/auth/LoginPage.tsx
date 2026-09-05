@@ -7,6 +7,20 @@ import { PasswordField } from '@/components/ui/PasswordField';
 import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/context/AuthContext';
 import { soloUsuario } from '@/lib/validacion';
+import { ApiError } from '@/api/client';
+
+/**
+ * El servidor responde distinto según el caso: «Usuario no encontrado» (404)
+ * cuando el nombre no existe y «Credenciales inválidas» (400) cuando falla la
+ * contraseña. Repetirlo aquí serviría para ir probando nombres hasta dar con
+ * los que están registrados, así que los dos se cuentan igual.
+ */
+function mensajeDeAcceso(err: unknown): string {
+  if (err instanceof ApiError && [400, 401, 404].includes(err.status)) {
+    return 'Usuario o contraseña incorrectos';
+  }
+  return err instanceof Error ? err.message : 'No se pudo iniciar sesión';
+}
 
 export function LoginPage() {
   const { login } = useAuth();
@@ -25,7 +39,7 @@ export function LoginPage() {
       await login(username, password);
       navigate('/', { replace: true });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'No se pudo iniciar sesión');
+      setError(mensajeDeAcceso(err));
     } finally {
       setLoading(false);
     }
