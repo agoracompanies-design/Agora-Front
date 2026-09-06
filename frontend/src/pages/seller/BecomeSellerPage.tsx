@@ -13,7 +13,7 @@ import { Card } from '@/components/ui/Card';
 import { PageSpinner } from '@/components/ui/Spinner';
 import { PlanPicker } from '@/components/plans/PlanPicker';
 import { cn } from '@/lib/utils';
-import { SELLER_PLAN, daAccesoDeNegocio, getTier } from '@/lib/plans';
+import { SELLER_PLAN, daAccesoDeNegocio, getTier, tipoDePlan } from '@/lib/plans';
 import type { BillingCycle } from '@/lib/plans';
 
 export function BecomeSellerPage() {
@@ -107,6 +107,7 @@ export function BecomeSellerPage() {
         cost: tier.cost,
         quantityAccounts: 1,
         durationDays: tier.durationDays,
+        planType: tipoDePlan(SELLER_PLAN),
       });
       await refreshSellerStatus();
       notify('¡Plan de vendedor activado!');

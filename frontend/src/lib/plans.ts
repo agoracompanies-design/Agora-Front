@@ -78,6 +78,14 @@ export function esPlanDe(plan: PlanConfig, nombreSuscripcion: string | undefined
 const PLAN_AL_CREAR_EMPRESA = 'Plan Inicial';
 
 /**
+ * Qué clase de plan es, para que el servidor lo archive bien. La prueba cuenta
+ * como de vendedor porque abre el panel igual que el de pago.
+ */
+export function tipoDePlan(plan: PlanConfig): 'buyer' | 'seller' {
+  return plan === BUYER_PLAN ? 'buyer' : 'seller';
+}
+
+/**
  * Si la suscripción abre la parte de administrar un negocio.
  *
  * El tipo de plan lo da la conexión: en el modelo acordado una `Subscription`

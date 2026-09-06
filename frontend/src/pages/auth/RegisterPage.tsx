@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/context/AuthContext';
 import { soloUsuario } from '@/lib/validacion';
 import { createSubscription } from '@/api/subscription';
-import { TRIAL_PLAN } from '@/lib/plans';
+import { TRIAL_PLAN, tipoDePlan } from '@/lib/plans';
 import { cn } from '@/lib/utils';
 
 type Role = 'comprador' | 'vendedor';
@@ -48,6 +48,7 @@ export function RegisterPage() {
           description: `Prueba de ${prueba.durationDays} días`,
           quantityAccounts: 1,
           durationDays: prueba.durationDays,
+          planType: tipoDePlan(TRIAL_PLAN),
         });
         await refreshSellerStatus();
       } catch {

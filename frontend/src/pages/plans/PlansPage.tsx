@@ -8,7 +8,7 @@ import { Card } from '@/components/ui/Card';
 import { PageSpinner } from '@/components/ui/Spinner';
 import { PlanPicker } from '@/components/plans/PlanPicker';
 import { Button } from '@/components/ui/Button';
-import { BUYER_PLAN, getTier } from '@/lib/plans';
+import { BUYER_PLAN, SELLER_PLAN, getTier, tipoDePlan } from '@/lib/plans';
 import type { BillingCycle } from '@/lib/plans';
 
 export function PlansPage() {
@@ -26,19 +26,29 @@ export function PlansPage() {
 
   if (isLoading) return <PageSpinner />;
   if (!isAuthenticated) return <Navigate to="/registrarse" replace />;
-  if (isSeller) return <Navigate to="/panel" replace />;
+  // Solo se manda al panel a quien puede entrar en él. Sin este `tieneAcceso`,
+  // un negocio con la suscripción vencida quedaba dando vueltas: aquí se le
+  // enviaba al panel por tener empresa, y el panel le devolvía aquí por no
+  // tener plan, así que la pantalla se quedaba en blanco y no podía renovar.
+  if (isSeller && tieneAcceso) return <Navigate to="/panel" replace />;
+
+  // Quien ya vende necesita el plan que le devuelve su panel; el resto, el de
+  // comprador. Ofrecer siempre el de comprador dejaba a un negocio pagando algo
+  // que no le abría lo suyo.
+  const plan = isSeller ? SELLER_PLAN : BUYER_PLAN;
 
   async function handleSubscribe(cycle: BillingCycle) {
     if (!user) return;
-    const tier = getTier(BUYER_PLAN, cycle);
+    const tier = getTier(plan, cycle);
     setSubmitting(true);
     try {
       await createSubscription({
         userId: user.id,
-        name: `${BUYER_PLAN.name} ${tier.label}`,
+        name: `${plan.name} ${tier.label}`,
         cost: tier.cost,
         quantityAccounts: 1,
         durationDays: tier.durationDays,
+        planType: tipoDePlan(plan),
       });
       await refreshSellerStatus();
       notify('¡Membresía activada!');
@@ -57,17 +67,21 @@ export function PlansPage() {
           <ShoppingBag size={19} />
         </div>
         <h1 id="plans-page__title" className="plans-page__title text-2xl font-semibold text-ink-900">
-          {tieneAcceso ? 'Elige tu membresía de comprador' : 'Tu suscripción ya no está activa'}
+          {tieneAcceso
+            ? `Elige tu ${isSeller ? 'plan de vendedor' : 'membresía de comprador'}`
+            : 'Tu suscripción ya no está activa'}
         </h1>
         <p id="plans-page__subtitle" className="plans-page__subtitle mt-2 text-sm text-ink-500">
           {tieneAcceso
             ? 'Un paso más y podrás buscar en todo el catálogo de tu ciudad.'
-            : 'Agora se usa con una membresía al día. Actívala y vuelves justo donde estabas.'}
+            : isSeller
+              ? 'Actívala y tu negocio vuelve a estar en línea, con su catálogo tal como lo dejaste.'
+              : 'Agora se usa con una membresía al día. Actívala y vuelves justo donde estabas.'}
         </p>
       </div>
 
       <Card className="p-6">
-        <PlanPicker plan={BUYER_PLAN} onSubscribe={handleSubscribe} submitting={submitting} ctaLabel="Activar membresía" />
+        <PlanPicker plan={plan} onSubscribe={handleSubscribe} submitting={submitting} ctaLabel="Activar membresía" />
         <p id="plans-page__note" className="plans-page__note mt-3 text-center text-xs text-ink-400">Se registrará tu suscripción; el cobro se gestiona fuera de la plataforma por ahora.</p>
       </Card>
 

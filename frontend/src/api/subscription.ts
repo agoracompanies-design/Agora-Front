@@ -34,7 +34,16 @@ export interface SubscriptionInput {
   description?: string;
   quantityAccounts: number;
   durationDays: number;
+  /**
+   * Qué clase de plan es. El servidor lo guarda tal cual y, si no llega, da por
+   * hecho `buyer`: sin esto, un Plan Vendedor quedaba archivado como si fuera de
+   * comprador. Lo pone quien crea la suscripción, que aquí es la aplicación y en
+   * su día será el panel administrativo al confirmar el pago.
+   */
+  planType?: PlanType;
 }
+
+export type PlanType = 'buyer' | 'seller';
 
 /**
  * Quien lleva el estado es el backend: al pedir la suscripción activa la
