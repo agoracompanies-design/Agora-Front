@@ -91,6 +91,20 @@ const SIN_REINTENTO = ['/auth/login', '/auth/refresh'];
  */
 let refrescando: Promise<string> | null = null;
 
+/**
+ * Pide un token de acceso nuevo ahora mismo, sin esperar a que el actual
+ * caduque.
+ *
+ * Los permisos viajan dentro del token, no se consultan en cada petición: el
+ * servidor firma los que tenía el usuario al emitirlo. Así que cuando concede
+ * uno nuevo —dar de alta la empresa concede los de publicar—, el token que hay
+ * en la mano se queda corto y sigue recibiendo 403 hasta que se renueve. El
+ * refresco relee los permisos guardados, de modo que con esto basta.
+ */
+export function renovarAcceso(): Promise<string> {
+  return refrescarToken();
+}
+
 function refrescarToken(): Promise<string> {
   if (refrescando) return refrescando;
 
