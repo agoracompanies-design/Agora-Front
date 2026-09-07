@@ -1,11 +1,13 @@
 import { useState } from 'react';
-import type { FormEvent } from 'react';
+import type { FormEvent, SyntheticEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { CalendarClock, Trash2 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useMotion } from '@/context/MotionContext';
 import { useToast } from '@/context/ToastContext';
 import { updatePassword, deleteAccount } from '@/api/user';
+import { cancelSubscription, estaVigente, getMySubscriptionHistory } from '@/api/subscription';
+import type { Subscription } from '@/api/subscription';
 import { PasswordField } from '@/components/ui/PasswordField';
 import { Button } from '@/components/ui/Button';
 import { Card, Badge } from '@/components/ui/Card';
@@ -13,7 +15,7 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { initials } from '@/lib/utils';
 
 export function AccountPage() {
-  const { user, isSeller, subscription, logout } = useAuth();
+  const { user, isSeller, subscription, logout, refreshSellerStatus } = useAuth();
   const { reducirMovimiento, loPideElSistema, eleccionManual, setReducirMovimiento, seguirAlSistema } = useMotion();
   const { notify } = useToast();
   const navigate = useNavigate();
@@ -24,7 +26,44 @@ export function AccountPage() {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
+  const [historial, setHistorial] = useState<Subscription[] | null>(null);
+  const [cargandoHistorial, setCargandoHistorial] = useState(false);
+  const [confirmCancel, setConfirmCancel] = useState(false);
+  const [cancelando, setCancelando] = useState(false);
+
   if (!user) return null;
+
+  /** Trae el historial la primera vez que se despliega, y no más. */
+  async function cargarHistorial(e: SyntheticEvent<HTMLDetailsElement>) {
+    if (!e.currentTarget.open || historial !== null || cargandoHistorial) return;
+    setCargandoHistorial(true);
+    try {
+      setHistorial(await getMySubscriptionHistory());
+    } catch {
+      setHistorial([]);
+      notify('No se pudo cargar el historial', 'error');
+    } finally {
+      setCargandoHistorial(false);
+    }
+  }
+
+  async function handleCancel() {
+    if (!subscription) return;
+    setCancelando(true);
+    try {
+      await cancelSubscription(subscription.idSubscription);
+      await refreshSellerStatus();
+      notify('Membresía cancelada');
+      setConfirmCancel(false);
+      // Sin membresía no hay app: se lleva a las opciones de compra en vez de
+      // dejarle en una cuenta desde la que ya no puede ir a ningún sitio.
+      navigate('/planes', { replace: true });
+    } catch (err) {
+      notify(err instanceof Error ? err.message : 'No se pudo cancelar la membresía', 'error');
+    } finally {
+      setCancelando(false);
+    }
+  }
 
   async function handlePasswordChange(e: FormEvent) {
     e.preventDefault();
@@ -73,17 +112,61 @@ export function AccountPage() {
       <Card className="p-6">
         <h2 className="mb-4 font-semibold text-ink-900">Membresía</h2>
         {subscription ? (
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-ink-100 text-ink-700">
-              <CalendarClock size={18} />
+          <div id="membership" className="membership space-y-4">
+            <div id="membership__current" className="membership__current flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-ink-100 text-ink-700">
+                <CalendarClock size={18} />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-ink-900">{subscription.name}</p>
+                {subscription.expiresAt && (
+                  <p className="text-xs text-ink-500">
+                    Vence el {new Date(subscription.expiresAt).toLocaleDateString('es-ES')}
+                  </p>
+                )}
+              </div>
             </div>
-            <div>
-              <p className="text-sm font-medium text-ink-900">{subscription.name}</p>
-              {subscription.expiresAt && (
-                <p className="text-xs text-ink-500">
-                  Vence el {new Date(subscription.expiresAt).toLocaleDateString('es-ES')}
-                </p>
-              )}
+
+            {/* El historial se pide al abrirlo, no al entrar en la cuenta: es
+                una consulta que la mayoría no va a mirar. */}
+            <details id="membership__history" className="membership__history" onToggle={cargarHistorial}>
+              <summary id="membership__history-summary" className="membership__history-summary cursor-pointer text-sm text-ink-600 hover:text-ink-900">
+                Ver historial de membresías
+              </summary>
+              <div id="membership__history-body" className="membership__history-body mt-3">
+                {cargandoHistorial && <p className="text-xs text-ink-400">Cargando…</p>}
+                {!cargandoHistorial && historial?.length === 0 && (
+                  <p className="text-xs text-ink-400">Esta es tu primera membresía.</p>
+                )}
+                {!cargandoHistorial && historial && historial.length > 0 && (
+                  <ul id="membership__history-list" className="membership__history-list space-y-2">
+                    {historial.map((s) => (
+                      <li
+                        key={s.idSubscription}
+                        className="membership__history-item flex items-center justify-between gap-3 rounded-lg border border-ink-200 px-3 py-2"
+                      >
+                        <div>
+                          <p className="text-sm text-ink-900">{s.name}</p>
+                          <p className="text-xs text-ink-500">
+                            {new Date(s.createdAt).toLocaleDateString('es-ES')}
+                            {s.expiresAt && ` — ${new Date(s.expiresAt).toLocaleDateString('es-ES')}`}
+                          </p>
+                        </div>
+                        <Badge>{estaVigente(s) ? 'Vigente' : 'Terminada'}</Badge>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </details>
+
+            <div id="membership__actions" className="membership__actions flex items-center gap-3 border-t border-ink-200 pt-3">
+              <Button variant="outline" size="sm" onClick={() => setConfirmCancel(true)}>
+                Cancelar membresía
+              </Button>
+              <p id="membership__actions-hint" className="membership__actions-hint text-xs text-ink-400">
+                Sin membresía al día no se puede usar Agora.
+              </p>
             </div>
           </div>
         ) : (
@@ -166,6 +249,16 @@ export function AccountPage() {
         loading={deleting}
         onConfirm={handleDelete}
         onCancel={() => setConfirmDelete(false)}
+      />
+
+      <ConfirmDialog
+        open={confirmCancel}
+        title="Cancelar membresía"
+        description="Perderás el acceso a Agora en cuanto se cancele, y tu negocio dejará de aparecer si tienes uno. Tu cuenta y tu catálogo se quedan como están: vuelven en cuanto actives otra membresía."
+        confirmLabel="Cancelar membresía"
+        loading={cancelando}
+        onConfirm={handleCancel}
+        onCancel={() => setConfirmCancel(false)}
       />
     </div>
   );
