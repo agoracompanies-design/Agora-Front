@@ -5,6 +5,9 @@ import { listProducts } from '@/api/product';
 import type { Product } from '@/types';
 import { nombreDeCategoria } from '@/lib/categorias';
 
+/** De cuántos productos salen las sugerencias del desplegable. */
+const SUGERENCIAS_MAX = 200;
+
 /**
  * Buscador de la cabecera.
  *
@@ -36,7 +39,11 @@ export function HeaderSearch({ ambito = 'desktop' }: { ambito?: string }) {
   const [catalogo, setCatalogo] = useState<Product[] | null>(null);
   useEffect(() => {
     if (!abierto || catalogo !== null) return;
-    listProducts({ limit: 200 })
+    // Estas son las sugerencias que salen mientras se escribe, y se sacan del
+    // primer bloque del catálogo. La búsqueda de verdad ocurre al pulsar Enter,
+    // que lleva a `/?q=…`. Mientras el servidor no sepa buscar por texto, ni
+    // una ni otra miran más allá de lo cargado; está pedido al equipo.
+    listProducts({ page: 1, limit: SUGERENCIAS_MAX })
       .then((d) => setCatalogo(d.products))
       .catch(() => setCatalogo([]));
   }, [abierto, catalogo]);

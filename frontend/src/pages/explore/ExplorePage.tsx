@@ -71,8 +71,15 @@ const CAROUSEL_SLIDES: CarouselSlide[] = [
 // de columnas variaba con el ancho y las filas nunca cuadraban.
 const COLUMNAS = 4;
 const PAGE_SIZE = COLUMNAS * 2;
-/** Tope de lo que se trae de una vez para filtrar y paginar en el cliente. */
-const CATALOGO_MAX = 200;
+/**
+ * Cuántos productos se piden de una vez.
+ *
+ * El catálogo no se trae entero: con mil productos la primera pantalla tardaría
+ * demasiado en aparecer, y aquí eso se paga caro. Se traen por bloques y, al
+ * llegar al final del último, un botón pide el siguiente. Dentro de lo cargado
+ * se filtra y se pagina en el navegador, que es instantáneo y no gasta red.
+ */
+const POR_BLOQUE = 200;
 const SCROLL_KEY = 'agora_explorar_scroll';
 
 
@@ -98,6 +105,10 @@ export function ExplorePage() {
   );
   const [moneda, setMoneda] = useState<MonedaPrincipal>(() => (searchParams.get('moneda') === 'CUP' ? 'CUP' : 'USD'));
   const [page, setPage] = useState(() => Number(searchParams.get('page')) || 1);
+
+  // Cuántos bloques de `POR_BLOQUE` se han traído ya, y si hay uno en camino.
+  const [bloques, setBloques] = useState(1);
+  const [cargandoMas, setCargandoMas] = useState(false);
 
   const [nearMe, setNearMe] = useState<{ lat: number; lng: number } | null>(null);
   const [radiusKm, setRadiusKm] = useState(15);
@@ -138,14 +149,14 @@ export function ExplorePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
+  // Primer bloque. Se vuelve a pedir cuando cambia algo que filtra el servidor
+  // —la ubicación—, porque entonces lo traído antes ya no vale.
   useEffect(() => {
     let cancelled = false;
     setIsLoading(true);
     listProducts({
-      // Sin paginar en el servidor: el backend no sabe filtrar por texto ni por
-      // categoría, así que se trae el catálogo y se pagina aquí. Si no, buscar
-      // «arroz» solo miraba dentro de la página que tocara.
-      limit: CATALOGO_MAX,
+      page: 1,
+      limit: POR_BLOQUE,
       latitude: nearMe?.lat,
       longitude: nearMe?.lng,
       radius: nearMe ? radiusKm : undefined,
@@ -154,6 +165,7 @@ export function ExplorePage() {
         if (cancelled) return;
         setRawProducts(data.products);
         setTotal(data.total);
+        setBloques(1);
       })
       .catch(() => {
         if (!cancelled) notify('No se pudieron cargar los productos', 'error');
@@ -163,6 +175,32 @@ export function ExplorePage() {
       cancelled = true;
     };
   }, [minPrice, maxPrice, nearMe, radiusKm, notify]);
+
+  /** Trae el siguiente bloque y lo añade al que ya está en pantalla. */
+  async function cargarMas() {
+    setCargandoMas(true);
+    try {
+      const data = await listProducts({
+        page: bloques + 1,
+        limit: POR_BLOQUE,
+        latitude: nearMe?.lat,
+        longitude: nearMe?.lng,
+        radius: nearMe ? radiusKm : undefined,
+      });
+      // Por id, no por concatenación a secas: si entre una petición y otra se
+      // publica algo, las páginas del servidor se corren y alguno repetiría.
+      setRawProducts((previos) => {
+        const vistos = new Set(previos.map((p) => p.idProduct));
+        return [...previos, ...data.products.filter((p) => !vistos.has(p.idProduct))];
+      });
+      setTotal(data.total);
+      setBloques((n) => n + 1);
+    } catch {
+      notify('No se pudieron cargar más productos', 'error');
+    } finally {
+      setCargandoMas(false);
+    }
+  }
 
   useEffect(() => {
     setPage(1);
@@ -284,6 +322,8 @@ export function ExplorePage() {
   }
 
   // Las páginas salen de los resultados filtrados, no del total del catálogo.
+  /** Si el servidor guarda más de lo que hay en pantalla. */
+  const quedanPorTraer = rawProducts.length < total;
   const totalPages = Math.max(1, Math.ceil(visibleProducts.length / PAGE_SIZE));
   const paginaActual = Math.min(page, totalPages);
   const productosDeLaPagina = visibleProducts.slice((paginaActual - 1) * PAGE_SIZE, paginaActual * PAGE_SIZE);
@@ -396,6 +436,24 @@ export function ExplorePage() {
                 </div>
                 <div id="explore__pagination" className="explore__pagination mt-4 shrink-0">
                   <Pagination page={paginaActual} totalPages={totalPages} onChange={setPage} />
+                  {/* Al final de lo cargado, y solo si el servidor tiene más.
+                      Se ofrece aquí y no al entrar para que la primera pantalla
+                      llegue cuanto antes. */}
+                  {quedanPorTraer && paginaActual === totalPages && (
+                    <div id="explore__more" className="explore__more mt-4 flex flex-col items-center gap-1.5">
+                      <Button variant="outline" onClick={cargarMas} loading={cargandoMas}>
+                        Cargar más productos
+                      </Button>
+                      <p id="explore__more-hint" className="explore__more-hint text-xs text-ink-400">
+                        {/* Con una búsqueda puesta hay que decirlo: se está
+                            filtrando lo cargado, no el catálogo entero. Cuando
+                            el servidor sepa buscar por texto, esto sobra. */}
+                        {search
+                          ? `Buscando entre ${rawProducts.length} de ${total} productos`
+                          : `${rawProducts.length} de ${total} cargados`}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
