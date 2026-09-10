@@ -1,0 +1,9 @@
+# El volcado tiene que llegar con saltos de línea de Unix aunque se clone en
+# Windows: los bloques COPY del final se restauran mal si git los convierte.
+*.sql text eol=lf
+
+# Las imágenes, tal cual.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
