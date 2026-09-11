@@ -25,11 +25,17 @@ function haceCuanto(iso: string) {
  * La bandeja, dentro del menú de la cuenta. Es de solo lectura: lo que pide
  * respuesta se contesta por WhatsApp, no aquí.
  */
-export function NotificationsPanel() {
+/**
+ * La lista de avisos. Se usa en dos sitios: la página de avisos, donde caben
+ * todos y la cabecera ya la titula, y cualquier sitio compacto, donde lleva su
+ * propio encabezado y se queda en los doce últimos.
+ */
+export function NotificationsPanel({ enPagina = false }: { enPagina?: boolean }) {
   const { avisos, sinLeer, marcarLeido, marcarTodoLeido } = useNotifications();
 
   return (
     <section id="inbox" className="inbox" aria-label="Avisos">
+      {!enPagina && (
       <header id="inbox__header" className="inbox__header flex items-center justify-between gap-2 px-3 py-2">
         <h2 id="inbox__title" className="inbox__title text-xs font-semibold uppercase tracking-wide text-ink-500">
           Avisos{sinLeer > 0 && ` (${sinLeer})`}
@@ -45,14 +51,15 @@ export function NotificationsPanel() {
           </button>
         )}
       </header>
+      )}
 
       {avisos.length === 0 ? (
         <p id="inbox__empty" className="inbox__empty flex items-center gap-2 px-3 pb-3 text-sm text-ink-500">
           <BellOff size={14} aria-hidden="true" /> No tienes avisos.
         </p>
       ) : (
-        <ul id="inbox__list" className="inbox__list max-h-72 overflow-y-auto">
-          {avisos.slice(0, 12).map((aviso) => (
+        <ul id="inbox__list" className={enPagina ? 'inbox__list' : 'inbox__list max-h-72 overflow-y-auto'}>
+          {(enPagina ? avisos : avisos.slice(0, 12)).map((aviso) => (
             <Fila key={aviso.id} aviso={aviso} onLeer={() => marcarLeido(aviso.id)} />
           ))}
         </ul>

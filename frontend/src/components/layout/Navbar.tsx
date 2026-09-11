@@ -1,9 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { Heart, LayoutGrid, LogOut, Store, User as UserIcon, ChevronDown, Menu, X , ShieldCheck } from 'lucide-react';
+import { Bell, Heart, LayoutGrid, LogOut, Store, User as UserIcon, ChevronDown, Menu, X , ShieldCheck } from 'lucide-react';
 import { Logo } from './Logo';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
-import { NotificationsPanel } from '@/components/notifications/NotificationsPanel';
 import { useNotifications } from '@/context/NotificationsContext';
 import { useAuth } from '@/context/AuthContext';
 import { useFavorites } from '@/context/FavoritesContext';
@@ -68,6 +67,18 @@ export function Navbar() {
         <div id="navbar__right" className="navbar__right hidden min-w-0 flex-1 md:flex items-center justify-end gap-3">
           <ThemeToggle />
           <Link
+            to="/avisos"
+            aria-label="Avisos"
+            id="navbar__notifications" className="navbar__notifications relative flex h-9 w-9 items-center justify-center rounded-full text-ink-500 hover:bg-ink-100 hover:text-ink-900"
+          >
+            <Bell size={18} />
+            {sinLeer > 0 && (
+              <span id="navbar__notifications-count" className="navbar__notifications-count absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-danger px-1 text-[10px] font-semibold text-white">
+                {sinLeer}
+              </span>
+            )}
+          </Link>
+          <Link
             to="/favoritos"
             aria-label="Favoritos"
             id="navbar__favorites" className="navbar__favorites relative flex h-9 w-9 items-center justify-center rounded-full text-ink-500 hover:bg-ink-100 hover:text-ink-900"
@@ -92,17 +103,6 @@ export function Navbar() {
                 </span>
                 <span id="navbar__user-name" className="navbar__user-name text-sm font-medium text-ink-800 max-w-[8rem] truncate">{user.username}</span>
                 <ChevronDown size={14} className="text-ink-400" />
-                {/* Los avisos sin leer, en la esquina del botón: es lo que
-                    hace mirar el menú de la cuenta. */}
-                {sinLeer > 0 && (
-                  <span
-                    id="navbar__user-badge"
-                    aria-label={`${sinLeer} aviso${sinLeer === 1 ? '' : 's'} sin leer`}
-                    className="navbar__user-badge absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-secondary-dark px-1 text-[10px] font-bold text-white"
-                  >
-                    {sinLeer > 9 ? '9+' : sinLeer}
-                  </span>
-                )}
               </button>
               {menuOpen && (
                 <div id="navbar__menu" className="navbar__menu absolute right-0 mt-2 w-80 animate-fade-up rounded-xl border border-ink-200 bg-ink-50 p-1.5 shadow-lift">
@@ -111,9 +111,6 @@ export function Navbar() {
                     <p id="navbar__menu-role" className="navbar__menu-role text-xs text-ink-500">{isSeller ? 'Cuenta de vendedor' : 'Cuenta de comprador'}</p>
                   </div>
 
-                  <div id="navbar__menu-inbox" className="navbar__menu-inbox mb-1 border-b border-ink-100 pb-1">
-                    <NotificationsPanel />
-                  </div>
                   {isModerator && (
                     <Link
                       to="/moderacion"
@@ -137,6 +134,13 @@ export function Navbar() {
                     id="navbar__menu-favorites" className="navbar__menu-favorites flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-ink-700 hover:bg-ink-50"
                   >
                     <Heart size={15} /> Favoritos
+                  </Link>
+                  <Link
+                    to="/avisos"
+                    onClick={() => setMenuOpen(false)}
+                    id="navbar__menu-notifications" className="navbar__menu-notifications flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-ink-700 hover:bg-ink-50"
+                  >
+                    <Bell size={15} /> Avisos{sinLeer > 0 && ` (${sinLeer})`}
                   </Link>
                   {isSeller ? (
                     <Link

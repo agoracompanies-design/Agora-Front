@@ -16,6 +16,7 @@ import { RegisterPage } from '@/pages/auth/RegisterPage';
 import { ExplorePage } from '@/pages/explore/ExplorePage';
 import { BusinessesPage } from '@/pages/business/BusinessesPage';
 import { FavoritesPage } from '@/pages/favorites/FavoritesPage';
+import { NotificationsPage } from '@/pages/notifications/NotificationsPage';
 import { ProductDetailPage } from '@/pages/product/ProductDetailPage';
 import { EnterprisePage } from '@/pages/enterprise/EnterprisePage';
 import { BecomeSellerPage } from '@/pages/seller/BecomeSellerPage';
@@ -72,6 +73,7 @@ export default function App() {
                     redirige para no romper enlaces ya compartidos. */}
                 <Route path="mercados" element={<Navigate to="/negocios" replace />} />
                 <Route path="favoritos" element={<FavoritesPage />} />
+                <Route path="avisos" element={<NotificationsPage />} />
                 <Route path="productos/:id" element={<ProductDetailPage />} />
                 <Route path="negocios/:id" element={<EnterprisePage />} />
                 <Route path="tiendas/:id" element={<RedirigirANegocio />} />
