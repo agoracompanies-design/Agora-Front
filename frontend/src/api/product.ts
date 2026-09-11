@@ -51,8 +51,32 @@ export function createProduct(input: ProductInput) {
     .then((res) => res.data);
 }
 
-export function updateProduct(id: string, input: Partial<Omit<ProductInput, 'image'>>) {
-  return apiClient.patch<void>(`/products/${id}`, input).then((res) => res.data);
+/**
+ * Si el servidor admite ya cambiar la foto al editar un producto.
+ *
+ * Hoy `PATCH /products/:id` solo lee el cuerpo JSON: no tiene `FileInterceptor`,
+ * que sí tiene el alta. Mandarle un `multipart` no guardaría la imagen y además
+ * echaría a perder el resto de la edición, así que la foto se queda fuera hasta
+ * que lo añadan —está pedido en `bugs-para-arreglar.md`—. El día que llegue,
+ * basta con poner esto en `true`.
+ */
+export const EDICION_DE_IMAGEN_LISTA = false;
+
+export function updateProduct(id: string, input: Partial<ProductInput>) {
+  // Con foto nueva hay que ir en multipart, como el alta; sin ella, el JSON de
+  // siempre, que es más barato de servir.
+  if (EDICION_DE_IMAGEN_LISTA && input.image) {
+    const form = new FormData();
+    for (const [clave, valor] of Object.entries(input)) {
+      if (valor === undefined || valor === null) continue;
+      form.append(clave, valor instanceof File ? valor : String(valor));
+    }
+    return apiClient
+      .patch<void>(`/products/${id}`, form, { headers: { 'Content-Type': 'multipart/form-data' } })
+      .then((res) => res.data);
+  }
+  const { image: _descartada, ...resto } = input;
+  return apiClient.patch<void>(`/products/${id}`, resto).then((res) => res.data);
 }
 
 export function deleteProduct(id: string) {

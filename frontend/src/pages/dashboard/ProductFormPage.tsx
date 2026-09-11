@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, ImagePlus, ImageOff } from 'lucide-react';
-import { createProduct, getProduct, productImageUrl, updateProduct } from '@/api/product';
+import { EDICION_DE_IMAGEN_LISTA, createProduct, getProduct, productImageUrl, updateProduct } from '@/api/product';
 import { Input, TextArea } from '@/components/ui/Field';
 import { PriceField } from '@/components/ui/PriceField';
 import { LARGO, texto } from '@/lib/validacion';
@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { PageSpinner } from '@/components/ui/Spinner';
 import { aWebp, pesoLegible } from '@/lib/imagen';
+import { usePegarImagen } from '@/hooks/usePegarImagen';
 import { CategoryPicker } from '@/components/dashboard/CategoryPicker';
 import { UnitPicker } from '@/components/dashboard/UnitPicker';
 import { NewCategoryDialog } from '@/components/dashboard/NewCategoryDialog';
@@ -70,6 +71,9 @@ export function ProductFormPage() {
       setConvirtiendo(false);
     }
   }
+  // Ctrl+V con una imagen en el portapapeles vale igual que elegir el archivo.
+  usePegarImagen(elegirImagen);
+
   const [existingImage, setExistingImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(isEditing);
   const [submitting, setSubmitting] = useState(false);
@@ -115,6 +119,7 @@ export function ProductFormPage() {
           unit,
           category,
           stock,
+          image,
         });
         notify('Producto actualizado');
       } else {
@@ -179,10 +184,22 @@ export function ProductFormPage() {
                 </div>
                 <label id="product-form__image-button" className="product-form__image-button inline-flex cursor-pointer items-center gap-2 rounded-xl border border-ink-200 px-4 py-2 text-sm font-medium text-ink-700 hover:border-ink-400">
                   <ImagePlus size={15} />
-                  {image ? 'Cambiar imagen' : 'Subir imagen'}
+                  {image ? 'Cambiar imagen' : existingImage ? 'Cambiar imagen' : 'Subir imagen'}
                   <input type="file" accept="image/*" id="product-form__image-input" className="product-form__image-input hidden" onChange={(e) => elegirImagen(e.target.files?.[0] ?? null)} />
                 </label>
+                <p id="product-form__image-paste" className="product-form__image-paste text-xs text-ink-400">
+                  o pégala con Ctrl+V
+                </p>
               </div>
+
+              {/* Cambiar la foto de un producto ya publicado depende del
+                  servidor, que todavía no la acepta al editar. Se dice aquí en
+                  vez de dejar que alguien la cambie y no se guarde. */}
+              {isEditing && !EDICION_DE_IMAGEN_LISTA && (
+                <p id="product-form__image-pending" className="product-form__image-pending mt-2 text-xs text-ink-500">
+                  Cambiar la foto de un producto publicado estará disponible en cuanto el servidor lo admita.
+                </p>
+              )}
 
               {convirtiendo && (
                 <p id="product-form__image-working" className="product-form__image-working mt-2 text-xs text-ink-500">

@@ -58,7 +58,12 @@ export async function aWebp(original: File): Promise<ResultadoConversion> {
     // Un navegador sin WebP devuelve un PNG sin avisar, y ese pesa más que el
     // original: se comprueba el tipo antes de dar el cambio por bueno.
     if (!blob || blob.type !== 'image/webp') return sinTocar;
-    if (blob.size >= original.size && original.type === 'image/webp') return sinTocar;
+    // Y si la conversión no adelgaza nada, se deja el original. Con imágenes
+    // pequeñas o ya comprimidas, el WebP puede salir más pesado —una captura de
+    // 356 B se iba a 574 B—, y aquí subir de más se paga en cada descarga.
+    // La excepción es haber tenido que reducir el lado: ahí el cambio vale por
+    // las dimensiones, no por los bytes.
+    if (blob.size >= original.size && escala === 1) return sinTocar;
 
     const nombre = original.name.replace(/\.[^.]+$/, '') || 'imagen';
     return {
