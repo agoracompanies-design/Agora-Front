@@ -24,7 +24,9 @@ export function formatPrice(value: number | null | undefined, currency: 'CUP' | 
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(value);
-  return currency === 'USD' ? `$${formatted}` : `${formatted} CUP`;
+  // La moneda se escribe, no se simboliza: «$» se confunde con el peso y aquí
+  // conviven las dos. Además deja las dos monedas con la misma forma.
+  return `${formatted} ${currency}`;
 }
 
 export function initials(name: string): string {

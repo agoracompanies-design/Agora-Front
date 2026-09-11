@@ -36,7 +36,7 @@ export function PlanPicker({ plan, onSubscribe, submitting, ctaLabel = 'Continua
       </div>
 
       <div id="plan__price" className="plan__price flex items-baseline gap-2">
-        <span id="plan__cost" className="plan__cost text-3xl font-semibold text-ink-900">${tier.cost}</span>
+        <span id="plan__cost" className="plan__cost text-3xl font-semibold text-ink-900">{tier.cost} USD</span>
         <span id="plan__period" className="plan__period text-sm text-ink-400">/ {tier.durationDays} días</span>
         {tier.savingsLabel && (
           <span id="plan__savings" className="plan__savings ml-auto rounded-full bg-ink-100 px-2.5 py-1 text-xs font-medium text-ink-700">{tier.savingsLabel}</span>
