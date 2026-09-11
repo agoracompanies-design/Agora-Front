@@ -57,7 +57,6 @@ export function ExplorePage() {
   const [search, setSearch] = useState(() => searchParams.get('q') ?? '');
   const [minPrice, setMinPrice] = useState(() => searchParams.get('min') ?? '');
   const [maxPrice, setMaxPrice] = useState(() => searchParams.get('max') ?? '');
-  const [inStockOnly, setInStockOnly] = useState(() => searchParams.get('stock') === '1');
   const [category, setCategory] = useState<string | null>(() => searchParams.get('cat'));
   const [sortOrder, setSortOrder] = useState<SortOrder>(() => (searchParams.get('sort') === 'desc' ? 'desc' : 'asc'));
   // En qué moneda se leen el mínimo y el máximo del rango.
@@ -83,7 +82,6 @@ export function ExplorePage() {
     if (search) params.q = search;
     if (minPrice) params.min = minPrice;
     if (maxPrice) params.max = maxPrice;
-    if (inStockOnly) params.stock = '1';
     if (category) params.cat = category;
     if (sortOrder === 'desc') params.sort = 'desc';
     if (moneda === 'CUP') params.moneda = 'CUP';
@@ -91,7 +89,7 @@ export function ExplorePage() {
     if (page > 1) params.page = String(page);
     setSearchParams(params, { replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, minPrice, maxPrice, inStockOnly, category, sortOrder, moneda, monedaPrecio, page]);
+  }, [search, minPrice, maxPrice, category, sortOrder, moneda, monedaPrecio, page]);
 
   // Mirror the URL back into state: the component doesn't remount when a
   // navbar link (e.g. "Más populares") points at "/" with different query
@@ -103,7 +101,6 @@ export function ExplorePage() {
     setMonedaPrecio(searchParams.get('monedaPrecio') === 'USD' ? 'USD' : 'CUP');
     setMinPrice(searchParams.get('min') ?? '');
     setMaxPrice(searchParams.get('max') ?? '');
-    setInStockOnly(searchParams.get('stock') === '1');
     setCategory(searchParams.get('cat'));
     setSortOrder(searchParams.get('sort') === 'desc' ? 'desc' : 'asc');
     setPage(Number(searchParams.get('page')) || 1);
@@ -165,7 +162,7 @@ export function ExplorePage() {
 
   useEffect(() => {
     setPage(1);
-  }, [minPrice, maxPrice, nearMe, radiusKm, search, category, inStockOnly]);
+  }, [minPrice, maxPrice, nearMe, radiusKm, search, category]);
 
 
   // Se apunta dónde estaba el scroll mientras se navega por el catálogo. Los
@@ -239,7 +236,6 @@ export function ExplorePage() {
       });
     }
     if (category) list = list.filter((p) => nombreDeCategoria(p) === category);
-    if (inStockOnly) list = list.filter((p) => p.stock);
     // CUP y USD son independientes y no hay tasa de cambio, así que comparar
     // 180 CUP con 8 USD no significa nada. Se agrupa: delante los que tienen
     // precio en la moneda elegida, detrás el resto, y dentro de cada grupo sí
@@ -256,7 +252,7 @@ export function ExplorePage() {
       const pb = enMoneda(b, m) ?? 0;
       return sortOrder === 'asc' ? pa - pb : pb - pa;
     });
-  }, [rawProducts, search, category, inStockOnly, sortOrder, moneda, minPrice, maxPrice, monedaPrecio]);
+  }, [rawProducts, search, category, sortOrder, moneda, minPrice, maxPrice, monedaPrecio]);
 
   function locateMe() {
     if (!navigator.geolocation) {
@@ -291,7 +287,7 @@ export function ExplorePage() {
   // Solo las de esta página: las calificaciones se piden de una en una, y
   // hacerlo para el catálogo entero serían doscientas peticiones por carga.
   const calificaciones = useProductRatings(productosDeLaPagina);
-  const hasActiveFilters = Boolean(minPrice || maxPrice || nearMe || category || inStockOnly);
+  const hasActiveFilters = Boolean(minPrice || maxPrice || nearMe || category);
 
   function clearFilters() {
     setMinPrice('');
@@ -312,8 +308,6 @@ export function ExplorePage() {
     monedaPrecio,
     onMonedaPrecio: setMonedaPrecio,
     onSortOrder: setSortOrder,
-    inStockOnly,
-    onInStockOnly: setInStockOnly,
     nearMe: Boolean(nearMe),
     onLocateMe: locateMe,
     locating,

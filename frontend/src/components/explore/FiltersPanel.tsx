@@ -1,4 +1,4 @@
-import { ArrowDownWideNarrow, ArrowUpNarrowWide, Banknote, DollarSign, MapPin, PackageCheck, SlidersHorizontal, X } from 'lucide-react';
+import { ArrowDownWideNarrow, ArrowUpNarrowWide, Banknote, DollarSign, MapPin, SlidersHorizontal, X } from 'lucide-react';
 import type { ReactNode } from 'react';
 import type { CategoryCount } from '@/hooks/useCategories';
 import { cn, soloPrecio } from '@/lib/utils';
@@ -21,8 +21,6 @@ interface FiltersPanelProps {
   /** En qué moneda se leen el mínimo y el máximo. */
   monedaPrecio: MonedaPrincipal;
   onMonedaPrecio: (v: MonedaPrincipal) => void;
-  inStockOnly: boolean;
-  onInStockOnly: (v: boolean) => void;
   nearMe: boolean;
   onLocateMe: () => void;
   locating: boolean;
@@ -116,8 +114,6 @@ export function FiltersPanel({
   onMoneda,
   monedaPrecio,
   onMonedaPrecio,
-  inStockOnly,
-  onInStockOnly,
   nearMe,
   onLocateMe,
   locating,
@@ -220,11 +216,8 @@ export function FiltersPanel({
         </div>
       </Grupo>
 
-      <Grupo nombre={uid('only')} titulo="Mostrar solo">
+      <Grupo nombre={uid('only')} titulo="Ubicación">
         <div id={uid('filters__only')} className="filters__only flex flex-wrap gap-2">
-          <Chip id={uid('filters__only-stock')} activo={inStockOnly} onClick={() => onInStockOnly(!inStockOnly)} icon={<PackageCheck size={13} aria-hidden="true" />}>
-            Disponibles
-          </Chip>
           <Chip id={uid('filters__only-near')} activo={nearMe} onClick={onLocateMe} icon={<MapPin size={13} aria-hidden="true" />}>
             {locating ? 'Buscando…' : 'Cerca de mí'}
           </Chip>
