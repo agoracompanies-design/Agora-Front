@@ -18,8 +18,6 @@ import { Pagination } from '@/components/ui/Pagination';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ScrollToTop } from '@/components/ui/ScrollToTop';
 import { BottomSheet } from '@/components/ui/BottomSheet';
-import { Carousel } from '@/components/home/Carousel';
-import type { CarouselSlide } from '@/components/home/Carousel';
 import { HowItWorks } from '@/components/home/HowItWorks';
 import { Membership } from '@/components/home/Membership';
 import { FiltersPanel } from '@/components/explore/FiltersPanel';
@@ -29,43 +27,6 @@ import { useAuth } from '@/context/AuthContext';
 import { useCategories } from '@/hooks/useCategories';
 import { useProductRatings } from '@/hooks/useProductRatings';
 import { nombreDeCategoria } from '@/lib/categorias';
-
-const CAROUSEL_SLIDES: CarouselSlide[] = [
-  {
-    icon: <MapPin size={20} />,
-    eyebrow: 'Búsqueda local',
-    title: 'Productos de tu ciudad, cerca de ti',
-    description: 'Filtra por ubicación y descubre lo que venden las mypimes y mercados de tu zona.',
-    cta: { label: 'Buscar cerca de mí', to: '/' },
-    // Los degradados cruzan de un color de marca al otro. Antes iban de un tono
-    // a su propia variante oscura y el recorrido no se veía: parecían planos.
-    gradient: 'bg-gradient-to-br from-primary via-primary to-secondary',
-  },
-  {
-    icon: <Store size={20} />,
-    eyebrow: 'Para negocios',
-    title: 'Publica tu catálogo y que te encuentren',
-    description: 'Regístrate como vendedor y aparece cuando alguien busque lo que ofreces en tu ciudad.',
-    cta: { label: 'Empezar a vender', to: '/vender' },
-    gradient: 'bg-gradient-to-tr from-secondary via-secondary-dark to-primary',
-  },
-  {
-    icon: <Star size={20} />,
-    eyebrow: 'Con confianza',
-    title: 'Decide con reseñas reales',
-    description: 'Revisa las calificaciones de otros usuarios antes de decidir dónde ir.',
-    cta: { label: 'Ver mejor calificados', to: '/' },
-    gradient: 'bg-gradient-to-r from-primary-dark via-primary to-secondary-dark',
-  },
-  {
-    icon: <ShoppingBag size={20} />,
-    eyebrow: 'Para tu casa o tu negocio',
-    title: 'Todo lo disponible en tu ciudad, en un solo lugar',
-    description: 'Desde el mercado hasta la mypime de tu barrio: un solo buscador, sin perder tiempo paseando de tienda en tienda.',
-    cta: { label: 'Explorar productos', to: '/' },
-    gradient: 'bg-gradient-to-br from-primary to-secondary',
-  },
-];
 
 // Dos filas por página: 4 columnas en escritorio. Con `auto-fill` el número
 // de columnas variaba con el ancho y las filas nunca cuadraban.
@@ -367,8 +328,6 @@ export function ExplorePage() {
 
   return (
     <div>
-      <Carousel slides={CAROUSEL_SLIDES} />
-
       {/* El h1 de la página no tiene por qué verse: era un titular decorativo
           y lo que manda aquí es el buscador. */}
       <h1 id="explore__title" className="explore__title sr-only">Explorar productos de tu ciudad</h1>
