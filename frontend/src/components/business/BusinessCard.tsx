@@ -1,10 +1,14 @@
 import { Link } from 'react-router-dom';
-import { MapPin, Package } from 'lucide-react';
+import { Heart, MapPin, Package } from 'lucide-react';
 import type { BusinessSummary } from '@/hooks/useBusinesses';
 import { EnterpriseLogo } from './EnterpriseLogo';
+import { useFavorites } from '@/context/FavoritesContext';
+import { cn } from '@/lib/utils';
 
 export function BusinessCard({ business }: { business: BusinessSummary }) {
   const { enterprise, productCount } = business;
+  const { isFavoriteBusiness, toggleFavoriteBusiness } = useFavorites();
+  const favorito = isFavoriteBusiness(enterprise.idUserEnterprise);
 
   return (
     <Link
@@ -19,6 +23,20 @@ export function BusinessCard({ business }: { business: BusinessSummary }) {
           logo={enterprise.image}
           className="h-11 w-11 rounded-xl text-sm font-semibold"
         />
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault();
+            toggleFavoriteBusiness(enterprise.idUserEnterprise);
+          }}
+          aria-label={favorito ? 'Quitar de favoritos' : 'Guardar en favoritos'}
+          aria-pressed={favorito}
+          id={`business__fav--${enterprise.idUserEnterprise}`}
+          className="business__fav order-last ml-auto flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-ink-400 transition-colors hover:bg-ink-100 hover:text-ink-900"
+        >
+          <Heart size={15} className={cn(favorito && 'fill-danger text-danger')} aria-hidden="true" />
+        </button>
+
         <div id={`business__identity--${enterprise.idUserEnterprise}`} className="business__identity min-w-0">
           <h2 id={`business__name--${enterprise.idUserEnterprise}`} className="business__name line-clamp-1 font-medium text-ink-900">{enterprise.companyName}</h2>
           {enterprise.address && (
