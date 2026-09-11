@@ -333,35 +333,17 @@ export function ExplorePage() {
           </Button>
         </div>
 
-        <div id="explore__layout" className="explore__layout flex flex-col gap-8 lg:h-[calc(100vh-117px)] lg:flex-row lg:items-start lg:gap-[39px]">
-          {/* El panel ocupa el alto de la ventana menos la cabecera, con 20px de aire
-              arriba y abajo para no pegarse a nada. Queda fijo mientras se recorre
-              el catálogo. */}
-          <aside id="explore__sidebar" className="explore__sidebar hidden lg:sticky lg:top-[81px] lg:flex lg:flex-col lg:w-[264px] shrink-0 gap-4">
-            <div id="explore__filters-card" className="explore__filters-card rounded-2xl border border-ink-200 bg-ink-50 p-4">
-              <FiltersPanel {...filtersProps} ambito="aside" />
-            </div>
+        {/* Los filtros, en barra sobre los resultados. Antes era una columna
+            lateral: se comía 264 px de ancho en una pantalla donde lo que
+            importa es que quepan productos. */}
+        <div id="explore__filters" className="explore__filters mb-5 hidden rounded-2xl border border-ink-200 bg-ink-50 px-4 py-3.5 lg:block">
+          <FiltersPanel {...filtersProps} ambito="bar" orientacion="horizontal" />
+        </div>
 
-            {!isSeller && (
-              <Link
-                to="/vender"
-                id="explore__seller-cta" className="explore__seller-cta group flex items-center gap-3 rounded-2xl border border-ink-200 bg-ink-50 p-4 transition-colors hover:border-primary"
-              >
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-ink-100 text-ink-600">
-                  <Store size={16} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-ink-900">¿Tienes un negocio?</p>
-                  <p className="text-xs text-ink-500">Publica tu catálogo en Agora</p>
-                </div>
-                <ArrowRight size={15} className="shrink-0 text-ink-400 transition-transform group-hover:translate-x-0.5" />
-              </Link>
-            )}
-          </aside>
-
-          <div id="explore__results" className="explore__results flex min-w-0 flex-1 flex-col lg:h-full">
+        <div id="explore__layout" className="explore__layout flex flex-col gap-8">
+          <div id="explore__results" className="explore__results flex min-w-0 flex-1 flex-col">
             {isLoading ? (
-              <div id="explore__grid-loading" className="explore__grid grid min-h-0 grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 lg:flex-1 lg:grid-rows-2">
+              <div id="explore__grid-loading" className="explore__grid grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
                 {Array.from({ length: PAGE_SIZE }).map((_, i) => (
                   <ProductCardSkeleton key={i} />
                 ))}
@@ -374,8 +356,8 @@ export function ExplorePage() {
                 action={hasActiveFilters ? <Button variant="outline" onClick={clearFilters}>Limpiar filtros</Button> : undefined}
               />
             ) : (
-              <div id="explore__results-body" className="explore__results-body flex min-h-0 flex-1 flex-col">
-                <div id="explore__grid" className="explore__grid grid min-h-0 grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 lg:flex-1 lg:grid-rows-2">
+              <div id="explore__results-body" className="explore__results-body flex flex-col">
+                <div id="explore__grid" className="explore__grid grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
                   {productosDeLaPagina.map((product) => (
                     <ProductCard
                       key={product.idProduct}
@@ -415,6 +397,25 @@ export function ExplorePage() {
       <p id="explore__count" className="explore__count mx-auto max-w-6xl px-4 pb-8 text-center text-sm text-ink-500 sm:px-6">
         {total} producto{total === 1 ? '' : 's'} publicados por vendedores en Agora
       </p>
+
+      {!isSeller && (
+        <div id="explore__seller" className="explore__seller mx-auto max-w-6xl px-4 pb-8 sm:px-6">
+          <Link
+            to="/vender"
+            id="explore__seller-cta"
+            className="explore__seller-cta group flex items-center gap-3 rounded-2xl border border-ink-200 bg-ink-50 p-4 transition-colors hover:border-primary"
+          >
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-ink-100 text-ink-600">
+              <Store size={16} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium text-ink-900">¿Tienes un negocio?</p>
+              <p className="text-xs text-ink-500">Publica tu catálogo en Agora</p>
+            </div>
+            <ArrowRight size={15} className="shrink-0 text-ink-400 transition-transform group-hover:translate-x-0.5" />
+          </Link>
+        </div>
+      )}
 
       <HowItWorks />
       {/* Se enseña también a quien ya paga: si sale una promoción de un plan

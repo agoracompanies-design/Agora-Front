@@ -33,6 +33,11 @@ interface FiltersPanelProps {
   onClear: () => void;
   /** Dónde se pinta este panel: 'aside' o 'sheet'. Distingue los ids. */
   ambito: string;
+  /**
+   * Cómo se coloca. `horizontal` es la barra que va sobre los resultados;
+   * `vertical` es la hoja de filtros del móvil, donde hay alto de sobra.
+   */
+  orientacion?: 'horizontal' | 'vertical';
 }
 
 /** Cada criterio es un chip que se enciende. Misma forma para ordenar, acotar y
@@ -125,19 +130,32 @@ export function FiltersPanel({
   hasActiveFilters,
   onClear,
   ambito,
+  orientacion = 'vertical',
 }: FiltersPanelProps) {
+  const enFila = orientacion === 'horizontal';
   /** Sufijo que distingue la copia de la columna de la de la hoja móvil. */
   const uid = (nombre: string) => `${nombre}--${ambito}`;
   const campo =
     'h-[35px] w-full min-w-0 rounded-lg border border-ink-200 bg-ink-50 px-[9px] text-[13px] text-ink-900 placeholder:text-ink-400 outline-none focus:border-primary';
 
   return (
-    <div id={uid('filters')} className="filters space-y-4">
-      <header id={uid('filters__header')} className="filters__header flex items-center justify-between gap-2">
+    <div
+      id={uid('filters')}
+      className={cn('filters', enFila ? 'flex flex-wrap items-start gap-x-7 gap-y-4' : 'space-y-4')}
+    >
+      <header
+        id={uid('filters__header')}
+        className={cn(
+          'filters__header flex items-center justify-between gap-2',
+          // En fila, el título no puede robar ancho a los filtros: se queda a
+          // un lado y «Limpiar» se va al extremo contrario.
+          enFila ? 'order-first shrink-0 self-center' : '',
+        )}
+      >
         <h2 id={uid('filters__title')} className="filters__title inline-flex items-center gap-2 text-sm font-semibold text-ink-900">
           <SlidersHorizontal size={15} aria-hidden="true" /> Filtros
         </h2>
-        {hasActiveFilters && (
+        {hasActiveFilters && !enFila && (
           <button
             onClick={onClear}
             id={uid('filters__clear')} className="filters__clear inline-flex items-center gap-1 text-[11px] font-medium text-ink-500 hover:text-ink-900"
@@ -146,6 +164,16 @@ export function FiltersPanel({
           </button>
         )}
       </header>
+
+      {hasActiveFilters && enFila && (
+        <button
+          onClick={onClear}
+          id={uid('filters__clear')}
+          className="filters__clear order-last ml-auto inline-flex shrink-0 items-center gap-1 self-center text-[11px] font-medium text-ink-500 hover:text-ink-900"
+        >
+          <X size={12} aria-hidden="true" /> Limpiar
+        </button>
+      )}
 
       <Grupo
         nombre={uid('price')}
