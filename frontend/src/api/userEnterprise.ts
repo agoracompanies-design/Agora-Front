@@ -1,4 +1,4 @@
-import { API_BASE_URL, apiClient, renovarAcceso } from './client';
+import { API_BASE_URL, apiClient, renovarAcceso, setToken } from './client';
 import type { UserEnterprise, Address, Contact } from '@/types';
 
 export interface UserEnterpriseInput {
@@ -48,20 +48,32 @@ function cuerpo(input: Partial<UserEnterpriseInput>) {
   return { datos: form, opciones: { headers: { 'Content-Type': 'multipart/form-data' } } };
 }
 
-export async function createEnterprise(input: UserEnterpriseInput) {
+export async function createEnterprise(input: UserEnterpriseInput): Promise<UserEnterprise> {
   const { datos, opciones } = cuerpo(input);
-  const empresa = await apiClient
-    .post<UserEnterprise>('/user-enterprise', datos, opciones)
+  const respuesta = await apiClient
+    .post<UserEnterprise | { enterprise: UserEnterprise; accessToken?: string }>(
+      '/user-enterprise',
+      datos,
+      opciones,
+    )
     .then((res) => res.data);
 
-  // Dar de alta la empresa es lo que concede los permisos para publicar, pero
-  // el servidor los guarda en el usuario y quien los lleva es el token: sin
-  // renovarlo, el primer «publicar producto» respondería 403 y el negocio
-  // recién creado se quedaría mirando su panel vacío. Si el refresco falla no
-  // se pierde la empresa, que ya está creada; se arreglará al volver a entrar.
-  await renovarAcceso().catch(() => {});
+  // Dar de alta la empresa concede los permisos para publicar, pero quien los
+  // lleva es el token: con el que había en la mano, el primer «publicar
+  // producto» respondería 403.
+  //
+  // Desde el 2026-09-11 el servidor devuelve ya el token renovado junto con la
+  // empresa, así que basta con guardarlo. Se sigue admitiendo la respuesta
+  // antigua —la empresa a secas— por si se trabaja contra una API sin ese
+  // cambio: entonces se pide el refresco, como hasta ahora.
+  if (respuesta && typeof respuesta === 'object' && 'enterprise' in respuesta) {
+    if (respuesta.accessToken) setToken(respuesta.accessToken);
+    else await renovarAcceso().catch(() => {});
+    return respuesta.enterprise;
+  }
 
-  return empresa;
+  await renovarAcceso().catch(() => {});
+  return respuesta;
 }
 
 export function getMyEnterprise() {
