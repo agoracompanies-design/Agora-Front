@@ -1,14 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import {
-  SlidersHorizontal,
-  MapPin,
-  PackageSearch,
-  Store,
-  ArrowRight,
-  ShoppingBag,
-  Star,
-} from 'lucide-react';
+import { SlidersHorizontal, PackageSearch, Store, ArrowRight } from 'lucide-react';
 import { listProducts } from '@/api/product';
 import type { Product } from '@/types';
 import { ProductCard } from '@/components/product/ProductCard';
@@ -20,6 +12,7 @@ import { ScrollToTop } from '@/components/ui/ScrollToTop';
 import { BottomSheet } from '@/components/ui/BottomSheet';
 import { HowItWorks } from '@/components/home/HowItWorks';
 import { Membership } from '@/components/home/Membership';
+import { CatalogSearch } from '@/components/explore/CatalogSearch';
 import { FiltersPanel } from '@/components/explore/FiltersPanel';
 import type { MonedaPrincipal, SortOrder } from '@/components/explore/FiltersPanel';
 import { useToast } from '@/context/ToastContext';
@@ -328,6 +321,11 @@ export function ExplorePage() {
 
 
       <div id="explore__catalog" className="explore__catalog mx-auto max-w-6xl px-4 pb-8 pt-4 sm:px-6">
+        {/* Lo primero de la página: buscar es a lo que se viene. */}
+        <div id="explore__search" className="explore__search mb-4">
+          <CatalogSearch productos={rawProducts} valor={search} onBuscar={setSearch} />
+        </div>
+
         {/* En móvil no hay panel lateral: los filtros se abren desde aquí. */}
         <div id="explore__mobile-filters" className="explore__mobile-filters mb-4 flex justify-end lg:hidden">
           <Button variant="outline" size="sm" onClick={() => setFiltersOpen(true)} icon={<SlidersHorizontal size={15} />}>

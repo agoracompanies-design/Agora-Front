@@ -3,7 +3,6 @@ import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { Heart, LayoutGrid, LogOut, Store, User as UserIcon, ChevronDown, Menu, X , ShieldCheck } from 'lucide-react';
 import { Logo } from './Logo';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
-import { HeaderSearch } from './HeaderSearch';
 import { NotificationsPanel } from '@/components/notifications/NotificationsPanel';
 import { useNotifications } from '@/context/NotificationsContext';
 import { useAuth } from '@/context/AuthContext';
@@ -67,7 +66,6 @@ export function Navbar() {
         </div>
 
         <div id="navbar__right" className="navbar__right hidden min-w-0 flex-1 md:flex items-center justify-end gap-3">
-          <HeaderSearch ambito="desktop" />
           <ThemeToggle />
           <Link
             to="/favoritos"
@@ -177,7 +175,6 @@ export function Navbar() {
         </div>
 
         <div id="navbar__mobile-actions" className="navbar__mobile-actions flex items-center gap-1 md:hidden">
-          <HeaderSearch ambito="mobile" />
           <ThemeToggle id="theme-toggle--mobile" />
           <button id="navbar__mobile-toggle" className="navbar__mobile-toggle p-2 text-ink-700" onClick={() => setMobileOpen((v) => !v)} aria-label="Menú">
             {mobileOpen ? <X size={22} /> : <Menu size={22} />}
