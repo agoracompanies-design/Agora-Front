@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Clock, CreditCard, Heart, ImageOff, MapPin, Navigation, Phone, Store, ExternalLink } from 'lucide-react';
-import { getProduct, productImageUrl } from '@/api/product';
+import { getProduct, listProducts, productImageUrl } from '@/api/product';
 import { averageRating, createRating, listRatingsByProduct } from '@/api/rating';
 import type { Product, Rating } from '@/types';
 import { Badge } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { ProductCarousel } from '@/components/product/ProductCarousel';
 import { RatingStars } from '@/components/ui/RatingStars';
 import { ZoomableImage } from '@/components/product/ZoomableImage';
 import { PageSpinner } from '@/components/ui/Spinner';
@@ -31,6 +32,7 @@ export function ProductDetailPage() {
   const [ratingsAvailable, setRatingsAvailable] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [submittingRating, setSubmittingRating] = useState(false);
+  const [relacionados, setRelacionados] = useState<Product[]>([]);
 
   useEffect(() => {
     if (!id) return;
@@ -46,6 +48,12 @@ export function ProductDetailPage() {
     listRatingsByProduct(id)
       .then(setRatings)
       .catch(() => setRatingsAvailable(false));
+
+    // Una sola petición para las dos filas de abajo: el mismo negocio y la
+    // misma categoría salen de ella, en vez de pedir el catálogo dos veces.
+    listProducts({ page: 1, limit: 200 })
+      .then((data) => setRelacionados(data.products))
+      .catch(() => setRelacionados([]));
   }, [id, notify]);
 
   async function handleRate(quantity: number) {
@@ -76,6 +84,15 @@ export function ProductDetailPage() {
 
   const imageUrl = productImageUrl(product.image);
   const enterprise = product.userEnterprise;
+
+  // Las dos filas de abajo: lo demás que vende este negocio, y alternativas de
+  // la misma categoría. Nunca el producto que ya se está mirando.
+  const otros = relacionados.filter((p) => p.idProduct !== product.idProduct);
+  const delNegocio = otros.filter((p) => p.userEnterprise?.idUserEnterprise === enterprise?.idUserEnterprise).slice(0, 12);
+  const deLaCategoria = otros
+    .filter((p) => nombreDeCategoria(p) === nombreDeCategoria(product))
+    .filter((p) => p.userEnterprise?.idUserEnterprise !== enterprise?.idUserEnterprise)
+    .slice(0, 12);
   const avg = averageRating(ratings);
   const myRating = ratings.find((r) => r.userId === user?.id);
   const canRate = isAuthenticated && hasPermission(user?.permissions, Permissions.RATING_CREATE) && !myRating;
@@ -213,6 +230,21 @@ export function ProductDetailPage() {
           )}
         </div>
       </div>
+
+      {(delNegocio.length > 0 || deLaCategoria.length > 0) && (
+        <div id="product-detail__more" className="product-detail__more mt-12 space-y-10">
+          <ProductCarousel
+            nombre="seller"
+            titulo={`Más de ${enterprise?.companyName ?? 'este negocio'}`}
+            productos={delNegocio}
+          />
+          <ProductCarousel
+            nombre="category"
+            titulo={`Más en ${nombreDeCategoria(product)}`}
+            productos={deLaCategoria}
+          />
+        </div>
+      )}
     </div>
   );
 }
