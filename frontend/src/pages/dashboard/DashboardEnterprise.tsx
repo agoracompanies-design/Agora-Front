@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { updateEnterprise } from '@/api/userEnterprise';
+import { LogoField } from '@/components/business/LogoField';
 import { Input, Select } from '@/components/ui/Field';
 import { PROVINCIAS } from '@/lib/provincias';
 import { LARGO, normalizarWeb, pareceCorreo, pareceTelefono, pareceWeb, soloDigitos, soloTelefono, texto } from '@/lib/validacion';
@@ -24,6 +25,7 @@ export function DashboardEnterprise() {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [website, setWebsite] = useState('');
+  const [logo, setLogo] = useState<File | null>(null);
 
   useEffect(() => {
     if (!enterprise) return;
@@ -63,6 +65,7 @@ export function DashboardEnterprise() {
         companyName,
         address: { street, city, state, zipCode, country },
         contact: { email: email.trim(), phone: phone.trim(), website: normalizarWeb(website) || undefined },
+        logo,
       });
       await refreshSellerStatus();
       notify('Empresa actualizada');
@@ -78,6 +81,7 @@ export function DashboardEnterprise() {
     <Card className="p-6">
       <h2 id="dash-enterprise__title" className="dash-enterprise__title mb-5 font-semibold text-ink-900">Información de la empresa</h2>
       <form onSubmit={handleSubmit} id="dash-enterprise__form" className="dash-enterprise__form space-y-4">
+        <LogoField nombre={companyName} actual={enterprise?.image} archivo={logo} onArchivo={setLogo} />
         <Input label="Nombre de la empresa / mercado" required maxLength={LARGO.empresa} value={companyName} onChange={(e) => setCompanyName(texto(e.target.value, LARGO.empresa))} />
         <div id="dash-enterprise__address-row" className="dash-enterprise__address-row grid grid-cols-2 gap-3">
           <Input label="Calle" required autoComplete="address-line1" maxLength={LARGO.direccion} value={street} onChange={(e) => setStreet(texto(e.target.value, LARGO.direccion))} />

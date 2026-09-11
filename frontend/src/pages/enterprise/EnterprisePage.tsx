@@ -5,6 +5,7 @@ import { getEnterprise } from '@/api/userEnterprise';
 import { listProducts } from '@/api/product';
 import { listServicesByEnterprise } from '@/api/service';
 import type { Product, Service, UserEnterprise } from '@/types';
+import { EnterpriseLogo } from '@/components/business/EnterpriseLogo';
 import { ProductCard } from '@/components/product/ProductCard';
 import { PageSpinner } from '@/components/ui/Spinner';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -12,7 +13,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 const BusinessMap = lazy(() =>
   import('@/components/business/BusinessMap').then((m) => ({ default: m.BusinessMap })),
 );
-import { cn, formatPrice, initials } from '@/lib/utils';
+import { cn, formatPrice } from '@/lib/utils';
 import { useToast } from '@/context/ToastContext';
 
 /** Hueco entre donde acaba el texto y donde el velo deja de ser sólido. */
@@ -153,9 +154,13 @@ export function EnterprisePage() {
 
           <div id="business-hero__row" className="business-hero__row flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
             <div id="business-hero__identity" className="business-hero__identity flex items-start gap-4">
-              <span id="business-hero__initials" className="business-hero__initials flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-primary text-xl font-bold text-white">
-                {initials(enterprise.companyName)}
-              </span>
+              <EnterpriseLogo
+                id="business-hero__logo"
+                nombre={enterprise.companyName}
+                logo={enterprise.image}
+                className="h-16 w-16"
+                textoClassName="text-xl"
+              />
               <div id="business-hero__data" className="business-hero__data min-w-0">
                 <h1 id="business-hero__name" className="business-hero__name text-2xl font-semibold text-ink-900">{enterprise.companyName}</h1>
                 {/* Acotado para que los datos no se salgan de la zona sólida

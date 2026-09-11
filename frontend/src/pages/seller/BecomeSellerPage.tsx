@@ -5,6 +5,7 @@ import { Check, Store } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { createEnterprise } from '@/api/userEnterprise';
+import { LogoField } from '@/components/business/LogoField';
 import { createSubscription } from '@/api/subscription';
 import { Input, Select } from '@/components/ui/Field';
 import { PROVINCIAS } from '@/lib/provincias';
@@ -34,6 +35,7 @@ export function BecomeSellerPage() {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [website, setWebsite] = useState('');
+  const [logo, setLogo] = useState<File | null>(null);
 
   useEffect(() => {
     if (enterprise) setStep(2);
@@ -86,6 +88,7 @@ export function BecomeSellerPage() {
         companyName,
         address: { street, city, state, zipCode, country },
         contact: { email: email.trim(), phone: phone.trim(), website: normalizarWeb(website) || undefined },
+        logo,
       });
       await refreshSellerStatus();
       notify('Empresa registrada correctamente');
@@ -136,6 +139,7 @@ export function BecomeSellerPage() {
       {step === 1 && (
         <Card className="p-6">
           <form onSubmit={handleCreateEnterprise} id="sell__form" className="sell__form space-y-4">
+            <LogoField nombre={companyName} archivo={logo} onArchivo={setLogo} />
             <Input label="Nombre de la empresa / mercado" required maxLength={LARGO.empresa} value={companyName} onChange={(e) => setCompanyName(texto(e.target.value, LARGO.empresa))} placeholder="Mercado La Esquina" />
             <div id="sell__address-row" className="sell__address-row grid grid-cols-2 gap-3">
               <Input label="Calle" required autoComplete="address-line1" maxLength={LARGO.direccion} value={street} onChange={(e) => setStreet(texto(e.target.value, LARGO.direccion))} />

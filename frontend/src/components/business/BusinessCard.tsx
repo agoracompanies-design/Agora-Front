@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { MapPin, Package } from 'lucide-react';
 import type { BusinessSummary } from '@/hooks/useBusinesses';
-import { initials } from '@/lib/utils';
+import { EnterpriseLogo } from './EnterpriseLogo';
 
 export function BusinessCard({ business }: { business: BusinessSummary }) {
   const { enterprise, productCount } = business;
@@ -13,9 +13,12 @@ export function BusinessCard({ business }: { business: BusinessSummary }) {
       className="business group flex flex-col gap-3 rounded-2xl border border-ink-200/80 bg-ink-50 p-5 shadow-card transition-all hover:-translate-y-0.5 hover:border-primary hover:shadow-lift"
     >
       <div id={`business__header--${enterprise.idUserEnterprise}`} className="business__header flex items-center gap-3">
-        <span id={`business__initials--${enterprise.idUserEnterprise}`} className="business__initials flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary text-sm font-semibold text-white">
-          {initials(enterprise.companyName)}
-        </span>
+        <EnterpriseLogo
+          id={`business__logo--${enterprise.idUserEnterprise}`}
+          nombre={enterprise.companyName}
+          logo={enterprise.image}
+          className="h-11 w-11 rounded-xl text-sm font-semibold"
+        />
         <div id={`business__identity--${enterprise.idUserEnterprise}`} className="business__identity min-w-0">
           <h2 id={`business__name--${enterprise.idUserEnterprise}`} className="business__name line-clamp-1 font-medium text-ink-900">{enterprise.companyName}</h2>
           {enterprise.address && (

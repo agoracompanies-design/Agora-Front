@@ -33,6 +33,12 @@ export interface UserEnterprise {
   idUserEnterprise: string;
   userId: string;
   companyName: string;
+  /**
+   * El logo, como lo devuelva el servidor. Todavía no existe en el backend
+   * —`user_enterprises` no tiene columna de imagen—, así que llega vacío y la
+   * ficha enseña el cuadrado con la inicial. Ver `LOGO_DE_EMPRESA_LISTO`.
+   */
+  image?: string | null;
   address: Address | null;
   contact: Contact | null;
   officeHours: string | null;
