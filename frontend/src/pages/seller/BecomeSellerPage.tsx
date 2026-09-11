@@ -6,7 +6,8 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { createEnterprise } from '@/api/userEnterprise';
 import { createSubscription } from '@/api/subscription';
-import { Input } from '@/components/ui/Field';
+import { Input, Select } from '@/components/ui/Field';
+import { PROVINCIAS } from '@/lib/provincias';
 import { LARGO, normalizarWeb, pareceCorreo, pareceTelefono, pareceWeb, soloDigitos, soloTelefono, texto } from '@/lib/validacion';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
@@ -138,8 +139,13 @@ export function BecomeSellerPage() {
             <Input label="Nombre de la empresa / mercado" required maxLength={LARGO.empresa} value={companyName} onChange={(e) => setCompanyName(texto(e.target.value, LARGO.empresa))} placeholder="Mercado La Esquina" />
             <div id="sell__address-row" className="sell__address-row grid grid-cols-2 gap-3">
               <Input label="Calle" required autoComplete="address-line1" maxLength={LARGO.direccion} value={street} onChange={(e) => setStreet(texto(e.target.value, LARGO.direccion))} />
-              <Input label="Ciudad" required autoComplete="address-level2" maxLength={LARGO.ciudad} value={city} onChange={(e) => setCity(texto(e.target.value, LARGO.ciudad))} />
-              <Input label="Provincia / Estado" required autoComplete="address-level1" maxLength={LARGO.ciudad} value={state} onChange={(e) => setState(texto(e.target.value, LARGO.ciudad))} />
+              <Input label="Municipio" required autoComplete="address-level2" maxLength={LARGO.ciudad} value={city} onChange={(e) => setCity(texto(e.target.value, LARGO.ciudad))} />
+              <Select label="Provincia" required autoComplete="address-level1" value={state} onChange={(e) => setState(e.target.value)}>
+                <option value="">Elige una provincia</option>
+                {PROVINCIAS.map((p) => (
+                  <option key={p} value={p}>{p}</option>
+                ))}
+              </Select>
               <Input label="Código postal" required inputMode="numeric" autoComplete="postal-code" value={zipCode} onChange={(e) => setZipCode(soloDigitos(e.target.value))} />
             </div>
             <Input label="País" required autoComplete="country-name" maxLength={LARGO.pais} value={country} onChange={(e) => setCountry(texto(e.target.value, LARGO.pais))} />
