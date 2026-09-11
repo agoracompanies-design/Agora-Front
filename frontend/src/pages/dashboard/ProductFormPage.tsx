@@ -44,6 +44,7 @@ export function ProductFormPage() {
   const [porEnviar, setPorEnviar] = useState<{
     categoria: string;
     productoNombre: string;
+    productoId: string;
     usuario: string;
     userId: string;
   } | null>(null);
@@ -101,6 +102,9 @@ export function ProductFormPage() {
       return;
     }
     setSubmitting(true);
+    // Cuál es el producto del que se habla: el que se está editando, o el que
+    // acaba de nacer. Hace falta para la solicitud de categoría.
+    let idGuardado = id ?? '';
     try {
       if (isEditing && id) {
         await updateProduct(id, {
@@ -118,7 +122,7 @@ export function ProductFormPage() {
           notify('Necesitas una empresa registrada para publicar productos', 'error');
           return;
         }
-        await createProduct({
+        const creado = await createProduct({
           name,
           priceCup: priceCup ? Number(priceCup) : null,
           priceUsd: priceUsd ? Number(priceUsd) : null,
@@ -129,6 +133,7 @@ export function ProductFormPage() {
           userEnterpriseId: enterprise.idUserEnterprise,
           image,
         });
+        idGuardado = creado.idProduct;
         notify('Producto publicado');
       }
       // La sugerencia ya la registró el backend al recibir un nombre que no
@@ -142,7 +147,7 @@ export function ProductFormPage() {
           productoNombre: name,
         });
         recargarAvisos();
-        setPorEnviar({ categoria: categoriaPedida, productoNombre: name, usuario: user.username, userId: user.id });
+        setPorEnviar({ categoria: categoriaPedida, productoNombre: name, productoId: idGuardado, usuario: user.username, userId: user.id });
         return;
       }
       navigate('/panel/productos');
@@ -232,7 +237,7 @@ export function ProductFormPage() {
 
       <SendRequestDialog
         open={Boolean(porEnviar)}
-        datos={porEnviar ?? { categoria: '', productoNombre: '', usuario: '', userId: '' }}
+        datos={porEnviar ?? { categoria: '', productoNombre: '', productoId: '', usuario: '', userId: '' }}
         onCerrar={() => {
           setPorEnviar(null);
           navigate('/panel/productos');

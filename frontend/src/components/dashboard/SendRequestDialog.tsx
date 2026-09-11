@@ -17,7 +17,7 @@ export function SendRequestDialog({
   onCerrar,
 }: {
   open: boolean;
-  datos: { categoria: string; productoNombre: string; usuario: string; userId: string };
+  datos: { categoria: string; productoNombre: string; productoId: string; usuario: string; userId: string };
   onCerrar: () => void;
 }) {
   return (

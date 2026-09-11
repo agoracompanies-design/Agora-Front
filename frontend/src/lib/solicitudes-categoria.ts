@@ -19,12 +19,18 @@ import { CATEGORIA_TEMPORAL } from './categorias';
 export function mensajeParaModerador(s: {
   categoria: string;
   productoNombre: string;
+  productoId: string;
   usuario: string;
   userId: string;
 }): string {
+  // El id del producto va dentro porque es lo que el moderador necesita para
+  // moverlo de «Otros» a la categoría aprobada: sin él tendría que buscarlo por
+  // el nombre entre los que esperan, y dos negocios pueden vender lo mismo con
+  // el mismo nombre.
   return `Categoría nueva esperando revisión en Agora
 
 Producto: ${s.productoNombre}
+Id del producto: ${s.productoId}
 Publica: ${s.usuario} (id ${s.userId})
 Categoría que pide: ${s.categoria}
 
