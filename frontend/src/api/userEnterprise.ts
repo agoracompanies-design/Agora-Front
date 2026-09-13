@@ -13,19 +13,32 @@ export interface UserEnterpriseInput {
 /**
  * Si el servidor guarda ya el logo de un negocio.
  *
- * Hoy no: `user_enterprises` no tiene columna de imagen, ni sus DTO aceptan
- * ningún archivo. El formulario lo pide igualmente y la ficha reserva su sitio,
- * porque el trabajo de pantalla está hecho; lo que no se hace es mandarlo y
- * dejar creer que se guardó. Está pedido en `bugs-para-arreglar.md`: cuando
- * llegue, esto pasa a `true`.
+ * Desde el 2026-09-12 sí: `user_enterprises` tiene columna `image`, el `PATCH`
+ * admite el archivo en el campo `image` y el logo se sirve público y cacheado
+ * en `/user-enterprise/image/<fichero>`. Comprobado contra la API.
+ *
+ * Con una salvedad, que es la razón de `subirLogoAparte()` más abajo: el alta
+ * guarda en esa columna la ruta del disco del servidor
+ * (`D:\...\uploads\enterprises\...png`) en vez de la dirección servible, así
+ * que un logo puesto al crear la empresa no se vería. El `PATCH` sí guarda la
+ * dirección buena, y por ahí va el logo mientras no lo igualen —está pedido en
+ * `bugs-para-arreglar.md`—.
  */
-export const LOGO_DE_EMPRESA_LISTO = false;
+export const LOGO_DE_EMPRESA_LISTO = true;
 
 const ORIGEN = API_BASE_URL.replace(/\/api\/?$/, '');
 
-/** La dirección del logo, o nada si el negocio no tiene. */
+/**
+ * La dirección del logo, o nada si el negocio no tiene.
+ *
+ * Solo sirve lo que el servidor guardó como ruta servible (`/user-enterprise/
+ * image/...`). Las empresas dadas de alta con logo antes de este arreglo tienen
+ * ahí la ruta del disco del servidor, que no es una dirección: para esas se
+ * devuelve nada y la ficha enseña el cuadrado con la inicial, que es lo que
+ * había antes, en vez de una imagen rota.
+ */
 export function enterpriseLogoUrl(logo: string | null | undefined): string | null {
-  if (!logo) return null;
+  if (!logo || !logo.startsWith('/')) return null;
   return `${ORIGEN}/api${logo}`;
 }
 
@@ -39,7 +52,8 @@ function cuerpo(input: Partial<UserEnterpriseInput>) {
   if (!LOGO_DE_EMPRESA_LISTO || !logo) return { datos: resto, opciones: undefined };
 
   const form = new FormData();
-  form.append('logo', logo);
+  // El servidor lo espera en `image`, el mismo nombre que la foto de producto.
+  form.append('image', logo);
   for (const [clave, valor] of Object.entries(resto)) {
     if (valor === undefined || valor === null) continue;
     // `address` y `contact` son objetos: viajan como JSON dentro del campo.
@@ -48,8 +62,27 @@ function cuerpo(input: Partial<UserEnterpriseInput>) {
   return { datos: form, opciones: { headers: { 'Content-Type': 'multipart/form-data' } } };
 }
 
+/**
+ * Sube el logo con un `PATCH` aparte, después de crear la empresa.
+ *
+ * El alta guarda en la columna la ruta del disco del servidor en vez de la
+ * dirección servible, así que el logo puesto ahí no se vería. El `PATCH` sí la
+ * guarda bien, y cuesta una petición más que nadie nota. Cuando el servidor
+ * iguale los dos caminos, esto sobra y el logo vuelve a viajar en el alta.
+ */
+async function subirLogoAparte(empresa: UserEnterprise, logo: File): Promise<UserEnterprise> {
+  try {
+    return await updateEnterprise(empresa.idUserEnterprise, { logo });
+  } catch {
+    // Si falla, la empresa ya está creada: se sigue adelante sin logo antes que
+    // dejar al usuario con un error después de haberla dado de alta.
+    return empresa;
+  }
+}
+
 export async function createEnterprise(input: UserEnterpriseInput): Promise<UserEnterprise> {
-  const { datos, opciones } = cuerpo(input);
+  const { logo, ...sinLogo } = input;
+  const { datos, opciones } = cuerpo(sinLogo);
   const respuesta = await apiClient
     .post<UserEnterprise | { enterprise: UserEnterprise; accessToken?: string }>(
       '/user-enterprise',
@@ -69,19 +102,25 @@ export async function createEnterprise(input: UserEnterpriseInput): Promise<User
   if (respuesta && typeof respuesta === 'object' && 'enterprise' in respuesta) {
     if (respuesta.accessToken) setToken(respuesta.accessToken);
     else await renovarAcceso().catch(() => {});
-    return respuesta.enterprise;
+    return logo ? subirLogoAparte(respuesta.enterprise, logo) : respuesta.enterprise;
   }
 
   await renovarAcceso().catch(() => {});
-  return respuesta;
+  return logo ? subirLogoAparte(respuesta, logo) : respuesta;
 }
 
 export function getMyEnterprise() {
   return apiClient.get<UserEnterprise>('/user-enterprise').then((res) => res.data);
 }
 
+/**
+ * La ficha de un negocio, sin necesidad de sesión.
+ *
+ * Desde el 2026-09-12 vive en `/user-enterprise/public/:id`: la ruta antigua
+ * `/user-enterprise/:id` se retiró y hoy responde 404.
+ */
 export function getEnterprise(id: string) {
-  return apiClient.get<UserEnterprise>(`/user-enterprise/${id}`).then((res) => res.data);
+  return apiClient.get<UserEnterprise>(`/user-enterprise/public/${id}`).then((res) => res.data);
 }
 
 export function updateEnterprise(id: string, input: Partial<UserEnterpriseInput>) {

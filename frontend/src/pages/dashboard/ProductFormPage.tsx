@@ -175,7 +175,9 @@ export function ProductFormPage() {
       <Card className="p-6">
         <h2 id="product-form__title" className="product-form__title mb-5 font-semibold text-ink-900">{isEditing ? 'Editar producto' : 'Publicar producto'}</h2>
         <form onSubmit={handleSubmit} id="product-form__form" className="product-form__form space-y-4">
-          {!isEditing && (
+          {/* Al editar, el campo solo tiene sentido si el servidor admite la foto
+              nueva; desde el 2026-09-12 la admite (`EDICION_DE_IMAGEN_LISTA`). */}
+          {(!isEditing || EDICION_DE_IMAGEN_LISTA) && (
             <label id="product-form__image-field" className="product-form__image-field block">
               <span id="product-form__image-label" className="product-form__image-label mb-1.5 block text-sm font-medium text-ink-800">Imagen</span>
               <div id="product-form__image-row" className="product-form__image-row flex items-center gap-4">
@@ -191,15 +193,6 @@ export function ProductFormPage() {
                   o pégala con Ctrl+V
                 </p>
               </div>
-
-              {/* Cambiar la foto de un producto ya publicado depende del
-                  servidor, que todavía no la acepta al editar. Se dice aquí en
-                  vez de dejar que alguien la cambie y no se guarde. */}
-              {isEditing && !EDICION_DE_IMAGEN_LISTA && (
-                <p id="product-form__image-pending" className="product-form__image-pending mt-2 text-xs text-ink-500">
-                  Cambiar la foto de un producto publicado estará disponible en cuanto el servidor lo admita.
-                </p>
-              )}
 
               {convirtiendo && (
                 <p id="product-form__image-working" className="product-form__image-working mt-2 text-xs text-ink-500">

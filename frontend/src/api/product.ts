@@ -54,13 +54,13 @@ export function createProduct(input: ProductInput) {
 /**
  * Si el servidor admite ya cambiar la foto al editar un producto.
  *
- * Hoy `PATCH /products/:id` solo lee el cuerpo JSON: no tiene `FileInterceptor`,
- * que sí tiene el alta. Mandarle un `multipart` no guardaría la imagen y además
- * echaría a perder el resto de la edición, así que la foto se queda fuera hasta
- * que lo añadan —está pedido en `bugs-para-arreglar.md`—. El día que llegue,
- * basta con poner esto en `true`.
+ * Desde el 2026-09-12 sí: `PATCH /products/:id` lleva el mismo
+ * `FileInterceptor('image')` que el alta, reemplaza el fichero anterior en
+ * disco y deja la ruta servible (`/products/image/<fichero>`). Comprobado
+ * contra la API: la foto cambia, la anterior se borra y una edición solo de
+ * texto —en JSON, sin archivo— conserva la que había.
  */
-export const EDICION_DE_IMAGEN_LISTA = false;
+export const EDICION_DE_IMAGEN_LISTA = true;
 
 export function updateProduct(id: string, input: Partial<ProductInput>) {
   // Con foto nueva hay que ir en multipart, como el alta; sin ella, el JSON de
