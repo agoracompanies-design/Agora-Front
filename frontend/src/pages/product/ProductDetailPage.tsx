@@ -123,8 +123,16 @@ export function ProductDetailPage() {
         <ArrowLeft size={14} /> Volver a explorar
       </Link>
 
-      <div id="product-detail__layout" className="product-detail__layout grid grid-cols-1 lg:grid-cols-5 gap-10">
-        <div id="product-detail__media" className="product-detail__media lg:col-span-3">
+      {/* Dos filas en escritorio: arriba la foto y su panel de datos al lado;
+          debajo de la foto, los carruseles. El panel ocupa las dos filas, que
+          es lo que llena el hueco blanco que quedaba bajo la imagen cuando el
+          panel era más alto que ella. En móvil no hay filas: la foto, los datos
+          y los carruseles van uno detrás de otro, como siempre. */}
+      <div
+        id="product-detail__layout"
+        className="product-detail__layout grid grid-cols-1 gap-10 lg:grid-cols-5 lg:grid-rows-[auto_1fr]"
+      >
+        <div id="product-detail__media" className="product-detail__media lg:col-span-3 lg:col-start-1 lg:row-start-1">
           {imageUrl ? (
             <ZoomableImage src={imageUrl} alt={product.name} />
           ) : (
@@ -136,7 +144,7 @@ export function ProductDetailPage() {
           )}
         </div>
 
-        <div id="product-detail__info" className="product-detail__info lg:col-span-2 flex flex-col gap-5">
+        <div id="product-detail__info" className="product-detail__info flex flex-col gap-5 lg:col-span-2 lg:col-start-4 lg:row-start-1 lg:row-span-2">
           <div>
             <div id="product-detail__topbar" className="product-detail__topbar mb-2 flex items-center justify-between gap-2">
               <div id="product-detail__tags" className="product-detail__tags flex items-center gap-2">
@@ -263,22 +271,24 @@ export function ProductDetailPage() {
             </p>
           )}
         </div>
+        {(delNegocio.length > 0 || deLaCategoria.length > 0) && (
+          <div
+            id="product-detail__more"
+            className="product-detail__more space-y-10 lg:col-span-3 lg:col-start-1 lg:row-start-2"
+          >
+            <ProductCarousel
+              nombre="seller"
+              titulo={`Más de ${enterprise?.companyName ?? 'este negocio'}`}
+              productos={delNegocio}
+            />
+            <ProductCarousel
+              nombre="category"
+              titulo={`Más en ${nombreDeCategoria(product)}`}
+              productos={deLaCategoria}
+            />
+          </div>
+        )}
       </div>
-
-      {(delNegocio.length > 0 || deLaCategoria.length > 0) && (
-        <div id="product-detail__more" className="product-detail__more mt-12 space-y-10">
-          <ProductCarousel
-            nombre="seller"
-            titulo={`Más de ${enterprise?.companyName ?? 'este negocio'}`}
-            productos={delNegocio}
-          />
-          <ProductCarousel
-            nombre="category"
-            titulo={`Más en ${nombreDeCategoria(product)}`}
-            productos={deLaCategoria}
-          />
-        </div>
-      )}
     </div>
   );
 }
