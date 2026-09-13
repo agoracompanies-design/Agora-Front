@@ -11,3 +11,73 @@ export const WHATSAPP_VENTAS = '5350000000';
  * Puede ser el mismo que el de ventas o uno aparte; también es un marcador.
  */
 export const WHATSAPP_MODERACION = '5350000000';
+
+
+// ---------------------------------------------------------------------------
+// El teléfono de un negocio
+// ---------------------------------------------------------------------------
+//
+// Cada negocio escribe el suyo a mano, así que en la base conviven
+// «+53 7 832 4417» y «58468600». Antes de convertirlo en un enlace hay que
+// dejarlo en una sola forma.
+
+/** Código de Cuba. Los números de allá son ocho dígitos sin él. */
+const CUBA = '53';
+
+/**
+ * El número en forma internacional, solo dígitos: `5378324417`.
+ *
+ * Si vienen ocho dígitos pelados se asume Cuba, que es de donde son todos los
+ * negocios. Con cualquier otro largo se deja lo que haya: ya trae su prefijo.
+ * Devuelve `null` si no hay ni un dígito, para poder no pintar el botón.
+ */
+export function telefonoInternacional(telefono: string | null | undefined): string | null {
+  const digitos = (telefono ?? '').replace(/\D/g, '');
+  if (!digitos) return null;
+  if (digitos.length === 8) return `${CUBA}${digitos}`;
+  return digitos;
+}
+
+/** El número como se lee: `+53 7 832 4417`. */
+export function telefonoLegible(telefono: string | null | undefined): string {
+  const internacional = telefonoInternacional(telefono);
+  if (!internacional) return '';
+  if (internacional.startsWith(CUBA) && internacional.length === 10) {
+    const n = internacional.slice(2);
+    return `+53 ${n.slice(0, 1)} ${n.slice(1, 4)} ${n.slice(4)}`;
+  }
+  return `+${internacional}`;
+}
+
+/**
+ * El enlace que abre el marcador del teléfono.
+ *
+ * No llama solo, y no hay forma de que lo haga: ningún navegador deja que una
+ * página marque un número sin que la persona lo confirme. Lo que sí hace es
+ * dejarlo escrito en el marcador, que es un toque en vez de copiar a mano ocho
+ * dígitos. En un ordenador lo recoge la aplicación que tenga registrada el
+ * sistema, y si no hay ninguna no pasa nada: por eso el número va también
+ * escrito en el botón, para poder leerlo.
+ */
+export function enlaceLlamada(telefono: string | null | undefined): string | null {
+  const internacional = telefonoInternacional(telefono);
+  return internacional ? `tel:+${internacional}` : null;
+}
+
+/**
+ * El enlace que abre WhatsApp con el mensaje ya escrito.
+ *
+ * `wa.me` es el enlace oficial y sirve para los dos casos: si la aplicación
+ * está instalada —móvil u ordenador— la abre, y si no, abre WhatsApp Web. Por
+ * eso se usa este y no `whatsapp://`, que solo funciona con la aplicación.
+ */
+export function enlaceWhatsapp(telefono: string | null | undefined, mensaje: string): string | null {
+  const internacional = telefonoInternacional(telefono);
+  return internacional ? `https://wa.me/${internacional}?text=${encodeURIComponent(mensaje)}` : null;
+}
+
+/** El saludo con el que se abre WhatsApp, ya con el producto por delante. */
+export function mensajeDeInteres(producto: string, negocio?: string): string {
+  const donde = negocio ? ` de ${negocio}` : '';
+  return `Hola, buenas. Vi «${producto}»${donde} en Agora y me interesa. ¿Está disponible?`;
+}

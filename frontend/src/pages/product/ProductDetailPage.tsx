@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Clock, CreditCard, Heart, ImageOff, MapPin, Navigation, Phone, Store, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Clock, CreditCard, Heart, ImageOff, MapPin, MessageCircle, Navigation, Phone, Store, ExternalLink } from 'lucide-react';
 import { getProduct, listProducts, productImageUrl } from '@/api/product';
 import { averageRating, createRating, listRatingsByProduct } from '@/api/rating';
 import type { Product, Rating } from '@/types';
@@ -18,6 +18,7 @@ import { useToast } from '@/context/ToastContext';
 import { useFavorites } from '@/context/FavoritesContext';
 import { hasPermission, Permissions } from '@/lib/permissions';
 import { addRecentlyViewed } from '@/lib/recentlyViewed';
+import { enlaceLlamada, enlaceWhatsapp, mensajeDeInteres, telefonoLegible } from '@/lib/contacto';
 import { nombreDeCategoria } from '@/lib/categorias';
 
 export function ProductDetailPage() {
@@ -101,6 +102,21 @@ export function ProductDetailPage() {
       ? `https://www.google.com/maps/search/?api=1&query=${enterprise.latitude},${enterprise.longitude}`
       : null;
 
+  // El número escrito a mano por el negocio, ya en forma de enlace. Se calcula
+  // una vez y de ahí salen los dos botones y el texto que enseñan.
+  const llamada = enlaceLlamada(enterprise?.contact?.phone);
+  const telefono =
+    llamada && product
+      ? {
+          llamada,
+          legible: telefonoLegible(enterprise?.contact?.phone),
+          whatsapp: enlaceWhatsapp(
+            enterprise?.contact?.phone,
+            mensajeDeInteres(product.name, enterprise?.companyName),
+          ),
+        }
+      : null;
+
   return (
     <div id="product-detail" className="product-detail mx-auto max-w-5xl px-4 sm:px-6 py-8">
       <Link to="/" id="product-detail__back" className="product-detail__back mb-6 inline-flex items-center gap-1.5 text-sm text-ink-500 hover:text-ink-900">
@@ -182,21 +198,39 @@ export function ProductDetailPage() {
           )}
 
           {enterprise && (mapUrl || enterprise.contact?.phone) && (
-            <div id="product-detail__actions" className="product-detail__actions flex gap-2.5">
+            // Una acción por fila. Antes la llamada era un cuadrado con un
+            // auricular al lado del mapa, y el número no se veía por ninguna
+            // parte: había que pulsar a ciegas. Ahora cada forma de contacto
+            // ocupa su fila y enseña el número, que en un ordenador —donde el
+            // enlace `tel:` puede no abrir nada— es lo único que sirve.
+            <div id="product-detail__actions" className="product-detail__actions flex flex-col gap-2.5">
               {/* El negocio es descubrir y CONTACTAR: el índigo se lo queda la
                   llamada, no el enlace a Google Maps, que además se lleva al
                   usuario fuera de Agora. */}
               {mapUrl && (
-                <a href={mapUrl} target="_blank" rel="noreferrer" id="product-detail__route" className="product-detail__route flex-1">
+                <a href={mapUrl} target="_blank" rel="noreferrer" id="product-detail__route" className="product-detail__route block">
                   <Button variant="outline" className="w-full" size="lg" icon={<Navigation size={16} />}>
                     ¿Cómo llegar?
                   </Button>
                 </a>
               )}
-              {enterprise.contact?.phone && (
-                <a href={`tel:${enterprise.contact.phone}`}>
-                  <Button size="lg" className="h-12 w-12 px-0" aria-label="Llamar al negocio">
-                    <Phone size={17} />
+              {telefono && (
+                <a href={telefono.llamada} id="product-detail__call" className="product-detail__call block">
+                  <Button className="w-full" size="lg" icon={<Phone size={16} />}>
+                    Llamar <span className="product-detail__call-number font-normal opacity-80">· {telefono.legible}</span>
+                  </Button>
+                </a>
+              )}
+              {telefono?.whatsapp && (
+                <a
+                  href={telefono.whatsapp}
+                  target="_blank"
+                  rel="noreferrer"
+                  id="product-detail__whatsapp"
+                  className="product-detail__whatsapp block"
+                >
+                  <Button variant="outline" className="w-full" size="lg" icon={<MessageCircle size={16} />}>
+                    WhatsApp <span className="product-detail__whatsapp-number font-normal text-ink-500">· {telefono.legible}</span>
                   </Button>
                 </a>
               )}
