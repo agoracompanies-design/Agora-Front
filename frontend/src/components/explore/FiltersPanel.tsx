@@ -4,9 +4,15 @@ import type { CategoryCount } from '@/hooks/useCategories';
 import { cn, soloPrecio } from '@/lib/utils';
 
 export type SortOrder = 'asc' | 'desc';
-/** Qué moneda manda al ordenar. Los dos precios son independientes y no hay
- *  tasa de cambio, así que no se pueden comparar entre sí: lo que se hace es
- *  poner delante los productos que tienen precio en la moneda elegida. */
+/**
+ * La moneda que manda en toda la pantalla.
+ *
+ * Los dos precios son independientes y no hay tasa de cambio, así que 180 CUP y
+ * 8 USD no se pueden comparar entre sí. Por eso la moneda no es un filtro más:
+ * es el primero, y el resto se lee en función de ella. El rango de precio se
+ * compara contra la moneda elegida y el orden pone delante los productos que la
+ * tienen; los demás van detrás, ordenados entre ellos.
+ */
 export type MonedaPrincipal = 'USD' | 'CUP';
 
 interface FiltersPanelProps {
@@ -16,11 +22,12 @@ interface FiltersPanelProps {
   onMaxPrice: (v: string) => void;
   sortOrder: SortOrder;
   onSortOrder: (v: SortOrder) => void;
+  /**
+   * La moneda con la que se lee todo: el rango de precio se compara contra
+   * ella y el orden pone delante los productos que la tienen.
+   */
   moneda: MonedaPrincipal;
   onMoneda: (v: MonedaPrincipal) => void;
-  /** En qué moneda se leen el mínimo y el máximo. */
-  monedaPrecio: MonedaPrincipal;
-  onMonedaPrecio: (v: MonedaPrincipal) => void;
   nearMe: boolean;
   onLocateMe: () => void;
   locating: boolean;
@@ -33,6 +40,12 @@ interface FiltersPanelProps {
   onClear: () => void;
   /** Dónde se pinta este panel: 'aside' o 'sheet'. Distingue los ids. */
   ambito: string;
+  /**
+   * Si el panel pone su propio título. En la hoja del móvil no: la hoja ya
+   * se titula «Filtrar resultados» y repetir «Filtros» justo debajo es decir
+   * dos veces lo mismo. Ahí la cabecera se queda solo con «Limpiar».
+   */
+  conTitulo?: boolean;
   /**
    * Cómo se coloca. `horizontal` es la barra que va sobre los resultados;
    * `vertical` es la hoja de filtros del móvil, donde hay alto de sobra.
@@ -85,13 +98,10 @@ function identificador(texto: string) {
 function Grupo({
   nombre,
   titulo,
-  extra,
   children,
 }: {
   nombre: string;
   titulo: string;
-  /** Lo que va pegado al rótulo, como el selector de moneda del precio. */
-  extra?: ReactNode;
   children: ReactNode;
 }) {
   return (
@@ -101,7 +111,6 @@ function Grupo({
         className="filters__legend mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-ink-500"
       >
         {titulo}
-        {extra}
       </h3>
       {children}
     </section>
@@ -117,8 +126,6 @@ export function FiltersPanel({
   onSortOrder,
   moneda,
   onMoneda,
-  monedaPrecio,
-  onMonedaPrecio,
   nearMe,
   onLocateMe,
   locating,
@@ -131,6 +138,7 @@ export function FiltersPanel({
   onClear,
   ambito,
   orientacion = 'vertical',
+  conTitulo = true,
 }: FiltersPanelProps) {
   const enFila = orientacion === 'horizontal';
   /** Sufijo que distingue la copia de la columna de la de la hoja móvil. */
@@ -143,65 +151,53 @@ export function FiltersPanel({
       id={uid('filters')}
       className={cn('filters', enFila ? 'flex flex-wrap items-start gap-x-7 gap-y-4' : 'space-y-4')}
     >
+      {/* El título encabeza el bloque, no se mete entre los criterios. En fila
+          eso se consigue ocupando el ancho entero: la fila es suya y los
+          filtros empiezan debajo. */}
+      {(conTitulo || hasActiveFilters) && (
       <header
         id={uid('filters__header')}
         className={cn(
-          'filters__header flex items-center justify-between gap-2',
-          // En fila, el título no puede robar ancho a los filtros: se queda a
-          // un lado y «Limpiar» se va al extremo contrario.
-          enFila ? 'order-first shrink-0 self-center' : '',
+          'filters__header flex items-center gap-2',
+          conTitulo ? 'justify-between' : 'justify-end',
+          enFila ? 'order-first w-full border-b border-ink-200/70 pb-3' : '',
         )}
       >
-        <h2 id={uid('filters__title')} className="filters__title inline-flex items-center gap-2 text-sm font-semibold text-ink-900">
-          <SlidersHorizontal size={15} aria-hidden="true" /> Filtros
-        </h2>
-        {hasActiveFilters && !enFila && (
+        {conTitulo && (
+          <h2 id={uid('filters__title')} className="filters__title inline-flex items-center gap-2 text-sm font-semibold text-ink-900">
+            <SlidersHorizontal size={15} aria-hidden="true" /> Filtros
+          </h2>
+        )}
+        {hasActiveFilters && (
           <button
             onClick={onClear}
-            id={uid('filters__clear')} className="filters__clear inline-flex items-center gap-1 text-[11px] font-medium text-ink-500 hover:text-ink-900"
+            id={uid('filters__clear')}
+            className="filters__clear inline-flex items-center gap-1 text-[11px] font-medium text-ink-500 hover:text-ink-900"
           >
             <X size={12} aria-hidden="true" /> Limpiar
           </button>
         )}
       </header>
-
-      {hasActiveFilters && enFila && (
-        <button
-          onClick={onClear}
-          id={uid('filters__clear')}
-          className="filters__clear order-last ml-auto inline-flex shrink-0 items-center gap-1 self-center text-[11px] font-medium text-ink-500 hover:text-ink-900"
-        >
-          <X size={12} aria-hidden="true" /> Limpiar
-        </button>
       )}
 
-      <Grupo
-        nombre={uid('price')}
-        titulo="Precio en"
-        extra={
-          <span id={uid('filters__price-currency')} className="filters__price-currency inline-flex gap-1">
-            {(['CUP', 'USD'] as const).map((m) => (
-              <button
-                key={m}
-                type="button"
-                aria-pressed={monedaPrecio === m}
-                onClick={() => onMonedaPrecio(m)}
-                id={uid(`filters__price-currency-${m.toLowerCase()}`)}
-                className={cn(
-                  'filters__price-currency-option rounded px-1.5 py-0.5 text-[10px] font-semibold tracking-wide transition-colors',
-                  monedaPrecio === m ? 'bg-primary text-white' : 'text-ink-500 hover:text-ink-900',
-                )}
-              >
-                {m}
-              </button>
-            ))}
-          </span>
-        }
-      >
+      {/* Primero la moneda, porque es de lo que dependen los demás: el rango se
+          lee en ella y el orden la pone delante. */}
+      <Grupo nombre={uid('currency')} titulo="Moneda">
+        <div id={uid('filters__currency')} className="filters__currency flex flex-wrap gap-2">
+          <Chip id={uid('filters__currency-usd')} activo={moneda === 'USD'} onClick={() => onMoneda('USD')} icon={<DollarSign size={13} aria-hidden="true" />}>
+            USD primero
+          </Chip>
+          <Chip id={uid('filters__currency-cup')} activo={moneda === 'CUP'} onClick={() => onMoneda('CUP')} icon={<Banknote size={13} aria-hidden="true" />}>
+            CUP primero
+          </Chip>
+        </div>
+      </Grupo>
+
+      <Grupo nombre={uid('price')} titulo={`Precio en ${moneda}`}>
         <div id={uid('filters__price')} className="filters__price flex items-center gap-2">
           <input
             inputMode="numeric"
-            aria-label="Precio mínimo en CUP"
+            aria-label={`Precio mínimo en ${moneda}`}
             placeholder="Mín"
             value={minPrice}
             onChange={(e) => onMinPrice(soloPrecio(e.target.value))}
@@ -211,7 +207,7 @@ export function FiltersPanel({
           <span id={uid('filters__price-sep')} className="filters__price-sep text-ink-400">–</span>
           <input
             inputMode="numeric"
-            aria-label="Precio máximo en CUP"
+            aria-label={`Precio máximo en ${moneda}`}
             placeholder="Máx"
             value={maxPrice}
             onChange={(e) => onMaxPrice(soloPrecio(e.target.value))}
@@ -228,18 +224,6 @@ export function FiltersPanel({
           </Chip>
           <Chip id={uid('filters__sort-desc')} activo={sortOrder === 'desc'} onClick={() => onSortOrder('desc')} icon={<ArrowDownWideNarrow size={13} aria-hidden="true" />}>
             Más caro
-          </Chip>
-        </div>
-
-        {/* Va con lo anterior, no aparte: elegir moneda solo tiene sentido
-            acompañando al orden. Primero salen los productos con precio en
-            esta moneda; detrás, los de la otra. */}
-        <div id={uid('filters__currency')} className="filters__currency mt-2 flex flex-wrap gap-2">
-          <Chip id={uid('filters__currency-usd')} activo={moneda === 'USD'} onClick={() => onMoneda('USD')} icon={<DollarSign size={13} aria-hidden="true" />}>
-            USD primero
-          </Chip>
-          <Chip id={uid('filters__currency-cup')} activo={moneda === 'CUP'} onClick={() => onMoneda('CUP')} icon={<Banknote size={13} aria-hidden="true" />}>
-            CUP primero
           </Chip>
         </div>
       </Grupo>

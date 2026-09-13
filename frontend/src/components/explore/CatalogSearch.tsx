@@ -107,7 +107,7 @@ export function CatalogSearch({ productos, valor, onBuscar }: CatalogSearchProps
           className="catalog-search__input h-full min-w-0 flex-1 bg-transparent pl-2.5 text-base text-ink-900 outline-none placeholder:text-ink-400"
           type="search"
           autoComplete="off"
-          placeholder="Busca productos o negocios…"
+          placeholder="Busca productos…"
           value={texto}
           onChange={(e) => {
             setTexto(e.target.value);

@@ -53,10 +53,6 @@ export function ExplorePage() {
   const [maxPrice, setMaxPrice] = useState(() => searchParams.get('max') ?? '');
   const [category, setCategory] = useState<string | null>(() => searchParams.get('cat'));
   const [sortOrder, setSortOrder] = useState<SortOrder>(() => (searchParams.get('sort') === 'desc' ? 'desc' : 'asc'));
-  // En qué moneda se leen el mínimo y el máximo del rango.
-  const [monedaPrecio, setMonedaPrecio] = useState<MonedaPrincipal>(() =>
-    searchParams.get('monedaPrecio') === 'USD' ? 'USD' : 'CUP',
-  );
   const [moneda, setMoneda] = useState<MonedaPrincipal>(() => (searchParams.get('moneda') === 'CUP' ? 'CUP' : 'USD'));
   const [page, setPage] = useState(() => Number(searchParams.get('page')) || 1);
 
@@ -79,11 +75,10 @@ export function ExplorePage() {
     if (category) params.cat = category;
     if (sortOrder === 'desc') params.sort = 'desc';
     if (moneda === 'CUP') params.moneda = 'CUP';
-    if (monedaPrecio === 'USD') params.monedaPrecio = 'USD';
     if (page > 1) params.page = String(page);
     setSearchParams(params, { replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, minPrice, maxPrice, category, sortOrder, moneda, monedaPrecio, page]);
+  }, [search, minPrice, maxPrice, category, sortOrder, moneda, page]);
 
   // Mirror the URL back into state: the component doesn't remount when a
   // navbar link (e.g. "Más populares") points at "/" with different query
@@ -92,7 +87,6 @@ export function ExplorePage() {
   useEffect(() => {
     setSearch(searchParams.get('q') ?? '');
     setMoneda(searchParams.get('moneda') === 'CUP' ? 'CUP' : 'USD');
-    setMonedaPrecio(searchParams.get('monedaPrecio') === 'USD' ? 'USD' : 'CUP');
     setMinPrice(searchParams.get('min') ?? '');
     setMaxPrice(searchParams.get('max') ?? '');
     setCategory(searchParams.get('cat'));
@@ -224,7 +218,8 @@ export function ExplorePage() {
     }
     // El rango se aplica aquí y no en el servidor: el backend lo compara
     // siempre contra priceCup, así que en USD daría resultados de otra moneda.
-    const enLaMoneda = (p: Product) => (monedaPrecio === 'USD' ? p.priceUsd : p.priceCup);
+    // Se lee en la moneda elegida arriba, que es la que manda en la pantalla.
+    const enLaMoneda = (p: Product) => (moneda === 'USD' ? p.priceUsd : p.priceCup);
     if (minPrice || maxPrice) {
       // Sin precio en esa moneda no hay nada que comparar: queda fuera. Darle
       // un infinito lo colaba en cualquier mínimo, que es peor que excluirlo.
@@ -254,7 +249,7 @@ export function ExplorePage() {
       return sortOrder === 'asc' ? pa - pb : pb - pa;
     });
     return { lista: ordenados, aproximada };
-  }, [rawProducts, search, category, sortOrder, moneda, minPrice, maxPrice, monedaPrecio]);
+  }, [rawProducts, search, category, sortOrder, moneda, minPrice, maxPrice]);
 
   const visibleProducts = resultado.lista;
 
@@ -309,8 +304,6 @@ export function ExplorePage() {
     sortOrder,
     moneda,
     onMoneda: setMoneda,
-    monedaPrecio,
-    onMonedaPrecio: setMonedaPrecio,
     onSortOrder: setSortOrder,
     nearMe: Boolean(nearMe),
     onLocateMe: locateMe,
@@ -451,7 +444,7 @@ export function ExplorePage() {
           }
         >
           <div id="explore__filters-sheet" className="explore__filters-sheet pb-4">
-            <FiltersPanel {...filtersProps} ambito="sheet" />
+            <FiltersPanel {...filtersProps} ambito="sheet" conTitulo={false} />
           </div>
         </BottomSheet>
       )}
