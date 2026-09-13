@@ -180,19 +180,6 @@ export function FiltersPanel({
       </header>
       )}
 
-      {/* Primero la moneda, porque es de lo que dependen los demás: el rango se
-          lee en ella y el orden la pone delante. */}
-      <Grupo nombre={uid('currency')} titulo="Moneda">
-        <div id={uid('filters__currency')} className="filters__currency flex flex-wrap gap-2">
-          <Chip id={uid('filters__currency-usd')} activo={moneda === 'USD'} onClick={() => onMoneda('USD')} icon={<DollarSign size={13} aria-hidden="true" />}>
-            USD primero
-          </Chip>
-          <Chip id={uid('filters__currency-cup')} activo={moneda === 'CUP'} onClick={() => onMoneda('CUP')} icon={<Banknote size={13} aria-hidden="true" />}>
-            CUP primero
-          </Chip>
-        </div>
-      </Grupo>
-
       <Grupo nombre={uid('price')} titulo={`Precio en ${moneda}`}>
         <div id={uid('filters__price')} className="filters__price flex items-center gap-2">
           <input
@@ -224,6 +211,20 @@ export function FiltersPanel({
           </Chip>
           <Chip id={uid('filters__sort-desc')} activo={sortOrder === 'desc'} onClick={() => onSortOrder('desc')} icon={<ArrowDownWideNarrow size={13} aria-hidden="true" />}>
             Más caro
+          </Chip>
+        </div>
+      </Grupo>
+
+      {/* La moneda sigue mandando sobre el precio y el orden —el rótulo del
+          rango lo dice, «Precio en USD»—, pero va aquí y no delante: el orden
+          de la fila es el que se pidió. */}
+      <Grupo nombre={uid('currency')} titulo="Moneda">
+        <div id={uid('filters__currency')} className="filters__currency flex flex-wrap gap-2">
+          <Chip id={uid('filters__currency-usd')} activo={moneda === 'USD'} onClick={() => onMoneda('USD')} icon={<DollarSign size={13} aria-hidden="true" />}>
+            USD primero
+          </Chip>
+          <Chip id={uid('filters__currency-cup')} activo={moneda === 'CUP'} onClick={() => onMoneda('CUP')} icon={<Banknote size={13} aria-hidden="true" />}>
+            CUP primero
           </Chip>
         </div>
       </Grupo>
