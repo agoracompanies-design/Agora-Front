@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import type { FormEvent, ReactNode } from 'react';
+import type { FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ShoppingBag, Store } from 'lucide-react';
 import { AuthLayout, AuthLink } from '@/components/layout/AuthLayout';
 import { Input } from '@/components/ui/Field';
 import { PasswordField } from '@/components/ui/PasswordField';
@@ -10,15 +9,23 @@ import { useAuth } from '@/context/AuthContext';
 import { soloUsuario } from '@/lib/validacion';
 import { createSubscription } from '@/api/subscription';
 import { TRIAL_PLAN, tipoDePlan } from '@/lib/plans';
-import { cn } from '@/lib/utils';
 
-type Role = 'comprador' | 'vendedor';
-
+/**
+ * Crear cuenta: usuario y contraseña, nada más.
+ *
+ * Antes preguntaba aquí si venías a comprar o a vender, y era una pregunta
+ * falsa: el servidor crea la misma cuenta en los dos casos y lo único que
+ * cambiaba era a qué pantalla se iba después. Quien elegía «vender» tampoco
+ * podía publicar: para eso hay que dar de alta la empresa, con su formulario
+ * entero, que es el flujo que ya existe dentro de la app.
+ *
+ * Así que la pregunta se quita. Se entra, y quien quiera vender crea su
+ * empresa desde dentro cuando le toque.
+ */
 export function RegisterPage() {
   const { register, login, refreshSellerStatus } = useAuth();
   const navigate = useNavigate();
 
-  const [role, setRole] = useState<Role>('comprador');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -57,7 +64,7 @@ export function RegisterPage() {
         navigate('/planes', { replace: true });
         return;
       }
-      navigate(role === 'vendedor' ? '/vender' : '/', { replace: true });
+      navigate('/', { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo crear la cuenta');
     } finally {
@@ -68,7 +75,7 @@ export function RegisterPage() {
   return (
     <AuthLayout
       title="Crea tu cuenta"
-      subtitle="Elige cómo quieres usar Agora"
+      subtitle="Con un usuario y una contraseña ya estás dentro"
       footer={
         <>
           ¿Ya tienes cuenta? <AuthLink to="/iniciar-sesion">Inicia sesión</AuthLink>
@@ -80,31 +87,6 @@ export function RegisterPage() {
       <meta name="description" content="Crea tu cuenta en Agora para buscar productos de las mypimes y mercados de tu ciudad, o para publicar tu catálogo." />
 
       <form onSubmit={handleSubmit} id="register" className="register space-y-4">
-        {/* Opciones excluyentes: fieldset + legend + radios nativos, no dos
-            botones con un estado pintado a mano. El radio se oculta a la vista
-            pero sigue siendo el que recibe foco y teclado. */}
-        <fieldset className="register__roles">
-          <legend className="register__legend mb-2 text-sm font-medium text-ink-800">¿Cómo vas a usar Agora?</legend>
-          <div id="register__options" className="register__options grid grid-cols-2 gap-2.5">
-            <RoleOption
-              icon={<ShoppingBag size={18} aria-hidden="true" />}
-              label="Comprar"
-              description="Buscar productos"
-              value="comprador"
-              checked={role === 'comprador'}
-              onChange={setRole}
-            />
-            <RoleOption
-              icon={<Store size={18} aria-hidden="true" />}
-              label="Vender"
-              description="Publicar catálogo"
-              value="vendedor"
-              checked={role === 'vendedor'}
-              onChange={setRole}
-            />
-          </div>
-        </fieldset>
-
         <Input
           label="Usuario"
           required
@@ -139,47 +121,12 @@ export function RegisterPage() {
           </p>
         )}
         <Button type="submit" className="w-full" size="lg" loading={loading}>
-          {role === 'vendedor' ? 'Crear cuenta de vendedor' : 'Crear cuenta'}
+          Crear cuenta
         </Button>
+        <p id="register__seller-note" className="register__seller-note text-center text-xs text-ink-500">
+          ¿Vas a vender? Crea tu cuenta y da de alta tu negocio desde dentro.
+        </p>
       </form>
     </AuthLayout>
-  );
-}
-
-function RoleOption({
-  icon,
-  label,
-  description,
-  value,
-  checked,
-  onChange,
-}: {
-  icon: ReactNode;
-  label: string;
-  description: string;
-  value: Role;
-  checked: boolean;
-  onChange: (value: Role) => void;
-}) {
-  return (
-    <label
-      className={cn(
-        'role flex cursor-pointer flex-col items-start gap-1.5 rounded-xl border px-4 py-3 text-left transition-colors',
-        'has-[:focus-visible]:ring-4 has-[:focus-visible]:ring-ink-900/10',
-        checked ? 'role--checked border-ink-900 bg-ink-900 text-ink-50' : 'border-ink-200 text-ink-700 hover:border-ink-400',
-      )}
-    >
-      <input
-        type="radio"
-        name="role"
-        value={value}
-        checked={checked}
-        onChange={() => onChange(value)}
-        id="role__input" className="role__input sr-only"
-      />
-      {icon}
-      <span id="role__label" className="role__label text-sm font-semibold">{label}</span>
-      <span className={cn('role__description text-xs', checked ? 'text-ink-50/85' : 'text-ink-500')}>{description}</span>
-    </label>
   );
 }
