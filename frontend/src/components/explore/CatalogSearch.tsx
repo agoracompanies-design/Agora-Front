@@ -10,6 +10,17 @@ const MAX_SUGERENCIAS = 6;
 /** Letras mínimas antes de sugerir nada: con una sola, todo coincide. */
 const MINIMO_PARA_SUGERIR = 2;
 
+/**
+ * Qué se puede escribir aquí. Decirlo evita la duda de si el buscador solo
+ * mira nombres de producto: mira también el negocio y la categoría, que es lo
+ * mismo que filtra la pantalla.
+ *
+ * Dos textos porque en un móvil estrecho el largo se corta a media palabra, y
+ * un rótulo cortado informa menos que uno corto entero.
+ */
+const PISTA_ANCHA = 'Busca un producto, un negocio o una categoría…';
+const PISTA_ESTRECHA = '¿Qué estás buscando?';
+
 interface CatalogSearchProps {
   /** Lo que hay cargado. Las sugerencias salen de aquí, sin pedir nada. */
   productos: Product[];
@@ -33,6 +44,18 @@ export function CatalogSearch({ productos, valor, onBuscar }: CatalogSearchProps
   const [texto, setTexto] = useState(valor);
   const [abierto, setAbierto] = useState(false);
   const caja = useRef<HTMLDivElement>(null);
+  // El valor de partida se lee al crear el estado, no en un efecto: así el
+  // primer dibujo ya sale con el rótulo que toca y no se ve cambiar.
+  const [pantallaAncha, setPantallaAncha] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(min-width: 640px)').matches,
+  );
+
+  useEffect(() => {
+    const consulta = window.matchMedia('(min-width: 640px)');
+    const alCambiar = (e: MediaQueryListEvent) => setPantallaAncha(e.matches);
+    consulta.addEventListener('change', alCambiar);
+    return () => consulta.removeEventListener('change', alCambiar);
+  }, []);
 
   // La búsqueda también cambia desde fuera (la URL, o el aspa de un filtro).
   useEffect(() => setTexto(valor), [valor]);
@@ -104,10 +127,12 @@ export function CatalogSearch({ productos, valor, onBuscar }: CatalogSearchProps
         />
         <input
           id="catalog-search__input"
-          className="catalog-search__input h-full min-w-0 flex-1 bg-transparent pl-2.5 text-base text-ink-900 outline-none placeholder:text-ink-400"
+          // El aspa que pinta el propio navegador en un `type="search"` se
+          // apaga: ya hay una nuestra, y salían las dos a la vez.
+          className="catalog-search__input h-full min-w-0 flex-1 bg-transparent pl-2.5 text-base text-ink-900 outline-none placeholder:text-ink-400 [&::-webkit-search-cancel-button]:appearance-none [&::-webkit-search-decoration]:appearance-none"
           type="search"
           autoComplete="off"
-          placeholder="Busca productos…"
+          placeholder={pantallaAncha ? PISTA_ANCHA : PISTA_ESTRECHA}
           value={texto}
           onChange={(e) => {
             setTexto(e.target.value);
