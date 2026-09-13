@@ -20,6 +20,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useCategories } from '@/hooks/useCategories';
 import { useProductRatings } from '@/hooks/useProductRatings';
 import { nombreDeCategoria } from '@/lib/categorias';
+import { creaFiltro } from '@/lib/busqueda';
 
 // Dos filas por página: 4 columnas en escritorio. Con `auto-fill` el número
 // de columnas variaba con el ancho y las filas nunca cuadraban.
@@ -203,16 +204,23 @@ export function ExplorePage() {
     return () => cancelAnimationFrame(id);
   }, [isLoading]);
 
-  const visibleProducts = useMemo(() => {
+  const resultado = useMemo(() => {
     let list = rawProducts;
+    // Si lo que se enseña salió de la pasada tolerante, hay que decirlo: son
+    // resultados parecidos, no lo que se pidió.
+    let aproximada = false;
     if (search.trim()) {
-      const q = search.trim().toLowerCase();
-      list = list.filter(
-        (p) =>
-          p.name.toLowerCase().includes(q) ||
-          p.userEnterprise?.companyName.toLowerCase().includes(q) ||
-          nombreDeCategoria(p).toLowerCase().includes(q),
-      );
+      const campos = (p: Product) => [p.name, p.userEnterprise?.companyName, nombreDeCategoria(p)] as const;
+      const exacto = creaFiltro(search);
+      list = list.filter((p) => exacto(...campos(p)));
+      // Sin ninguna coincidencia exacta, se repite admitiendo faltas. Quien
+      // escribe «platanos» o «arros» tiene que encontrar lo que busca, no un
+      // «sin resultados» que se lee como «aquí no hay».
+      if (list.length === 0) {
+        const aproximado = creaFiltro(search, { aproximado: true });
+        list = rawProducts.filter((p) => aproximado(...campos(p)));
+        aproximada = list.length > 0;
+      }
     }
     // El rango se aplica aquí y no en el servidor: el backend lo compara
     // siempre contra priceCup, así que en USD daría resultados de otra moneda.
@@ -237,7 +245,7 @@ export function ExplorePage() {
     const otra: MonedaPrincipal = moneda === 'USD' ? 'CUP' : 'USD';
     const tienePrincipal = (p: Product) => enMoneda(p, moneda) !== null && enMoneda(p, moneda) !== undefined;
 
-    return [...list].sort((a, b) => {
+    const ordenados = [...list].sort((a, b) => {
       const aPrincipal = tienePrincipal(a);
       if (aPrincipal !== tienePrincipal(b)) return aPrincipal ? -1 : 1;
       const m = aPrincipal ? moneda : otra;
@@ -245,7 +253,10 @@ export function ExplorePage() {
       const pb = enMoneda(b, m) ?? 0;
       return sortOrder === 'asc' ? pa - pb : pb - pa;
     });
+    return { lista: ordenados, aproximada };
   }, [rawProducts, search, category, sortOrder, moneda, minPrice, maxPrice, monedaPrecio]);
+
+  const visibleProducts = resultado.lista;
 
   function locateMe() {
     if (!navigator.geolocation) {
@@ -357,6 +368,14 @@ export function ExplorePage() {
               />
             ) : (
               <div id="explore__results-body" className="explore__results-body flex flex-col">
+                {/* Nada coincidía con lo escrito y esto es lo que se le parece.
+                    Decirlo evita que alguien se quede pensando por qué le sale
+                    otra cosa. */}
+                {resultado.aproximada && (
+                  <p id="explore__approximate" className="explore__approximate mb-3 text-xs text-ink-500">
+                    Nada coincide exactamente con «{search}». Estos son los resultados más parecidos.
+                  </p>
+                )}
                 <div id="explore__grid" className="explore__grid grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
                   {productosDeLaPagina.map((product) => (
                     <ProductCard
