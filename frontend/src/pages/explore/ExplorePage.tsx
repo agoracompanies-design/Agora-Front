@@ -8,7 +8,6 @@ import { ProductCardSkeleton } from '@/components/product/ProductCardSkeleton';
 import { Button } from '@/components/ui/Button';
 import { Pagination } from '@/components/ui/Pagination';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { ScrollToTop } from '@/components/ui/ScrollToTop';
 import { BottomSheet } from '@/components/ui/BottomSheet';
 import { HowItWorks } from '@/components/home/HowItWorks';
 import { Membership } from '@/components/home/Membership';
@@ -376,6 +375,7 @@ export function ExplorePage() {
                       product={product}
                       moneda={moneda}
                       votos={calificaciones[product.idProduct]?.votos}
+                      compacta
                     />
                   ))}
                 </div>
@@ -449,7 +449,6 @@ export function ExplorePage() {
         </BottomSheet>
       )}
 
-      <ScrollToTop />
     </div>
   );
 }

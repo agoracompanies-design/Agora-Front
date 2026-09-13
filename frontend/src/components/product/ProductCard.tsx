@@ -27,9 +27,25 @@ interface ProductCardProps {
    * avisar de que ya no lo está sin obligar a leer el badge pequeño.
    */
   avisarAgotado?: boolean;
+  /**
+   * Versión más apretada, solo para la rejilla de Explorar.
+   *
+   * Ahí las tarjetas se ven de cuatro en cuatro y en cuadrícula larga, así que
+   * cada una puede ocupar menos sin costar legibilidad: la foto pierde altura,
+   * el relleno se ajusta y el precio baja un punto. En los carruseles, en
+   * favoritos y en la ficha del negocio se quedan como están, que ahí son pocas
+   * y se miran de una en una.
+   */
+  compacta?: boolean;
 }
 
-export function ProductCard({ product, moneda: preferida = 'USD', votos, avisarAgotado = false }: ProductCardProps) {
+export function ProductCard({
+  product,
+  moneda: preferida = 'USD',
+  votos,
+  avisarAgotado = false,
+  compacta = false,
+}: ProductCardProps) {
   const imageUrl = productImageUrl(product.image);
   // Los dos precios son independientes: un negocio puede poner solo uno, o
   // ambos con descuento por pagar en divisa. Se enseña el de la moneda pedida
@@ -60,7 +76,8 @@ export function ProductCard({ product, moneda: preferida = 'USD', votos, avisarA
     >
       <div
         className={cn(
-          'product__image relative aspect-[4/3] w-full flex-auto min-h-0 overflow-hidden',
+          'product__image relative w-full flex-auto min-h-0 overflow-hidden',
+          compacta ? 'aspect-[3/2]' : 'aspect-[4/3]',
           agotadoResaltado ? 'bg-red-100/60 dark:bg-red-950/40' : 'bg-ink-100',
         )}
       >
@@ -111,12 +128,29 @@ export function ProductCard({ product, moneda: preferida = 'USD', votos, avisarA
         </button>
       </div>
 
-      <div id={`product__body--${product.idProduct}`} className="product__body flex flex-1 flex-col gap-1.5 p-3">
-        <h3 id={`product__name--${product.idProduct}`} className="product__name line-clamp-2 text-sm font-medium leading-snug text-ink-900">{product.name}</h3>
+      <div
+        id={`product__body--${product.idProduct}`}
+        className={cn('product__body flex flex-1 flex-col', compacta ? 'gap-1 p-2.5' : 'gap-1.5 p-3')}
+      >
+        <h3
+          id={`product__name--${product.idProduct}`}
+          className={cn(
+            'product__name line-clamp-2 font-medium leading-snug text-ink-900',
+            compacta ? 'text-[13px]' : 'text-sm',
+          )}
+        >
+          {product.name}
+        </h3>
         {product.description && (
           <p id={`product__description--${product.idProduct}`} className="product__description line-clamp-1 text-xs text-ink-500">{product.description}</p>
         )}
-        <p id={`product__price--${product.idProduct}`} className="product__price mt-auto flex items-center gap-1.5 text-base font-bold text-ink-900">
+        <p
+          id={`product__price--${product.idProduct}`}
+          className={cn(
+            'product__price mt-auto flex items-center gap-1.5 font-bold text-ink-900',
+            compacta ? 'text-sm' : 'text-base',
+          )}
+        >
           {precio ?? 'Consultar precio'}
           {precio && (
             <span

@@ -2,6 +2,7 @@ import { Outlet } from 'react-router-dom';
 import { Navbar } from './Navbar';
 import { NewNotificationsToast } from '@/components/notifications/NewNotificationsToast';
 import { Footer } from './Footer';
+import { ScrollToTop } from '@/components/ui/ScrollToTop';
 
 export function AppLayout() {
   return (
@@ -13,6 +14,9 @@ export function AppLayout() {
         <Outlet />
       </main>
       <Footer />
+      {/* Fuera del <main>: acompaña a toda la página, no a su contenido, y así
+          vale para todas las pantallas y no solo para la de explorar. */}
+      <ScrollToTop />
     </div>
   );
 }
