@@ -36,3 +36,22 @@ export function avisoDeContacto(valor: string): string | null {
   if (limpio.includes('@')) return 'Ese correo no parece completo.';
   return 'Un teléfono lleva al menos ocho dígitos.';
 }
+
+/**
+ * Parte el contacto en los dos campos que espera el servidor.
+ *
+ * El teléfono va **sin espacios ni guiones**: el backend lo valida con
+ * `/^\+?\d{8,15}$/`, así que «+53 5 846 8600» tal cual se rechaza con 400.
+ * Aquí se escribe como se lee y se limpia al mandarlo.
+ */
+export function contactoParaElServidor(valor: string): { email?: string; phone?: string } {
+  const limpio = valor.trim();
+  const tipo = tipoDeContacto(limpio);
+  if (tipo === 'correo') return { email: limpio };
+  if (tipo === 'telefono') {
+    const masDelante = limpio.trimStart().startsWith('+');
+    const digitos = limpio.replace(/\D/g, '');
+    return { phone: masDelante ? `+${digitos}` : digitos };
+  }
+  return {};
+}

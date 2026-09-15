@@ -15,9 +15,17 @@ export function listCategories() {
   return apiClient.get<Category[]>('/categories').then((res) => res.data);
 }
 
-/** Solo las que esperan revisión. Pide `category:approve`. */
+/**
+ * Solo las que esperan revisión. Pide `category:approve`.
+ *
+ * Desde el commit `92abc88` la ruta es `/categories/pending/list` y no
+ * `/categories/pending`: al bajar el guard del panel a cada método, `pending`
+ * a secas pasó a chocar con `@Get(':id')`, que se lo queda y responde 500.
+ * Además va detrás de `AdminSubdomainGuard`, así que solo contesta por
+ * `administration.<dominio>` —es cosa del panel, que está en pausa—.
+ */
 export function listPendingCategories() {
-  return apiClient.get<Category[]>('/categories/pending').then((res) => res.data);
+  return apiClient.get<Category[]>('/categories/pending/list').then((res) => res.data);
 }
 
 /** Aprobar: a partir de ahí la categoría clasifica de verdad. */

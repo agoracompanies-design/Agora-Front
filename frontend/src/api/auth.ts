@@ -1,3 +1,4 @@
+import { contactoParaElServidor } from '@/lib/contacto-cuenta';
 import { apiClient } from './client';
 import type { LoginResponse } from '@/types';
 
@@ -10,28 +11,20 @@ export function login(username: string, password: string) {
 /**
  * Si el servidor guarda ya un contacto —correo o teléfono— de la cuenta.
  *
- * Hoy no: la tabla `users` solo tiene `id`, `username`, `permissions`,
- * `password`, `planType` e `image`, y `POST /user` únicamente acepta usuario y
- * contraseña. Mandarle un contacto lo descartaría en silencio, y pedirlo para
- * tirarlo es peor que no pedirlo: da la impresión de que la cuenta quedó
- * verificada cuando no hay nada guardado.
+ * Desde el commit `92abc88` sí, y además **lo exige**: `users` tiene `email` y
+ * `phone`, los dos con índice único, y `POST /user` responde 400 si no llega
+ * ninguno de los dos. Así que esto ya no es opcional para nosotros: sin
+ * mandarlo no se puede crear una cuenta.
  *
- * Por eso el campo está escrito y validado pero no se enseña mientras esto sea
- * `false`. Está pedido en `bugs-para-arreglar.md` con el esquema que hace
- * falta; cuando llegue, esto pasa a `true` y aparece.
+ * Van en dos campos separados porque es lo que espera el servidor; en pantalla
+ * se pide en uno solo y `contactoParaElServidor()` decide cuál es. El teléfono
+ * viaja sin espacios: el backend lo valida con `/^\+?\d{8,15}$/`.
  */
-export const CONTACTO_EN_REGISTRO_LISTO = false;
-
-export interface DatosDeRegistro {
-  username: string;
-  password: string;
-  /** Correo o teléfono: uno de los dos, para que la cuenta tenga dueño. */
-  contacto?: string;
-}
+export const CONTACTO_EN_REGISTRO_LISTO = true;
 
 export function register(username: string, password: string, contacto?: string) {
   const cuerpo: Record<string, string> = { username, password };
-  if (CONTACTO_EN_REGISTRO_LISTO && contacto) cuerpo.contacto = contacto;
+  if (contacto) Object.assign(cuerpo, contactoParaElServidor(contacto));
   return apiClient.post<void>('/user', cuerpo).then((res) => res.data);
 }
 
