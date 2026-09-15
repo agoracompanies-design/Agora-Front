@@ -1,4 +1,5 @@
 import { BellOff, CalendarClock, Megaphone, MessageCircle, ShieldAlert, Tags } from 'lucide-react';
+import { enlaceSeguro } from '@/lib/enlaces';
 import { useNotifications } from '@/context/NotificationsContext';
 import type { Aviso, TipoAviso } from '@/lib/notificaciones';
 import { cn } from '@/lib/utils';
@@ -97,9 +98,9 @@ function Fila({ aviso, onLeer }: { aviso: Aviso; onLeer: () => void }) {
       </button>
       {/* La bandeja es de solo lectura, pero un aviso que pide responder y no
           deja hacerlo obliga a salir a buscar el número. */}
-      {aviso.enlace && (
+      {enlaceSeguro(aviso.enlace) && (
         <a
-          href={aviso.enlace}
+          href={enlaceSeguro(aviso.enlace)!}
           target="_blank"
           rel="noreferrer"
           id={`inbox__item-link--${aviso.id}`}

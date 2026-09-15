@@ -290,7 +290,6 @@ export function ExplorePage() {
   function clearFilters() {
     setMinPrice('');
     setMaxPrice('');
-    setInStockOnly(false);
     setCategory(null);
     setNearMe(null);
   }
