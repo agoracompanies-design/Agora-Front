@@ -47,11 +47,34 @@ export function useCategories() {
 }
 
 /**
+ * Saca la lista de categorías del catálogo, como último recurso.
+ *
+ * Solo aparecen las que tienen algún producto: una categoría aprobada y todavía
+ * vacía no sale por aquí. Es peor que la lista de verdad, pero infinitamente
+ * mejor que un desplegable en blanco.
+ */
+function desdeElCatalogo(productos: { category?: unknown }[]): Category[] {
+  const nombres = new Set<string>();
+  for (const p of productos) nombres.add(nombreDeCategoria(p as never));
+  return Array.from(nombres)
+    .filter(Boolean)
+    .sort((a, b) => a.localeCompare(b, 'es'))
+    .map((name) => ({ id: `derivada:${name}`, name, approved: true }) as Category);
+}
+
+/**
  * La lista real de categorías aprobadas, del backend.
  *
- * Esta sí sale de `GET /categories`: al publicar hay que poder elegir una
+ * Debería salir de `GET /categories`: al publicar hay que poder elegir una
  * aprobada aunque todavía no tenga productos, y sobre todo hay que evitar que
  * alguien «sugiera» una que ya existe.
+ *
+ * **Hoy ese endpoint responde 403 en el dominio normal.** El controlador entero
+ * de categorías quedó detrás de `AdminSubdomainGuard`, así que solo contesta
+ * por `administration.<dominio>`, y con él se fue también la lista que necesita
+ * cualquier vendedor para publicar: el selector salía vacío. Está pedido en
+ * `bugs-para-arreglar.md`; mientras tanto, si la llamada falla se deducen las
+ * categorías del catálogo, que sí se puede leer.
  */
 export function useApprovedCategories() {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -62,11 +85,26 @@ export function useApprovedCategories() {
     listCategories()
       .then((todas) => {
         if (cancelled) return;
-        setCategories(todas.filter((c) => c.approved).sort((a, b) => a.name.localeCompare(b.name, 'es')));
+        const aprobadas = todas.filter((c) => c.approved);
+        if (aprobadas.length > 0) {
+          setCategories(aprobadas.sort((a, b) => a.name.localeCompare(b.name, 'es')));
+          return;
+        }
+        // Responde, pero sin nada aprobado: se completa con el catálogo antes
+        // que dejar el selector en blanco.
+        return listProducts({ limit: 100 }).then((data) => {
+          if (!cancelled) setCategories(desdeElCatalogo(data.products));
+        });
       })
-      // Sin permiso o sin red se sigue pudiendo escribir la categoría a mano:
-      // el backend la resuelve igual con el nombre que se le mande.
-      .catch(() => setCategories([]))
+      .catch(() =>
+        listProducts({ limit: 100 })
+          .then((data) => {
+            if (!cancelled) setCategories(desdeElCatalogo(data.products));
+          })
+          // Ni una cosa ni la otra: se sigue pudiendo escribir la categoría a
+          // mano, que el backend la resuelve igual con el nombre que se le mande.
+          .catch(() => !cancelled && setCategories([])),
+      )
       .finally(() => !cancelled && setIsLoading(false));
     return () => {
       cancelled = true;
