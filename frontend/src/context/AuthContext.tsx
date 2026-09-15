@@ -36,7 +36,7 @@ interface AuthContextValue {
   isModerator: boolean;
   isAuthenticated: boolean;
   login: (username: string, password: string) => Promise<AuthUser>;
-  register: (username: string, password: string) => Promise<void>;
+  register: (username: string, password: string, contacto?: string) => Promise<void>;
   /** Cierra la sesión aquí y revoca el refresco en el servidor. */
   logout: () => Promise<void>;
   refreshSellerStatus: () => Promise<void>;
@@ -105,8 +105,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return response.user;
   }, []);
 
-  const register = useCallback(async (username: string, password: string) => {
-    await authApi.register(username, password);
+  const register = useCallback(async (username: string, password: string, contacto?: string) => {
+    await authApi.register(username, password, contacto);
   }, []);
 
   /** Deja esta sesión como si nunca hubiera existido, aquí y en el servidor. */

@@ -6,6 +6,8 @@ import { Input } from '@/components/ui/Field';
 import { PasswordField } from '@/components/ui/PasswordField';
 import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/context/AuthContext';
+import { CONTACTO_EN_REGISTRO_LISTO } from '@/api/auth';
+import { avisoDeContacto, contactoValido } from '@/lib/contacto-cuenta';
 import { soloUsuario } from '@/lib/validacion';
 import { createSubscription } from '@/api/subscription';
 import { TRIAL_PLAN, tipoDePlan } from '@/lib/plans';
@@ -27,6 +29,10 @@ export function RegisterPage() {
   const navigate = useNavigate();
 
   const [username, setUsername] = useState('');
+  // Correo o teléfono: con qué localizar a quien abre la cuenta. Solo se pide
+  // cuando el servidor sabe guardarlo; pedirlo para tirarlo daría la impresión
+  // de que la cuenta quedó verificada sin estarlo.
+  const [contacto, setContacto] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
@@ -35,13 +41,17 @@ export function RegisterPage() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError('');
+    if (CONTACTO_EN_REGISTRO_LISTO && !contactoValido(contacto)) {
+      setError(avisoDeContacto(contacto) ?? 'Revisa el correo o el teléfono');
+      return;
+    }
     if (password !== confirmPassword) {
       setError('Las contraseñas no coinciden');
       return;
     }
     setLoading(true);
     try {
-      await register(username, password);
+      await register(username, password, contacto);
       const nuevoUsuario = await login(username, password);
       // La prueba se concede al crear la cuenta: sin ella la app queda cerrada
       // detrás de las opciones de compra y nadie llega a ver nada. Vale para
@@ -96,6 +106,17 @@ export function RegisterPage() {
           onChange={(e) => setUsername(soloUsuario(e.target.value))}
           placeholder="tu_usuario"
         />
+        {CONTACTO_EN_REGISTRO_LISTO && (
+          <Input
+            label="Correo o teléfono"
+            required
+            autoComplete="email"
+            hint="Nos sirve para devolverte la cuenta si pierdes la contraseña."
+            value={contacto}
+            onChange={(e) => setContacto(e.target.value.trimStart())}
+            placeholder="tu@correo.cu o +53 5 555 5555"
+          />
+        )}
         <PasswordField
           label="Contraseña"
           required
