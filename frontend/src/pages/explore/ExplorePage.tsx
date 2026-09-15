@@ -20,6 +20,7 @@ import { useCategories } from '@/hooks/useCategories';
 import { useProductRatings } from '@/hooks/useProductRatings';
 import { nombreDeCategoria } from '@/lib/categorias';
 import { creaFiltro } from '@/lib/busqueda';
+import { pedirUbicacion, porQueFallo, ubicacionReciente } from '@/lib/ubicacion';
 
 // Dos filas por página: 4 columnas en escritorio. Con `auto-fill` el número
 // de columnas variaba con el ancho y las filas nunca cuadraban.
@@ -260,36 +261,29 @@ export function ExplorePage() {
       setNearMe(null);
       return;
     }
-    if (!navigator.geolocation) {
-      notify('Tu navegador no puede darnos tu ubicación', 'error');
+
+    // Si la portada de bienvenida ya la consiguió hace poco, se usa esa: ni
+    // permiso ni GPS ni espera.
+    const yaLaSabemos = ubicacionReciente();
+    if (yaLaSabemos) {
+      setNearMe(yaLaSabemos);
       return;
     }
+
     setLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setNearMe({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-        setLocating(false);
-      },
-      (error) => {
-        setLocating(false);
-        // Un solo mensaje para los tres casos dejaba al usuario sin saber qué
-        // hacer; sobre todo el primero, que no se arregla reintentando.
-        if (error.code === error.PERMISSION_DENIED) {
-          notify('Tienes la ubicación bloqueada para Agora. Actívala desde el candado de la barra de direcciones.', 'error');
-        } else if (error.code === error.TIMEOUT) {
-          notify('Tu ubicación está tardando demasiado. Vuelve a intentarlo o filtra por provincia.', 'error');
-        } else {
-          notify('No conseguimos tu ubicación. Revisa que el GPS esté encendido.', 'error');
-        }
-      },
-      {
-        timeout: 8000,
-        // Vale una posición de hasta cinco minutos. Así, si ya se concedió el
-        // permiso al entrar, esto responde al instante en vez de encender el
-        // GPS otra vez: en un teléfono modesto eso son varios segundos.
-        maximumAge: 5 * 60 * 1000,
-      },
-    );
+    pedirUbicacion()
+      .then(setNearMe)
+      .catch((error: unknown) => {
+        // `pedirUbicacion` rechaza con el error del navegador, salvo cuando no
+        // hay geolocalización: ahí manda un Error normal.
+        notify(
+          error instanceof Error
+            ? 'Tu navegador no puede darnos tu ubicación'
+            : porQueFallo(error as GeolocationPositionError),
+          'error',
+        );
+      })
+      .finally(() => setLocating(false));
   }
 
   function selectCategory(c: string) {

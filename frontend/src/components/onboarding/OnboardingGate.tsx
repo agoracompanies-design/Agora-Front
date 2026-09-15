@@ -4,6 +4,7 @@ import { Search, MapPin, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Logo } from '@/components/layout/Logo';
 import { useAuth } from '@/context/AuthContext';
+import { guardarUbicacion } from '@/lib/ubicacion';
 
 const STORAGE_KEY = 'agora_onboarded';
 
@@ -29,8 +30,11 @@ export function OnboardingGate({ children }: { children: ReactNode }) {
       return;
     }
     setPhase('loading');
+    // La posición se guarda en vez de tirarse: es lo que evita que el filtro
+    // «Cerca de mí» tenga que volver a encender el GPS un minuto después.
     navigator.geolocation.getCurrentPosition(
-      () => {
+      (pos) => {
+        guardarUbicacion({ lat: pos.coords.latitude, lng: pos.coords.longitude });
         setPhase('detected');
         setTimeout(finish, 700);
       },

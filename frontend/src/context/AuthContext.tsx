@@ -16,6 +16,7 @@ import type { Subscription } from '@/api/subscription';
 import { daAccesoDeNegocio } from '@/lib/plans';
 import { ApiError } from '@/api/client';
 import { isSeller as computeIsSeller, isModerator as computeIsModerator } from '@/lib/permissions';
+import { olvidarUbicacion } from '@/lib/ubicacion';
 
 // Agora no es una landing: sin sesión no se ve ninguna pantalla, solo el acceso.
 // Aquí vivía un usuario de vista previa que en `npm run dev` entraba solo y
@@ -114,6 +115,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     clearToken();
     clearRefreshToken();
     localStorage.removeItem('agora_user');
+    // La ubicación es de quien la compartió, no del equipo: se va con la sesión.
+    olvidarUbicacion();
     setUser(null);
   }, []);
 
