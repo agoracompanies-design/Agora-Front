@@ -1,13 +1,26 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import {
+  addFavoriteEnterprise,
+  addFavoriteProduct,
+  listFavoriteEnterprises,
+  listFavoriteProducts,
+  removeFavoriteEnterprise,
+  removeFavoriteProduct,
+} from '@/api/favorite';
 
 /**
- * Los favoritos son de cada cuenta, no del navegador.
+ * Los favoritos viven en el servidor desde el 2026-09-15.
  *
- * Se guardaban todos bajo una sola clave, así que en un equipo compartido —o
- * simplemente al cambiar de cuenta— lo guardado por uno aparecía en la sesión
- * del siguiente. Ahora la clave lleva el id del usuario.
+ * Antes solo estaban en el navegador, así que se perdían al cambiar de equipo
+ * o al limpiarlo. Ahora la lista buena es la de la API y lo de `localStorage`
+ * se queda como copia: es lo que se pinta mientras llega la respuesta —en una
+ * conexión mala eso son segundos de corazones apagados— y lo único que hay si
+ * la petición no llega.
+ *
+ * La clave local lleva el id del usuario: sin eso, en un equipo compartido lo
+ * guardado por uno aparecía en la sesión del siguiente.
  */
 const STORAGE_KEY = 'agora_favorites';
 /** Los negocios se guardan aparte: son otra lista y otra pantalla. */
@@ -60,9 +73,48 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
 
   // Al entrar o salir de una cuenta se cargan los suyos. Sin esto, la lista en
   // memoria seguiría siendo la del usuario anterior hasta recargar la página.
+  // Primero la copia local, que es instantánea; el servidor manda en cuanto
+  // conteste.
   useEffect(() => {
-    setFavorites(readFavorites(user?.id));
-    setFavoriteBusinesses(readFavorites(user?.id, STORAGE_KEY_NEGOCIOS));
+    const localesProductos = readFavorites(user?.id);
+    const localesNegocios = readFavorites(user?.id, STORAGE_KEY_NEGOCIOS);
+    setFavorites(localesProductos);
+    setFavoriteBusinesses(localesNegocios);
+    if (!user?.id) return;
+
+    let cancelado = false;
+    Promise.allSettled([listFavoriteProducts(), listFavoriteEnterprises()]).then(
+      ([productos, negocios]) => {
+        if (cancelado) return;
+
+        if (productos.status === 'fulfilled') {
+          const delServidor = productos.value.map((p) => p.idProduct);
+          setFavorites(delServidor);
+          // Lo que estaba guardado aquí de antes y el servidor no tiene se sube
+          // una vez, para que nadie pierda su lista al estrenar esto.
+          for (const id of localesProductos) {
+            if (!delServidor.includes(id)) addFavoriteProduct(id).catch(() => {});
+          }
+          if (localesProductos.some((id) => !delServidor.includes(id))) {
+            setFavorites([...new Set([...delServidor, ...localesProductos])]);
+          }
+        }
+
+        if (negocios.status === 'fulfilled') {
+          const delServidor = negocios.value.map((n) => n.idUserEnterprise);
+          setFavoriteBusinesses(delServidor);
+          for (const id of localesNegocios) {
+            if (!delServidor.includes(id)) addFavoriteEnterprise(id).catch(() => {});
+          }
+          if (localesNegocios.some((id) => !delServidor.includes(id))) {
+            setFavoriteBusinesses([...new Set([...delServidor, ...localesNegocios])]);
+          }
+        }
+      },
+    );
+    return () => {
+      cancelado = true;
+    };
   }, [user?.id]);
 
   useEffect(() => {
@@ -77,33 +129,77 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
     }
   }, [favorites, favoriteBusinesses, user?.id]);
 
-  const toggleFavorite = useCallback((productId: string) => {
-    setFavorites((prev) =>
-      prev.includes(productId) ? prev.filter((id) => id !== productId) : [...prev, productId],
-    );
-  }, []);
+  // El corazón se enciende en el acto y la petición va detrás: con la conexión
+  // de allá, esperar la respuesta para pintar sería medio segundo de nada. Si
+  // el servidor la rechaza se deshace, que es mejor que dejar encendido algo
+  // que no se guardó.
+  //
+  // La petición va FUERA del actualizador de estado. Dentro parece cómodo
+  // —ahí se sabe si estaba o no— pero React invoca ese actualizador dos veces
+  // en desarrollo, a propósito, para delatar justo esto: se mandaban dos altas
+  // por cada clic y quedaban dos filas del mismo favorito.
+  const toggleFavorite = useCallback(
+    (productId: string) => {
+      const estaba = favorites.includes(productId);
+      setFavorites((prev) =>
+        estaba ? prev.filter((id) => id !== productId) : [...new Set([...prev, productId])],
+      );
+      if (!user?.id) return;
+      const peticion = estaba ? removeFavoriteProduct(productId) : addFavoriteProduct(productId);
+      peticion.catch(() => {
+        setFavorites((actuales) =>
+          estaba ? [...new Set([...actuales, productId])] : actuales.filter((id) => id !== productId),
+        );
+      });
+    },
+    [favorites, user?.id],
+  );
 
   // Aquí solo se guardan ids, así que la lista puede quedar apuntando a
   // productos borrados: entonces el contador de la cabecera marcaba 1 y la
   // pantalla de favoritos salía vacía, porque cada una contaba una cosa
   // distinta. Quien resuelve los ids avisa de los que ya no existen.
-  const forgetFavorites = useCallback((productIds: string[]) => {
-    if (productIds.length === 0) return;
-    setFavorites((prev) => prev.filter((id) => !productIds.includes(id)));
-  }, []);
+  const forgetFavorites = useCallback(
+    (productIds: string[]) => {
+      if (productIds.length === 0) return;
+      setFavorites((prev) => prev.filter((id) => !productIds.includes(id)));
+      // También en el servidor: si no, vuelven en la siguiente carga.
+      if (user?.id) for (const id of productIds) removeFavoriteProduct(id).catch(() => {});
+    },
+    [user?.id],
+  );
 
   const isFavorite = useCallback((productId: string) => favorites.includes(productId), [favorites]);
 
-  const toggleFavoriteBusiness = useCallback((enterpriseId: string) => {
-    setFavoriteBusinesses((prev) =>
-      prev.includes(enterpriseId) ? prev.filter((id) => id !== enterpriseId) : [...prev, enterpriseId],
-    );
-  }, []);
+  const toggleFavoriteBusiness = useCallback(
+    (enterpriseId: string) => {
+      const estaba = favoriteBusinesses.includes(enterpriseId);
+      setFavoriteBusinesses((prev) =>
+        estaba ? prev.filter((id) => id !== enterpriseId) : [...new Set([...prev, enterpriseId])],
+      );
+      if (!user?.id) return;
+      const peticion = estaba
+        ? removeFavoriteEnterprise(enterpriseId)
+        : addFavoriteEnterprise(enterpriseId);
+      peticion.catch(() => {
+        setFavoriteBusinesses((actuales) =>
+          estaba
+            ? [...new Set([...actuales, enterpriseId])]
+            : actuales.filter((id) => id !== enterpriseId),
+        );
+      });
+    },
+    [favoriteBusinesses, user?.id],
+  );
 
-  const forgetFavoriteBusinesses = useCallback((enterpriseIds: string[]) => {
-    if (enterpriseIds.length === 0) return;
-    setFavoriteBusinesses((prev) => prev.filter((id) => !enterpriseIds.includes(id)));
-  }, []);
+  const forgetFavoriteBusinesses = useCallback(
+    (enterpriseIds: string[]) => {
+      if (enterpriseIds.length === 0) return;
+      setFavoriteBusinesses((prev) => prev.filter((id) => !enterpriseIds.includes(id)));
+      if (user?.id) for (const id of enterpriseIds) removeFavoriteEnterprise(id).catch(() => {});
+    },
+    [user?.id],
+  );
 
   const isFavoriteBusiness = useCallback(
     (enterpriseId: string) => favoriteBusinesses.includes(enterpriseId),
