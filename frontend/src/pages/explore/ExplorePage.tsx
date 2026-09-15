@@ -253,8 +253,15 @@ export function ExplorePage() {
   const visibleProducts = resultado.lista;
 
   function locateMe() {
+    // Es un filtro como los demás del panel, así que se apaga pulsándolo otra
+    // vez. Antes volvía a pedir la ubicación y se quedaba encendido: el único
+    // modo de quitarlo era «Limpiar», que se lleva por delante el resto.
+    if (nearMe) {
+      setNearMe(null);
+      return;
+    }
     if (!navigator.geolocation) {
-      notify('Tu navegador no soporta geolocalización', 'error');
+      notify('Tu navegador no puede darnos tu ubicación', 'error');
       return;
     }
     setLocating(true);
@@ -263,11 +270,25 @@ export function ExplorePage() {
         setNearMe({ lat: pos.coords.latitude, lng: pos.coords.longitude });
         setLocating(false);
       },
-      () => {
-        notify('No pudimos acceder a tu ubicación', 'error');
+      (error) => {
         setLocating(false);
+        // Un solo mensaje para los tres casos dejaba al usuario sin saber qué
+        // hacer; sobre todo el primero, que no se arregla reintentando.
+        if (error.code === error.PERMISSION_DENIED) {
+          notify('Tienes la ubicación bloqueada para Agora. Actívala desde el candado de la barra de direcciones.', 'error');
+        } else if (error.code === error.TIMEOUT) {
+          notify('Tu ubicación está tardando demasiado. Vuelve a intentarlo o filtra por provincia.', 'error');
+        } else {
+          notify('No conseguimos tu ubicación. Revisa que el GPS esté encendido.', 'error');
+        }
       },
-      { timeout: 8000 },
+      {
+        timeout: 8000,
+        // Vale una posición de hasta cinco minutos. Así, si ya se concedió el
+        // permiso al entrar, esto responde al instante en vez de encender el
+        // GPS otra vez: en un teléfono modesto eso son varios segundos.
+        maximumAge: 5 * 60 * 1000,
+      },
     );
   }
 
