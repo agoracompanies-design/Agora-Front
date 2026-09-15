@@ -332,6 +332,8 @@ export function ExplorePage() {
 
   return (
     <div>
+      {/* React 19 lo sube al <head>: cada ruta con su título. */}
+      <title>Explorar · Agora</title>
       {/* El h1 de la página no tiene por qué verse: era un titular decorativo
           y lo que manda aquí es el buscador. */}
       <h1 id="explore__title" className="explore__title sr-only">Explorar productos de tu ciudad</h1>

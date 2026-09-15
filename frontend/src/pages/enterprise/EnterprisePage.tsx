@@ -1,6 +1,8 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft, ExternalLink, Mail, MapPin, Phone, Store } from 'lucide-react';
+import { enlaceLlamada, telefonoLegible } from '@/lib/contacto';
+import { correoValido } from '@/lib/contacto-cuenta';
 import { getEnterprise } from '@/api/userEnterprise';
 import { listProducts } from '@/api/product';
 import { listServicesByEnterprise } from '@/api/service';
@@ -123,6 +125,8 @@ export function EnterprisePage() {
 
   return (
     <div>
+      {/* React 19 lo sube al <head>: el negocio da nombre a la pestaña. */}
+      <title>{`${enterprise.companyName} · Agora`}</title>
       <header ref={heroRef} id="business-hero" className="business-hero relative overflow-hidden border-b border-ink-200/70 bg-ink-100">
         {/* El mapa real del negocio hace de fondo. Se dibuja más ancho que el
             contenedor y anclado a la izquierda, así su centro —el marcador—
@@ -175,14 +179,22 @@ export function EnterprisePage() {
                       </dd>
                     </div>
                   )}
+                  {/* El teléfono y el correo los escribe el negocio a mano, así
+                      que se comprueban antes de convertirlos en un enlace: sin
+                      eso salía `tel:` seguido de lo que hubiera escrito. La
+                      ficha del producto ya lo hacía así; aquí no. */}
                   {enterprise.contact?.phone && (
                     <div className="flex items-center gap-2">
                       <dt className="sr-only">Teléfono</dt>
                       <Phone size={14} className="shrink-0" aria-hidden="true" />
                       <dd>
-                        <a href={`tel:${enterprise.contact.phone}`} className="hover:text-ink-900 hover:underline">
-                          {enterprise.contact.phone}
-                        </a>
+                        {enlaceLlamada(enterprise.contact.phone) ? (
+                          <a href={enlaceLlamada(enterprise.contact.phone)!} className="hover:text-ink-900 hover:underline">
+                            {telefonoLegible(enterprise.contact.phone)}
+                          </a>
+                        ) : (
+                          enterprise.contact.phone
+                        )}
                       </dd>
                     </div>
                   )}
@@ -191,9 +203,13 @@ export function EnterprisePage() {
                       <dt className="sr-only">Correo</dt>
                       <Mail size={14} className="shrink-0" aria-hidden="true" />
                       <dd>
-                        <a href={`mailto:${enterprise.contact.email}`} className="hover:text-ink-900 hover:underline">
-                          {enterprise.contact.email}
-                        </a>
+                        {correoValido(enterprise.contact.email) ? (
+                          <a href={`mailto:${enterprise.contact.email}`} className="hover:text-ink-900 hover:underline">
+                            {enterprise.contact.email}
+                          </a>
+                        ) : (
+                          enterprise.contact.email
+                        )}
                       </dd>
                     </div>
                   )}

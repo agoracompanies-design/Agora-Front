@@ -11,6 +11,11 @@ const CORREO = /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i;
 
 export type TipoDeContacto = 'correo' | 'telefono' | null;
 
+/** Si tiene forma de correo. Para decidir si se pinta como `mailto:`. */
+export function correoValido(valor: string | null | undefined): boolean {
+  return CORREO.test((valor ?? '').trim());
+}
+
 /** Qué escribió: un correo, un teléfono, o nada aprovechable todavía. */
 export function tipoDeContacto(valor: string): TipoDeContacto {
   const limpio = valor.trim();

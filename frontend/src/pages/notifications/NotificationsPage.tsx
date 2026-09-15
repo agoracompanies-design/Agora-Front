@@ -18,6 +18,8 @@ export function NotificationsPage() {
 
   return (
     <div id="notifications" className="notifications mx-auto max-w-3xl px-4 py-10 sm:px-6">
+      {/* React 19 lo sube al <head>: cada ruta con su título. */}
+      <title>Tus avisos · Agora</title>
       <header id="notifications__header" className="notifications__header flex items-start justify-between gap-4">
         <div>
           <h1 id="notifications__title" className="notifications__title text-2xl font-semibold text-ink-900">

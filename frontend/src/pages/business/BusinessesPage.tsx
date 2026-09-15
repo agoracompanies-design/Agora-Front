@@ -10,6 +10,8 @@ export function BusinessesPage() {
 
   return (
     <div id="businesses" className="businesses mx-auto max-w-6xl px-4 sm:px-6 py-8">
+      {/* React 19 lo sube al <head>: cada ruta con su título. */}
+      <title>Negocios · Agora</title>
       <Link to="/" className="businesses__back mb-4 inline-flex items-center gap-1.5 text-sm text-ink-500 hover:text-ink-900">
         <ArrowLeft size={14} aria-hidden="true" /> Volver a explorar
       </Link>

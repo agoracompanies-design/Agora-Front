@@ -97,6 +97,8 @@ export function AccountPage() {
 
   return (
     <div id="account" className="account mx-auto max-w-2xl px-4 sm:px-6 py-10 space-y-6">
+      {/* React 19 lo sube al <head>: cada ruta con su título. */}
+      <title>Tu cuenta · Agora</title>
       <div id="account__identity" className="account__identity flex items-center gap-4">
         <span id="account__initials" className="account__initials flex h-14 w-14 items-center justify-center rounded-full bg-primary text-lg font-semibold text-white">
           {initials(user.username)}

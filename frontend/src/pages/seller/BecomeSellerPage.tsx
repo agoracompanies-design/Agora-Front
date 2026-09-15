@@ -127,6 +127,8 @@ export function BecomeSellerPage() {
 
   return (
     <div id="sell" className="sell mx-auto max-w-2xl px-4 sm:px-6 py-12">
+      {/* React 19 lo sube al <head>: cada ruta con su título. */}
+      <title>Vender en Agora</title>
       <div id="sell__intro" className="sell__intro mb-10 text-center">
         <h1 id="sell__title" className="sell__title text-2xl font-semibold text-ink-900">Empieza a vender en Agora</h1>
         <p id="sell__subtitle" className="sell__subtitle mt-2 text-sm text-ink-500">Dos pasos y tu catálogo estará listo para tus clientes.</p>
