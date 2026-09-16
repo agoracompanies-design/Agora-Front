@@ -101,8 +101,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (response.refreshToken) setRefreshToken(response.refreshToken);
     localStorage.setItem('agora_user', JSON.stringify(response.user));
     setUser(response.user);
-    // Devuelto para quien lo necesite nada más entrar, como el alta de la
-    // prueba en el registro: el estado de React aún no se ha propagado.
+    // Devuelto para quien lo necesite nada más entrar: el estado de React aún
+    // no se ha propagado.
     return response.user;
   }, []);
 

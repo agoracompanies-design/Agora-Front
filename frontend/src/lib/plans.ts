@@ -58,7 +58,8 @@ export const SELLER_PLAN: PlanConfig = {
  * de pagar nada. Se guarda como una suscripción más, con coste cero.
  *
  * Desde el commit `641de2e` la crea el servidor al registrar la cuenta, con este
- * mismo nombre —así se sigue reconociendo— pero con 30 días, no 7.
+ * mismo nombre —así se sigue reconociendo—. Dura 7 días (decidido el
+ * 2026-09-16); ese commit aún da 30 y está pedido corregirlo en el backend.
  */
 export const TRIAL_PLAN: PlanConfig = {
   name: 'Prueba gratuita',
