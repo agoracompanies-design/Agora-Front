@@ -1,28 +1,22 @@
-import { useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { ShoppingBag } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
-import { useToast } from '@/context/ToastContext';
-import { createSubscription } from '@/api/subscription';
 import { Card } from '@/components/ui/Card';
 import { PageSpinner } from '@/components/ui/Spinner';
 import { PlanPicker } from '@/components/plans/PlanPicker';
 import { Button } from '@/components/ui/Button';
-import { BUYER_PLAN, SELLER_PLAN, getTier, tipoDePlan } from '@/lib/plans';
-import type { BillingCycle } from '@/lib/plans';
+import { BUYER_PLAN, SELLER_PLAN, enlaceParaSolicitar } from '@/lib/plans';
 
 export function PlansPage() {
-  const { user, isAuthenticated, isLoading, isSeller, tieneAcceso, logout, refreshSellerStatus } = useAuth();
-  const { notify } = useToast();
+  const { user, isAuthenticated, isLoading, isSeller, tieneAcceso, logout } = useAuth();
   const navigate = useNavigate();
-  const [submitting, setSubmitting] = useState(false);
 
   // Antes había un efecto que, al detectar CUALQUIER suscripción activa —
   // incluida la prueba—, echaba de aquí para atrás de inmediato. Eso dejaba
   // muerto el enlace «Elegir membresía» del carrusel de promociones para
   // cualquiera que ya tuviera algo: entraba y salía en el mismo instante, sin
-  // que el clic pareciera hacer nada. El caso de «me acabo de suscribir» ya lo
-  // resuelve `handleSubscribe` navegando a `/` explícitamente al terminar.
+  // que el clic pareciera hacer nada. Aquí ya no se activa nada: el plan se pide
+  // por WhatsApp y llega cuando el panel lo activa.
 
   if (isLoading) return <PageSpinner />;
   if (!isAuthenticated) return <Navigate to="/registrarse" replace />;
@@ -36,29 +30,6 @@ export function PlansPage() {
   // comprador. Ofrecer siempre el de comprador dejaba a un negocio pagando algo
   // que no le abría lo suyo.
   const plan = isSeller ? SELLER_PLAN : BUYER_PLAN;
-
-  async function handleSubscribe(cycle: BillingCycle) {
-    if (!user) return;
-    const tier = getTier(plan, cycle);
-    setSubmitting(true);
-    try {
-      await createSubscription({
-        userId: user.id,
-        name: `${plan.name} ${tier.label}`,
-        cost: tier.cost,
-        quantityAccounts: 1,
-        durationDays: tier.durationDays,
-        planType: tipoDePlan(plan),
-      });
-      await refreshSellerStatus();
-      notify('¡Membresía activada!');
-      navigate('/', { replace: true });
-    } catch (err) {
-      notify(err instanceof Error ? err.message : 'No se pudo activar la membresía', 'error');
-    } finally {
-      setSubmitting(false);
-    }
-  }
 
   return (
     <div id="plans-page" className="plans-page mx-auto max-w-2xl px-4 sm:px-6 py-12">
@@ -83,8 +54,10 @@ export function PlansPage() {
       </div>
 
       <Card className="p-6">
-        <PlanPicker plan={plan} onSubscribe={handleSubscribe} submitting={submitting} ctaLabel="Activar membresía" />
-        <p id="plans-page__note" className="plans-page__note mt-3 text-center text-xs text-ink-400">Se registrará tu suscripción; el cobro se gestiona fuera de la plataforma por ahora.</p>
+        {/* El plan no se activa desde aquí: se paga por WhatsApp y, confirmado el
+            pago, se activa desde el panel administrativo. */}
+        <PlanPicker plan={plan} enlace={(tier) => enlaceParaSolicitar(plan, tier, user?.username)} />
+        <p id="plans-page__note" className="plans-page__note mt-3 text-center text-xs text-ink-500">Te escribimos para confirmar el pago y activamos tu membresía.</p>
       </Card>
 
       <div id="plans-page__skip" className="plans-page__skip mt-6 flex items-center justify-center">

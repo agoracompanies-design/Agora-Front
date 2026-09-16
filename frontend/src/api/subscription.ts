@@ -72,6 +72,11 @@ export function getMySubscriptionHistory() {
   return apiClient.get<Subscription[]>('/subscription/history').then((res) => res.data);
 }
 
+/**
+ * Solo para el panel administrativo. Desde el commit `641de2e` el backend lo
+ * cierra a la app de clientes (403 fuera del subdominio de administración):
+ * la prueba la crea el servidor al registrar y los planes se piden por WhatsApp.
+ */
 export function createSubscription(input: SubscriptionInput) {
   return apiClient.post<Subscription>('/subscription', input).then((res) => res.data);
 }

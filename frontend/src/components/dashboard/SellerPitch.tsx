@@ -2,9 +2,8 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Building2, Check, LayoutDashboard, MessageCircle, Package, Store, Wrench } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
-import { SELLER_PLAN, getTier, monthlyEquivalent } from '@/lib/plans';
+import { SELLER_PLAN, enlaceParaSolicitar, getTier, monthlyEquivalent } from '@/lib/plans';
 import type { BillingCycle } from '@/lib/plans';
-import { WHATSAPP_VENTAS } from '@/lib/contacto';
 import { cn } from '@/lib/utils';
 
 /**
@@ -48,11 +47,7 @@ export function SellerPitch({
   const [cycle, setCycle] = useState<BillingCycle>('quarterly');
   const tier = getTier(SELLER_PLAN, cycle);
 
-  const mensaje = encodeURIComponent(
-    `Hola, quiero activar el Plan Vendedor de Agora (${tier.label}, ${tier.cost} USD por ${tier.durationDays} días).` +
-      (user ? ` Mi usuario es ${user.username}.` : ''),
-  );
-  const enlaceWhatsapp = `https://wa.me/${WHATSAPP_VENTAS}?text=${mensaje}`;
+  const enlaceWhatsapp = enlaceParaSolicitar(SELLER_PLAN, tier, user?.username);
 
   return (
     <div id="pitch" className="pitch space-y-10">

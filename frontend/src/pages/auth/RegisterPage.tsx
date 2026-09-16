@@ -9,8 +9,6 @@ import { useAuth } from '@/context/AuthContext';
 import { CONTACTO_EN_REGISTRO_LISTO } from '@/api/auth';
 import { avisoDeContacto, contactoValido } from '@/lib/contacto-cuenta';
 import { soloUsuario } from '@/lib/validacion';
-import { createSubscription } from '@/api/subscription';
-import { TRIAL_PLAN, tipoDePlan } from '@/lib/plans';
 
 /**
  * Crear cuenta: usuario y contraseña, nada más.
@@ -25,7 +23,7 @@ import { TRIAL_PLAN, tipoDePlan } from '@/lib/plans';
  * empresa desde dentro cuando le toque.
  */
 export function RegisterPage() {
-  const { register, login, refreshSellerStatus } = useAuth();
+  const { register, login } = useAuth();
   const navigate = useNavigate();
 
   const [username, setUsername] = useState('');
@@ -52,28 +50,9 @@ export function RegisterPage() {
     setLoading(true);
     try {
       await register(username, password, contacto);
-      const nuevoUsuario = await login(username, password);
-      // La prueba se concede al crear la cuenta: sin ella la app queda cerrada
-      // detrás de las opciones de compra y nadie llega a ver nada. Vale para
-      // todo durante una semana, panel de negocio incluido.
-      try {
-        const prueba = TRIAL_PLAN.tiers[0];
-        await createSubscription({
-          userId: nuevoUsuario.id,
-          name: TRIAL_PLAN.name,
-          cost: prueba.cost,
-          description: `Prueba de ${prueba.durationDays} días`,
-          quantityAccounts: 1,
-          durationDays: prueba.durationDays,
-          planType: tipoDePlan(TRIAL_PLAN),
-        });
-        await refreshSellerStatus();
-      } catch {
-        // Si el alta de la prueba falla, la cuenta ya existe: se sigue a las
-        // opciones de compra en vez de dejar el registro a medias.
-        navigate('/planes', { replace: true });
-        return;
-      }
+      // La prueba gratuita la crea el servidor al registrar la cuenta (desde el
+      // commit `641de2e`); al entrar, el contexto ya la carga con el resto.
+      await login(username, password);
       navigate('/', { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'No se pudo crear la cuenta');
