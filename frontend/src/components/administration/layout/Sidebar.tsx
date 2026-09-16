@@ -15,14 +15,11 @@ import { useTheme } from '@/context/ThemeContext';
 
 const NAV_ITEMS = [
   { to: '/administration', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/panel/negocios', icon: Building2, label: 'Negocios' },
-  { to: '/panel/usuarios', icon: Users, label: 'Usuarios' },
-  { to: '/panel/suscripciones', icon: CreditCard, label: 'Suscripciones' },
-  { to: '/panel/productos', icon: Package, label: 'Productos' },
-  { to: '/panel/servicios', icon: Wrench, label: 'Servicios' },
-  { to: '/panel/categorias', icon: Tag, label: 'Categorías' },
-  { to: '/panel/valoraciones', icon: Star, label: 'Valoraciones' },
-  { to: '/panel/ajustes', icon: Settings, label: 'Ajustes' },
+  { to: '/administration/negocios', icon: Building2, label: 'Negocios' },
+  { to: '/administration/usuarios', icon: Users, label: 'Usuarios' },
+  { to: '/administration/suscripciones', icon: CreditCard, label: 'Suscripciones' },
+  { to: '/administration/productos', icon: Package, label: 'Productos' },
+  { to: '/administration/servicios', icon: Wrench, label: 'Servicios' },
 ];
 
 const WAVES_LIGHT = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='800' viewBox='0 0 400 800' preserveAspectRatio='none'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%23dbeafe' stop-opacity='0.8'/%3E%3Cstop offset='100%25' stop-color='%23e0f2fe' stop-opacity='0.5'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M0 380 Q 100 220, 200 380 T 400 380 V 800 H 0 Z' fill='url(%23g)'/%3E%3Cpath d='M0 520 Q 100 380, 200 520 T 400 520 V 800 H 0 Z' fill='%23bfdbfe' fill-opacity='0.4'/%3E%3Cpath d='M0 640 Q 100 520, 200 640 T 400 640 V 800 H 0 Z' fill='%2393c5fd' fill-opacity='0.3'/%3E%3Cpath d='M0 740 Q 100 660, 200 740 T 400 740 V 800 H 0 Z' fill='%2360a5fa' fill-opacity='0.25'/%3E%3C/svg%3E")`;

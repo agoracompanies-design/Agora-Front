@@ -3,19 +3,7 @@ import { apiClient } from './client';
 export interface Subscription {
   idSubscription: string;
   userId: string;
-  /**
-   * A qué empresa pertenece la suscripción. En el diagrama acordado
-   * `Subscription` se conecta con `User` y con `UserEnterprise`, y es esa
-   * conexión la que dice de qué tipo es el plan. Ya llega rellena en las
-   * suscripciones nuevas. Ver `daAccesoDeNegocio`.
-   */
   userEnterpriseId?: string | null;
-  /**
-   * El mismo dato dicho de otra forma: `seller` si el usuario tenía empresa al
-   * contratar, `buyer` si no. Las suscripciones anteriores a que existiera la
-   * columna quedaron todas en `buyer`, incluidas las de vendedor, así que sola
-   * no basta para negar el acceso: se usa para concederlo, nunca para quitarlo.
-   */
   planType?: string | null;
   name: string;
   cost: number;
@@ -25,6 +13,15 @@ export interface Subscription {
   durationDays: number;
   createdAt: string;
   expiresAt: string | null;
+  user?: {
+    id: string;
+    name: string;
+    email: string;
+  } | null;
+  userEnterprise?: {
+    idUserEnterprise: string;
+    companyName: string;
+  } | null;
 }
 
 export interface SubscriptionInput {
@@ -34,23 +31,11 @@ export interface SubscriptionInput {
   description?: string;
   quantityAccounts: number;
   durationDays: number;
-  /**
-   * Qué clase de plan es. El servidor lo guarda tal cual y, si no llega, da por
-   * hecho `buyer`: sin esto, un Plan Vendedor quedaba archivado como si fuera de
-   * comprador. Lo pone quien crea la suscripción, que aquí es la aplicación y en
-   * su día será el panel administrativo al confirmar el pago.
-   */
   planType?: PlanType;
 }
 
 export type PlanType = 'buyer' | 'seller';
 
-/**
- * Quien lleva el estado es el backend: al pedir la suscripción activa la
- * verifica y, si ya venció, la guarda con `status: false`. Lo que no hace es
- * responder 404 en ese caso —devuelve la suscripción caducada—, así que aquí
- * se lee el campo en vez de dar por buena cualquier respuesta.
- */
 export function estaVigente(s: Subscription | null | undefined): boolean {
   return Boolean(s?.status);
 }
@@ -69,4 +54,19 @@ export function createSubscription(input: SubscriptionInput) {
 
 export function cancelSubscription(id: string) {
   return apiClient.delete<void>(`/subscription/${id}`).then((res) => res.data);
+}
+
+export function listAllSubscriptions() {
+  return apiClient
+    .get<Subscription[] | { data: Subscription[] } | { subscriptions: Subscription[] }>(
+      '/subscription/all',
+    )
+    .then((res) => {
+      const payload = res.data;
+      if (Array.isArray(payload)) return payload;
+      if (Array.isArray((payload as any)?.data)) return (payload as any).data;
+      if (Array.isArray((payload as any)?.subscriptions))
+        return (payload as any).subscriptions;
+      return [];
+    });
 }
