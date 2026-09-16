@@ -30,6 +30,7 @@ import { ServiceFormPage } from '@/pages/dashboard/ServiceFormPage';
 import { DashboardEnterprise } from '@/pages/dashboard/DashboardEnterprise';
 import { ModerationPage } from '@/pages/moderation/ModerationPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
+import { MainDashboard } from './pages/administration/MainDashboard';
 
 /** Enlaces antiguos: /tiendas/:id era la ficha del negocio antes del 2026-08-31. */
 function RedirigirANegocio() {
@@ -80,6 +81,10 @@ export default function App() {
                 <Route path="vender" element={<BecomeSellerPage />} />
                 <Route path="cuenta" element={<AccountPage />} />
                 <Route path="planes" element={<PlansPage />} />
+
+{/*Para panel administrativo*/
+                <Route path="administration" element={<MainDashboard />} />
+}
 
                 {/* El panel no se cierra con un guardia: DashboardLayout
                     enseña la página de venta a quien no puede administrar, y
