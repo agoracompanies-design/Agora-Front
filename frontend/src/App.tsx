@@ -1,3 +1,5 @@
+import { lazy, Suspense } from "react";
+import type { ComponentType } from "react";
 import {
   BrowserRouter,
   Navigate,
@@ -15,7 +17,6 @@ import { FavoritesProvider } from "@/context/FavoritesContext";
 import { OnboardingGate } from "@/components/onboarding/OnboardingGate";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { DashboardLayout as AdminLayout } from "@/components/administration/layout/DashboardLayout";
 import {
   ProtectedRoute,
   RequireModerator,
@@ -43,12 +44,33 @@ import { ServiceFormPage } from "@/pages/dashboard/ServiceFormPage";
 import { DashboardEnterprise } from "@/pages/dashboard/DashboardEnterprise";
 import { ModerationPage } from "@/pages/moderation/ModerationPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
-import { MainDashboard } from "./pages/administration/MainDashboard";
-import { BusinessListPage } from "./pages/administration/business/BusinessListPage";
-import { UsersListPage } from "./pages/administration/users/UsersListPage";
-import { ProductsListPage } from "./pages/administration/products/ProductsListPage";
-import { ServicesListPage } from "./pages/administration/services/ServicesListPage";
-import { SubscriptionsListPage } from "./pages/administration/subscription/SubscriptionsListPage";
+
+import { PageSpinner } from "@/components/ui/Spinner";
+
+/*
+ * El panel administrativo se carga solo si alguien entra en /administration.
+ *
+ * Importado de forma directa, el empaquetador lo metía entero —con `recharts`,
+ * la librería de gráficas— en el paquete principal, el que descarga cualquier
+ * cliente al abrir Agora aunque nunca vaya a ver el panel. Con `lazy` cada
+ * pieza queda en su propio fichero y el navegador lo pide al llegar a la ruta.
+ *
+ * `named` adapta las exportaciones con nombre, que es como están escritas estas
+ * páginas, a lo que espera `lazy` (una exportación por defecto).
+ */
+function named<T extends Record<string, ComponentType>>(cargar: () => Promise<T>, nombre: keyof T) {
+  return lazy(() => cargar().then((m) => ({ default: m[nombre] })));
+}
+const AdminLayout = named(() => import("@/components/administration/layout/DashboardLayout"), "DashboardLayout");
+const MainDashboard = named(() => import("./pages/administration/MainDashboard"), "MainDashboard");
+const BusinessListPage = named(() => import("./pages/administration/business/BusinessListPage"), "BusinessListPage");
+const UsersListPage = named(() => import("./pages/administration/users/UsersListPage"), "UsersListPage");
+const ProductsListPage = named(() => import("./pages/administration/products/ProductsListPage"), "ProductsListPage");
+const ServicesListPage = named(() => import("./pages/administration/services/ServicesListPage"), "ServicesListPage");
+const SubscriptionsListPage = named(
+  () => import("./pages/administration/subscription/SubscriptionsListPage"),
+  "SubscriptionsListPage",
+);
 
 /** Enlaces antiguos: /tiendas/:id era la ficha del negocio antes del 2026-08-31. */
 function RedirigirANegocio() {
@@ -165,7 +187,11 @@ export default function App() {
                             {/* Panel administrativo — DENTRO del AppLayout para mantener el header global */}
                             <Route
                               path="administration"
-                              element={<AdminLayout />}
+                              element={
+                                <Suspense fallback={<PageSpinner />}>
+                                  <AdminLayout />
+                                </Suspense>
+                              }
                             >
                               <Route index element={<MainDashboard />} />
                               <Route
