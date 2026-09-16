@@ -13,11 +13,12 @@ const VOTOS_PARA_ASENTARSE = 10;
  * de la ventana: así las dos filas y la paginación caben en pantalla también en
  * portátiles de 1366 × 768, donde antes la paginación quedaba 51 px por debajo.
  *
- * `50dvh - 184px` sale de repartir la pantalla entre dos filas: cabecera (65),
+ * `50dvh - 200px` sale de repartir la pantalla entre dos filas: cabecera (65),
  * separación de filas (16), paginación con su margen (48), un respiro arriba y
- * abajo (16) y, por fila, el cuerpo de la tarjeta con sus bordes (106).
+ * abajo (16) y, por fila, el cuerpo fijo de la tarjeta más sus bordes (122),
+ * redondeado con unos píxeles de margen.
  *
- * - Mínimo 110 px: en pantallas muy bajas deja de encoger y se hace scroll,
+ * - Mínimo 100 px: en pantallas muy bajas deja de encoger y se hace scroll,
  *   antes que una foto convertida en tira.
  * - Máximo 3:2 del ancho de la tarjeta (`66.667cqw`, medido sobre la tarjeta,
  *   que es contenedor): en pantallas altas queda exactamente como antes.
@@ -26,7 +27,7 @@ const VOTOS_PARA_ASENTARSE = 10;
  * tableta y móvil son tres y cuatro filas: no tiene sentido hacerlas caber.
  * Compartido con el esqueleto de carga para que no salte al llegar los datos.
  */
-export const FOTO_COMPACTA_LG = 'lg:aspect-auto lg:h-[clamp(110px,calc(50dvh-184px),66.667cqw)]';
+export const FOTO_COMPACTA_LG = 'lg:aspect-auto lg:h-[clamp(100px,calc(50dvh-200px),66.667cqw)]';
 
 interface ProductCardProps {
   product: Product;
@@ -152,7 +153,16 @@ export function ProductCard({
 
       <div
         id={`product__body--${product.idProduct}`}
-        className={cn('product__body flex flex-1 flex-col', compacta ? 'gap-1 p-2.5' : 'gap-1.5 p-3')}
+        className={cn(
+          'product__body flex flex-col',
+          // En la rejilla, el cuerpo mide siempre lo mismo: lo que ocupa con el
+          // nombre a dos líneas (120 px). Si no, una página con nombres largos
+          // tiene filas más altas que otra y la paginación sube y baja al
+          // cambiar de página. Con nombres cortos, lo que sobra queda sobre el
+          // precio, que ya va empujado abajo, así precio y tienda se alinean.
+          // `flex-none` y no `flex-1`: con base 0 la altura fija no se respeta.
+          compacta ? 'h-[7.5rem] flex-none gap-1 overflow-hidden p-2.5' : 'flex-1 gap-1.5 p-3',
+        )}
       >
         <h3
           id={`product__name--${product.idProduct}`}

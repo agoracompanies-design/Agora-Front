@@ -15,7 +15,7 @@ export function ProductCardSkeleton({ compacta = false }: { compacta?: boolean }
       <Skeleton
         className={cn('w-full flex-auto min-h-0 rounded-none', compacta ? `aspect-[3/2] ${FOTO_COMPACTA_LG}` : 'aspect-[4/3]')}
       />
-      <div className={cn('flex flex-col', compacta ? 'gap-1 p-2.5' : 'gap-1.5 p-3')}>
+      <div className={cn('flex flex-col', compacta ? 'h-[7.5rem] flex-none gap-1 overflow-hidden p-2.5' : 'gap-1.5 p-3')}>
         <Skeleton className="h-4 w-4/5" />
         <Skeleton className="h-4 w-1/2" />
         <Skeleton className="h-3 w-full" />

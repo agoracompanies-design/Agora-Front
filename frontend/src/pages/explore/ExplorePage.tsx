@@ -20,6 +20,7 @@ import { useCategories } from '@/hooks/useCategories';
 import { useProductRatings } from '@/hooks/useProductRatings';
 import { nombreDeCategoria } from '@/lib/categorias';
 import { creaFiltro, normalizar } from '@/lib/busqueda';
+import { cn } from '@/lib/utils';
 import { PROVINCIAS } from '@/lib/provincias';
 import { municipiosDe } from '@/lib/municipios';
 import { pedirUbicacion, porQueFallo, ubicacionReciente } from '@/lib/ubicacion';
@@ -447,7 +448,19 @@ export function ExplorePage() {
                     Nada coincide exactamente con «{search}». Estos son los resultados más parecidos.
                   </p>
                 )}
-                <div id="explore__grid" className="explore__grid grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+                {/* Con varias páginas, el hueco de una página entera queda
+                    reservado aunque la última traiga menos productos: filas
+                    explícitas de igual alto (8 = 4×2, 3×3 y 2×4), para que la
+                    paginación y lo de debajo no suban y bajen al pasar de
+                    página. Con una sola página no hay a dónde saltar, y
+                    reservar dejaría un hueco en blanco bajo pocos resultados. */}
+                <div
+                  id="explore__grid"
+                  className={cn(
+                    'explore__grid grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4',
+                    totalPages > 1 && 'grid-rows-4 sm:grid-rows-3 lg:grid-rows-2',
+                  )}
+                >
                   {productosDeLaPagina.map((product) => (
                     <ProductCard
                       key={product.idProduct}
