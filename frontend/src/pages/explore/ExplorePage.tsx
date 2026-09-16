@@ -427,7 +427,7 @@ export function ExplorePage() {
             {isLoading ? (
               <div id="explore__grid-loading" className="explore__grid grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
                 {Array.from({ length: PAGE_SIZE }).map((_, i) => (
-                  <ProductCardSkeleton key={i} />
+                  <ProductCardSkeleton key={i} compacta />
                 ))}
               </div>
             ) : visibleProducts.length === 0 ? (

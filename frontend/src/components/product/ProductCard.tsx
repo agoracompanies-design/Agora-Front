@@ -8,6 +8,26 @@ import { useFavorites } from '@/context/FavoritesContext';
 /** Por debajo de estas calificaciones, un producto se considera recién llegado. */
 const VOTOS_PARA_ASENTARSE = 10;
 
+/**
+ * La altura de la foto en la rejilla de Explorar, en escritorio, ligada al alto
+ * de la ventana: así las dos filas y la paginación caben en pantalla también en
+ * portátiles de 1366 × 768, donde antes la paginación quedaba 51 px por debajo.
+ *
+ * `50dvh - 184px` sale de repartir la pantalla entre dos filas: cabecera (65),
+ * separación de filas (16), paginación con su margen (48), un respiro arriba y
+ * abajo (16) y, por fila, el cuerpo de la tarjeta con sus bordes (106).
+ *
+ * - Mínimo 110 px: en pantallas muy bajas deja de encoger y se hace scroll,
+ *   antes que una foto convertida en tira.
+ * - Máximo 3:2 del ancho de la tarjeta (`66.667cqw`, medido sobre la tarjeta,
+ *   que es contenedor): en pantallas altas queda exactamente como antes.
+ *
+ * Solo desde `lg`, que es donde la página muestra dos filas de cuatro. En
+ * tableta y móvil son tres y cuatro filas: no tiene sentido hacerlas caber.
+ * Compartido con el esqueleto de carga para que no salte al llegar los datos.
+ */
+export const FOTO_COMPACTA_LG = 'lg:aspect-auto lg:h-[clamp(110px,calc(50dvh-184px),66.667cqw)]';
+
 interface ProductCardProps {
   product: Product;
   /**
@@ -69,6 +89,8 @@ export function ProductCard({
       to={`/productos/${product.idProduct}`}
       className={cn(
         'product group flex h-full flex-col overflow-hidden rounded-xl border shadow-soft transition-all hover:-translate-y-0.5 hover:shadow-card',
+        // Contenedor para que la foto compacta mida su máximo sobre la tarjeta.
+        compacta && '@container',
         agotadoResaltado
           ? 'border-red-300 bg-red-50 dark:border-red-900/60 dark:bg-red-950/30'
           : 'border-ink-200/80 bg-ink-50',
@@ -77,7 +99,7 @@ export function ProductCard({
       <div
         className={cn(
           'product__image relative w-full flex-auto min-h-0 overflow-hidden',
-          compacta ? 'aspect-[3/2]' : 'aspect-[4/3]',
+          compacta ? `aspect-[3/2] ${FOTO_COMPACTA_LG}` : 'aspect-[4/3]',
           agotadoResaltado ? 'bg-red-100/60 dark:bg-red-950/40' : 'bg-ink-100',
         )}
       >
