@@ -4,6 +4,7 @@ import type { CategoryCount } from '@/hooks/useCategories';
 import { cn, soloPrecio } from '@/lib/utils';
 import { PROVINCIAS } from '@/lib/provincias';
 import { municipiosDe } from '@/lib/municipios';
+import { ZoneSelect } from '@/components/explore/ZoneSelect';
 
 export type SortOrder = 'asc' | 'desc';
 /**
@@ -166,18 +167,28 @@ export function FiltersPanel({
   const campo =
     'h-[35px] w-full min-w-0 rounded-lg border border-ink-200 bg-ink-50 px-[9px] text-[13px] text-ink-900 placeholder:text-ink-400 outline-none focus:border-primary';
   /**
-   * Un desplegable de zona. En la barra lleva la forma de los chips —misma
-   * altura, mismo encendido— y el ancho de su opción más larga, para que no
-   * corte el texto. En la hoja del móvil, campo entero: ahí se toca con el dedo.
+   * El botón de un desplegable de zona. En la barra lleva la forma de los chips
+   * —misma altura, mismo encendido—; en la hoja del móvil, campo entero: ahí se
+   * toca con el dedo.
    */
   const selector = (activo: boolean) =>
     enFila
       ? cn(
-          'max-w-full cursor-pointer rounded-full border-0 py-[3px] pl-[11px] pr-1.5 text-[11px] font-medium outline-none transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-primary/40',
+          'cursor-pointer rounded-full py-[3px] pl-[11px] pr-2 text-[11px] font-medium outline-none transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-primary/40',
           activo ? 'bg-primary text-white' : 'bg-primary/15 text-ink-900 hover:bg-primary/25',
         )
       : cn(campo, 'cursor-pointer', activo && 'border-primary bg-primary/10 font-medium');
   const conCuenta = (nombre: string, n: number | undefined) => `${nombre} (${n ?? 0})`;
+  const opcionesProvincia = [
+    { valor: '', texto: conCuenta('Todas las provincias', conteoZona.total) },
+    ...PROVINCIAS.map((p) => ({ valor: p, texto: conCuenta(p, conteoZona.provincias[p]) })),
+  ];
+  const opcionesMunicipio = provincia
+    ? [
+        { valor: '', texto: conCuenta('Todos los municipios', conteoZona.provincias[provincia]) },
+        ...municipiosDe(provincia).map((m) => ({ valor: m, texto: conCuenta(m, conteoZona.municipios[m]) })),
+      ]
+    : [];
 
   return (
     <div
@@ -271,39 +282,31 @@ export function FiltersPanel({
             {locating ? 'Buscando…' : 'Cerca de mí'}
           </Chip>
 
-          {/* La zona se elige con desplegables nativos: son 16 provincias y hasta
-              19 municipios, demasiados para chips. «Todas las provincias» es no
+          {/* La zona se elige con desplegables: son 16 provincias y hasta 19
+              municipios, demasiados para chips. «Todas las provincias» es no
               filtrar, pero se dice en voz alta para que se vea que el filtro
               existe y en qué está. El municipio solo aparece con una provincia
               elegida: sin ella no hay lista que ofrecer. */}
-          <label htmlFor={uid('filters__province')} className="sr-only">Provincia</label>
-          <select
+          <ZoneSelect
             id={uid('filters__province')}
-            value={provincia}
-            onChange={(e) => onProvincia(e.target.value)}
-            className={cn('filters__province', selector(Boolean(provincia)))}
-          >
-            <option value="">{conCuenta('Todas las provincias', conteoZona.total)}</option>
-            {PROVINCIAS.map((p) => (
-              <option key={p} value={p}>{conCuenta(p, conteoZona.provincias[p])}</option>
-            ))}
-          </select>
+            label="Provincia"
+            valor={provincia}
+            opciones={opcionesProvincia}
+            onCambio={onProvincia}
+            className={enFila ? undefined : 'w-full'}
+            claseBoton={cn('filters__province', selector(Boolean(provincia)))}
+          />
 
           {provincia && (
-            <>
-              <label htmlFor={uid('filters__municipality')} className="sr-only">Municipio de {provincia}</label>
-              <select
-                id={uid('filters__municipality')}
-                value={municipio}
-                onChange={(e) => onMunicipio(e.target.value)}
-                className={cn('filters__municipality', selector(Boolean(municipio)))}
-              >
-                <option value="">{conCuenta('Todos los municipios', conteoZona.provincias[provincia])}</option>
-                {municipiosDe(provincia).map((m) => (
-                  <option key={m} value={m}>{conCuenta(m, conteoZona.municipios[m])}</option>
-                ))}
-              </select>
-            </>
+            <ZoneSelect
+              id={uid('filters__municipality')}
+              label={`Municipio de ${provincia}`}
+              valor={municipio}
+              opciones={opcionesMunicipio}
+              onCambio={onMunicipio}
+              className={enFila ? undefined : 'w-full'}
+              claseBoton={cn('filters__municipality', selector(Boolean(municipio)))}
+            />
           )}
         </div>
 
