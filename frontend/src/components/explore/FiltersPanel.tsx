@@ -175,9 +175,14 @@ export function FiltersPanel({
     enFila
       ? cn(
           'cursor-pointer rounded-full py-[3px] pl-[11px] pr-2 text-[11px] font-medium outline-none transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-primary/40',
-          activo ? 'bg-primary text-white' : 'bg-primary/15 text-ink-900 hover:bg-primary/25',
+          // Apagado —«Todas las provincias», «Todos los municipios»— va un punto
+          // más claro que los chips de al lado, para que se distinga que es un
+          // desplegable. «Más claro» es menos tinte en modo claro y más en oscuro.
+          activo
+            ? 'bg-primary text-white'
+            : 'bg-primary/10 text-ink-900 hover:bg-primary/20 dark:bg-primary/25 dark:hover:bg-primary/35',
         )
-      : cn(campo, 'cursor-pointer', activo && 'border-primary bg-primary/10 font-medium');
+      : cn(campo, 'cursor-pointer', activo ? 'border-primary bg-primary/10 font-medium' : 'dark:bg-ink-100');
   const conCuenta = (nombre: string, n: number | undefined) => `${nombre} (${n ?? 0})`;
   const opcionesProvincia = [
     { valor: '', texto: conCuenta('Todas las provincias', conteoZona.total) },
