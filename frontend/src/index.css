@@ -4,6 +4,17 @@
    a `.dark` class, toggled by ThemeContext — not by OS preference alone. */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Le dice al navegador en qué modo está la página, para sus controles nativos:
+   la lista desplegable de un <select>, las barras de desplazamiento, los
+   selectores de fecha. Sin esto los pintaba siempre en claro, y en modo oscuro
+   la lista de un <select> salía con texto claro sobre fondo claro. */
+:root {
+  color-scheme: light;
+}
+:root.dark {
+  color-scheme: dark;
+}
+
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "SF Pro Display", sans-serif;
   --font-display: "Urbanist", "Inter", ui-sans-serif, system-ui, sans-serif;
@@ -329,3 +340,4 @@
     }
   }
 }
+

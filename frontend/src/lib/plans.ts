@@ -1,3 +1,5 @@
+import { WHATSAPP_VENTAS } from './contacto';
+
 export type BillingCycle = 'monthly' | 'quarterly' | 'yearly';
 
 export interface PlanTier {
@@ -54,6 +56,10 @@ export const SELLER_PLAN: PlanConfig = {
  * La prueba se concede sola al crear la cuenta y vale para todo, panel de
  * negocio incluido: la idea es que un vendedor pueda publicar su catálogo antes
  * de pagar nada. Se guarda como una suscripción más, con coste cero.
+ *
+ * Desde el commit `641de2e` la crea el servidor al registrar la cuenta, con este
+ * mismo nombre —así se sigue reconociendo—. Dura 7 días (decidido el
+ * 2026-09-16); ese commit aún da 30 y está pedido corregirlo en el backend.
  */
 export const TRIAL_PLAN: PlanConfig = {
   name: 'Prueba gratuita',
@@ -120,6 +126,20 @@ type PlanReconocible =
 
 export function getTier(plan: PlanConfig, cycle: BillingCycle): PlanTier {
   return plan.tiers.find((t) => t.cycle === cycle) ?? plan.tiers[0];
+}
+
+/**
+ * El enlace de WhatsApp para pedir un plan, con el mensaje ya escrito.
+ *
+ * Desde el commit `641de2e` del backend un cliente ya no puede activarse un plan:
+ * `POST /subscription` es solo del panel administrativo. El cobro va por
+ * WhatsApp y, confirmado el pago, el administrador lo activa desde el panel.
+ */
+export function enlaceParaSolicitar(plan: PlanConfig, tier: PlanTier, usuario?: string): string {
+  const mensaje =
+    `Hola, quiero activar el ${plan.name} de Agora (${tier.label}, ${tier.cost} USD por ${tier.durationDays} días).` +
+    (usuario ? ` Mi usuario es ${usuario}.` : '');
+  return `https://wa.me/${WHATSAPP_VENTAS}?text=${encodeURIComponent(mensaje)}`;
 }
 
 export function monthlyEquivalent(tier: PlanTier): number {

@@ -25,6 +25,15 @@ export interface Subscription {
   durationDays: number;
   createdAt: string;
   expiresAt: string | null;
+  user?: {
+    id: string;
+    name: string;
+    email: string;
+  } | null;
+  userEnterprise?: {
+    idUserEnterprise: string;
+    companyName: string;
+  } | null;
 }
 
 export interface SubscriptionInput {
@@ -63,10 +72,30 @@ export function getMySubscriptionHistory() {
   return apiClient.get<Subscription[]>('/subscription/history').then((res) => res.data);
 }
 
+/**
+ * Solo para el panel administrativo. Desde el commit `641de2e` el backend lo
+ * cierra a la app de clientes (403 fuera del subdominio de administración):
+ * la prueba la crea el servidor al registrar y los planes se piden por WhatsApp.
+ */
 export function createSubscription(input: SubscriptionInput) {
   return apiClient.post<Subscription>('/subscription', input).then((res) => res.data);
 }
 
 export function cancelSubscription(id: string) {
   return apiClient.delete<void>(`/subscription/${id}`).then((res) => res.data);
+}
+
+export function listAllSubscriptions() {
+  return apiClient
+    .get<Subscription[] | { data: Subscription[] } | { subscriptions: Subscription[] }>(
+      '/subscription/all',
+    )
+    .then((res) => {
+      const payload = res.data;
+      if (Array.isArray(payload)) return payload;
+      if (Array.isArray((payload as any)?.data)) return (payload as any).data;
+      if (Array.isArray((payload as any)?.subscriptions))
+        return (payload as any).subscriptions;
+      return [];
+    });
 }

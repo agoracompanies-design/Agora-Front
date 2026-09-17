@@ -1,20 +1,22 @@
 import { useState } from 'react';
-import { Check } from 'lucide-react';
-import type { BillingCycle, PlanConfig } from '@/lib/plans';
+import { Check, MessageCircle } from 'lucide-react';
+import type { BillingCycle, PlanConfig, PlanTier } from '@/lib/plans';
 import { CYCLE_LABELS, getTier } from '@/lib/plans';
-import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/utils';
 
 const CYCLES: BillingCycle[] = ['monthly', 'quarterly', 'yearly'];
 
 interface PlanPickerProps {
   plan: PlanConfig;
-  onSubscribe: (cycle: BillingCycle) => void;
-  submitting?: boolean;
+  /**
+   * A dónde lleva el botón con el ciclo elegido. Es un enlace y no una acción:
+   * el plan no se activa aquí, se pide por WhatsApp y lo activa el panel.
+   */
+  enlace: (tier: PlanTier) => string;
   ctaLabel?: string;
 }
 
-export function PlanPicker({ plan, onSubscribe, submitting, ctaLabel = 'Continuar' }: PlanPickerProps) {
+export function PlanPicker({ plan, enlace, ctaLabel = 'Solicitar por WhatsApp' }: PlanPickerProps) {
   const [cycle, setCycle] = useState<BillingCycle>('monthly');
   const tier = getTier(plan, cycle);
 
@@ -51,9 +53,16 @@ export function PlanPicker({ plan, onSubscribe, submitting, ctaLabel = 'Continua
         ))}
       </ul>
 
-      <Button className="mt-6 w-full" size="lg" loading={submitting} onClick={() => onSubscribe(cycle)}>
+      <a
+        href={enlace(tier)}
+        target="_blank"
+        rel="noreferrer"
+        id="plan__request"
+        className="plan__request mt-6 inline-flex h-12 w-full items-center justify-center gap-2 rounded-3xl bg-primary px-8 text-base font-medium text-white shadow-soft transition-colors hover:bg-primary-dark"
+      >
+        <MessageCircle size={18} aria-hidden="true" />
         {ctaLabel}
-      </Button>
+      </a>
     </div>
   );
 }

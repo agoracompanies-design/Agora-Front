@@ -43,23 +43,19 @@ export function enterpriseLogoUrl(logo: string | null | undefined): string | nul
 }
 
 /**
- * Prepara el cuerpo: con logo va en multipart, como las fotos de producto; sin
- * él —o mientras el servidor no lo admita— se manda el JSON de siempre, que es
- * más barato y es lo único que hoy entiende la API.
+ * El multipart lleva el logo y nada más.
+ *
+ * `address` y `contact` son objetos, y en multipart solo pueden viajar como
+ * texto JSON, que el servidor no sabe leer: el `PATCH` responde 400 («address
+ * must be an object») y el alta responde 200 pero los guarda vacíos. Medido el
+ * 2026-09-16 contra `641de2e`. Así que los datos van siempre en JSON y el logo,
+ * si lo hay, en una petición aparte.
  */
-function cuerpo(input: Partial<UserEnterpriseInput>) {
-  const { logo, ...resto } = input;
-  if (!LOGO_DE_EMPRESA_LISTO || !logo) return { datos: resto, opciones: undefined };
-
+function soloLogo(logo: File) {
   const form = new FormData();
   // El servidor lo espera en `image`, el mismo nombre que la foto de producto.
   form.append('image', logo);
-  for (const [clave, valor] of Object.entries(resto)) {
-    if (valor === undefined || valor === null) continue;
-    // `address` y `contact` son objetos: viajan como JSON dentro del campo.
-    form.append(clave, typeof valor === 'object' ? JSON.stringify(valor) : String(valor));
-  }
-  return { datos: form, opciones: { headers: { 'Content-Type': 'multipart/form-data' } } };
+  return form;
 }
 
 /**
@@ -82,13 +78,8 @@ async function subirLogoAparte(empresa: UserEnterprise, logo: File): Promise<Use
 
 export async function createEnterprise(input: UserEnterpriseInput): Promise<UserEnterprise> {
   const { logo, ...sinLogo } = input;
-  const { datos, opciones } = cuerpo(sinLogo);
   const respuesta = await apiClient
-    .post<UserEnterprise | { enterprise: UserEnterprise; accessToken?: string }>(
-      '/user-enterprise',
-      datos,
-      opciones,
-    )
+    .post<UserEnterprise | { enterprise: UserEnterprise; accessToken?: string }>('/user-enterprise', sinLogo)
     .then((res) => res.data);
 
   // Dar de alta la empresa concede los permisos para publicar, pero quien los
@@ -123,9 +114,32 @@ export function getEnterprise(id: string) {
   return apiClient.get<UserEnterprise>(`/user-enterprise/public/${id}`).then((res) => res.data);
 }
 
-export function updateEnterprise(id: string, input: Partial<UserEnterpriseInput>) {
-  const { datos, opciones } = cuerpo(input);
-  return apiClient.patch<UserEnterprise>(`/user-enterprise/${id}`, datos, opciones).then((res) => res.data);
+/**
+ * Guarda los cambios de la empresa: primero los datos en JSON y después, si se
+ * eligió uno, el logo solo en multipart (ver `soloLogo()`). Devuelve la empresa
+ * tal como quedó tras la última petición.
+ */
+export async function updateEnterprise(id: string, input: Partial<UserEnterpriseInput>): Promise<UserEnterprise> {
+  const { logo, ...datos } = input;
+  const ruta = `/user-enterprise/${id}`;
+  let empresa: UserEnterprise | undefined;
+  if (Object.values(datos).some((v) => v !== undefined)) {
+    empresa = await apiClient.patch<UserEnterprise>(ruta, datos).then((res) => res.data);
+  }
+  if (LOGO_DE_EMPRESA_LISTO && logo) {
+    try {
+      empresa = await apiClient
+        .patch<UserEnterprise>(ruta, soloLogo(logo), { headers: { 'Content-Type': 'multipart/form-data' } })
+        .then((res) => res.data);
+    } catch (error) {
+      // Si los datos ya entraron, decirlo: un «no se pudo actualizar» a secas
+      // haría creer que no se guardó nada y se repetiría el cambio a ciegas.
+      if (empresa) throw new Error('Los datos se guardaron, pero el logo no se pudo subir');
+      throw error;
+    }
+  }
+  // Sin datos ni logo no hay nada que mandar: se relee para devolver lo mismo.
+  return empresa ?? getMyEnterprise();
 }
 
 export function deleteEnterprise(id: string) {

@@ -19,7 +19,11 @@ import { useAuth } from '@/context/AuthContext';
 import { useCategories } from '@/hooks/useCategories';
 import { useProductRatings } from '@/hooks/useProductRatings';
 import { nombreDeCategoria } from '@/lib/categorias';
-import { creaFiltro } from '@/lib/busqueda';
+import { creaFiltro, normalizar } from '@/lib/busqueda';
+import { cn } from '@/lib/utils';
+import { PROVINCIAS } from '@/lib/provincias';
+import { municipiosDe } from '@/lib/municipios';
+import { pedirUbicacion, porQueFallo, ubicacionReciente } from '@/lib/ubicacion';
 
 // Dos filas por página: 4 columnas en escritorio. Con `auto-fill` el número
 // de columnas variaba con el ancho y las filas nunca cuadraban.
@@ -35,6 +39,25 @@ const PAGE_SIZE = COLUMNAS * 2;
  */
 const POR_BLOQUE = 200;
 const SCROLL_KEY = 'agora_explorar_scroll';
+
+/** La provincia de la URL, si es una de verdad; si no, ninguna. */
+function provinciaDeUrl(valor: string | null): string {
+  return valor && (PROVINCIAS as readonly string[]).includes(valor) ? valor : '';
+}
+
+/** El municipio de la URL, solo si pertenece a esa provincia. */
+function municipioDeUrl(provincia: string, valor: string | null): string {
+  return valor && municipiosDe(provincia).includes(valor) ? valor : '';
+}
+
+/**
+ * Compara dos nombres de lugar sin que importen mayúsculas ni tildes. Cada
+ * negocio escribió su dirección y los más antiguos, de antes del selector, lo
+ * hicieron a mano: «camaguey» tiene que valer como «Camagüey».
+ */
+function mismoLugar(a: string | undefined | null, b: string): boolean {
+  return Boolean(a) && normalizar(a!.trim()) === normalizar(b);
+}
 
 
 export function ExplorePage() {
@@ -53,6 +76,10 @@ export function ExplorePage() {
   const [category, setCategory] = useState<string | null>(() => searchParams.get('cat'));
   const [sortOrder, setSortOrder] = useState<SortOrder>(() => (searchParams.get('sort') === 'desc' ? 'desc' : 'asc'));
   const [moneda, setMoneda] = useState<MonedaPrincipal>(() => (searchParams.get('moneda') === 'CUP' ? 'CUP' : 'USD'));
+  const [provincia, setProvincia] = useState(() => provinciaDeUrl(searchParams.get('prov')));
+  const [municipio, setMunicipio] = useState(() =>
+    municipioDeUrl(provinciaDeUrl(searchParams.get('prov')), searchParams.get('mun')),
+  );
   const [page, setPage] = useState(() => Number(searchParams.get('page')) || 1);
 
   // Cuántos bloques de `POR_BLOQUE` se han traído ya, y si hay uno en camino.
@@ -74,10 +101,12 @@ export function ExplorePage() {
     if (category) params.cat = category;
     if (sortOrder === 'desc') params.sort = 'desc';
     if (moneda === 'CUP') params.moneda = 'CUP';
+    if (provincia) params.prov = provincia;
+    if (municipio) params.mun = municipio;
     if (page > 1) params.page = String(page);
     setSearchParams(params, { replace: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, minPrice, maxPrice, category, sortOrder, moneda, page]);
+  }, [search, minPrice, maxPrice, category, sortOrder, moneda, provincia, municipio, page]);
 
   // Mirror the URL back into state: the component doesn't remount when a
   // navbar link (e.g. "Más populares") points at "/" with different query
@@ -90,6 +119,9 @@ export function ExplorePage() {
     setMaxPrice(searchParams.get('max') ?? '');
     setCategory(searchParams.get('cat'));
     setSortOrder(searchParams.get('sort') === 'desc' ? 'desc' : 'asc');
+    const prov = provinciaDeUrl(searchParams.get('prov'));
+    setProvincia(prov);
+    setMunicipio(municipioDeUrl(prov, searchParams.get('mun')));
     setPage(Number(searchParams.get('page')) || 1);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
@@ -149,7 +181,7 @@ export function ExplorePage() {
 
   useEffect(() => {
     setPage(1);
-  }, [minPrice, maxPrice, nearMe, radiusKm, search, category]);
+  }, [minPrice, maxPrice, nearMe, radiusKm, search, category, provincia, municipio]);
 
 
   // Se apunta dónde estaba el scroll mientras se navega por el catálogo. Los
@@ -231,6 +263,26 @@ export function ExplorePage() {
       });
     }
     if (category) list = list.filter((p) => nombreDeCategoria(p) === category);
+
+    // Los conteos de cada zona salen de aquí, con todo lo demás ya aplicado y
+    // antes de filtrar por zona: así cada opción del desplegable dice cuántos
+    // resultados daría elegirla ahora mismo.
+    const conteoZona = { total: list.length, provincias: {} as Record<string, number>, municipios: {} as Record<string, number> };
+    for (const p of list) {
+      const dir = p.userEnterprise?.address;
+      const prov = PROVINCIAS.find((nombre) => mismoLugar(dir?.state, nombre));
+      if (!prov) continue;
+      conteoZona.provincias[prov] = (conteoZona.provincias[prov] ?? 0) + 1;
+      if (prov !== provincia) continue;
+      const mun = municipiosDe(prov).find((nombre) => mismoLugar(dir?.city, nombre));
+      if (mun) conteoZona.municipios[mun] = (conteoZona.municipios[mun] ?? 0) + 1;
+    }
+    if (provincia) {
+      list = list.filter((p) => {
+        const dir = p.userEnterprise?.address;
+        return mismoLugar(dir?.state, provincia) && (!municipio || mismoLugar(dir?.city, municipio));
+      });
+    }
     // CUP y USD son independientes y no hay tasa de cambio, así que comparar
     // 180 CUP con 8 USD no significa nada. Se agrupa: delante los que tienen
     // precio en la moneda elegida, detrás el resto, y dentro de cada grupo sí
@@ -247,8 +299,8 @@ export function ExplorePage() {
       const pb = enMoneda(b, m) ?? 0;
       return sortOrder === 'asc' ? pa - pb : pb - pa;
     });
-    return { lista: ordenados, aproximada };
-  }, [rawProducts, search, category, sortOrder, moneda, minPrice, maxPrice]);
+    return { lista: ordenados, aproximada, conteoZona };
+  }, [rawProducts, search, category, sortOrder, moneda, minPrice, maxPrice, provincia, municipio]);
 
   const visibleProducts = resultado.lista;
 
@@ -260,36 +312,29 @@ export function ExplorePage() {
       setNearMe(null);
       return;
     }
-    if (!navigator.geolocation) {
-      notify('Tu navegador no puede darnos tu ubicación', 'error');
+
+    // Si la portada de bienvenida ya la consiguió hace poco, se usa esa: ni
+    // permiso ni GPS ni espera.
+    const yaLaSabemos = ubicacionReciente();
+    if (yaLaSabemos) {
+      setNearMe(yaLaSabemos);
       return;
     }
+
     setLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setNearMe({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-        setLocating(false);
-      },
-      (error) => {
-        setLocating(false);
-        // Un solo mensaje para los tres casos dejaba al usuario sin saber qué
-        // hacer; sobre todo el primero, que no se arregla reintentando.
-        if (error.code === error.PERMISSION_DENIED) {
-          notify('Tienes la ubicación bloqueada para Agora. Actívala desde el candado de la barra de direcciones.', 'error');
-        } else if (error.code === error.TIMEOUT) {
-          notify('Tu ubicación está tardando demasiado. Vuelve a intentarlo o filtra por provincia.', 'error');
-        } else {
-          notify('No conseguimos tu ubicación. Revisa que el GPS esté encendido.', 'error');
-        }
-      },
-      {
-        timeout: 8000,
-        // Vale una posición de hasta cinco minutos. Así, si ya se concedió el
-        // permiso al entrar, esto responde al instante en vez de encender el
-        // GPS otra vez: en un teléfono modesto eso son varios segundos.
-        maximumAge: 5 * 60 * 1000,
-      },
-    );
+    pedirUbicacion()
+      .then(setNearMe)
+      .catch((error: unknown) => {
+        // `pedirUbicacion` rechaza con el error del navegador, salvo cuando no
+        // hay geolocalización: ahí manda un Error normal.
+        notify(
+          error instanceof Error
+            ? 'Tu navegador no puede darnos tu ubicación'
+            : porQueFallo(error as GeolocationPositionError),
+          'error',
+        );
+      })
+      .finally(() => setLocating(false));
   }
 
   function selectCategory(c: string) {
@@ -306,13 +351,21 @@ export function ExplorePage() {
   // Solo las de esta página: las calificaciones se piden de una en una, y
   // hacerlo para el catálogo entero serían doscientas peticiones por carga.
   const calificaciones = useProductRatings(productosDeLaPagina);
-  const hasActiveFilters = Boolean(minPrice || maxPrice || nearMe || category);
+  const hasActiveFilters = Boolean(minPrice || maxPrice || nearMe || category || provincia);
 
   function clearFilters() {
     setMinPrice('');
     setMaxPrice('');
     setCategory(null);
     setNearMe(null);
+    setProvincia('');
+    setMunicipio('');
+  }
+
+  /** Al cambiar de provincia, el municipio elegido ya no es de ella: se suelta. */
+  function elegirProvincia(v: string) {
+    setProvincia(v);
+    setMunicipio('');
   }
 
   const filtersProps = {
@@ -329,6 +382,11 @@ export function ExplorePage() {
     locating,
     radiusKm,
     onRadiusKm: setRadiusKm,
+    provincia,
+    onProvincia: elegirProvincia,
+    municipio,
+    onMunicipio: setMunicipio,
+    conteoZona: resultado.conteoZona,
     categories,
     activeCategory: category,
     onSelectCategory: selectCategory,
@@ -338,6 +396,8 @@ export function ExplorePage() {
 
   return (
     <div>
+      {/* React 19 lo sube al <head>: cada ruta con su título. */}
+      <title>Explorar · Agora</title>
       {/* El h1 de la página no tiene por qué verse: era un titular decorativo
           y lo que manda aquí es el buscador. */}
       <h1 id="explore__title" className="explore__title sr-only">Explorar productos de tu ciudad</h1>
@@ -368,7 +428,7 @@ export function ExplorePage() {
             {isLoading ? (
               <div id="explore__grid-loading" className="explore__grid grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
                 {Array.from({ length: PAGE_SIZE }).map((_, i) => (
-                  <ProductCardSkeleton key={i} />
+                  <ProductCardSkeleton key={i} compacta />
                 ))}
               </div>
             ) : visibleProducts.length === 0 ? (
@@ -388,7 +448,19 @@ export function ExplorePage() {
                     Nada coincide exactamente con «{search}». Estos son los resultados más parecidos.
                   </p>
                 )}
-                <div id="explore__grid" className="explore__grid grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+                {/* Con varias páginas, el hueco de una página entera queda
+                    reservado aunque la última traiga menos productos: filas
+                    explícitas de igual alto (8 = 4×2, 3×3 y 2×4), para que la
+                    paginación y lo de debajo no suban y bajen al pasar de
+                    página. Con una sola página no hay a dónde saltar, y
+                    reservar dejaría un hueco en blanco bajo pocos resultados. */}
+                <div
+                  id="explore__grid"
+                  className={cn(
+                    'explore__grid grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4',
+                    totalPages > 1 && 'grid-rows-4 sm:grid-rows-3 lg:grid-rows-2',
+                  )}
+                >
                   {productosDeLaPagina.map((product) => (
                     <ProductCard
                       key={product.idProduct}

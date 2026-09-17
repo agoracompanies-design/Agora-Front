@@ -6,7 +6,6 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { createEnterprise } from '@/api/userEnterprise';
 import { LogoField } from '@/components/business/LogoField';
-import { createSubscription } from '@/api/subscription';
 import { Input, Select } from '@/components/ui/Field';
 import { PROVINCIAS } from '@/lib/provincias';
 import { municipiosDe } from '@/lib/municipios';
@@ -17,8 +16,7 @@ import { Card } from '@/components/ui/Card';
 import { PageSpinner } from '@/components/ui/Spinner';
 import { PlanPicker } from '@/components/plans/PlanPicker';
 import { cn } from '@/lib/utils';
-import { SELLER_PLAN, daAccesoDeNegocio, getTier, tipoDePlan } from '@/lib/plans';
-import type { BillingCycle } from '@/lib/plans';
+import { SELLER_PLAN, daAccesoDeNegocio, enlaceParaSolicitar } from '@/lib/plans';
 
 export function BecomeSellerPage() {
   const { user, isAuthenticated, isLoading, enterprise, subscription, refreshSellerStatus } = useAuth();
@@ -102,31 +100,10 @@ export function BecomeSellerPage() {
     }
   }
 
-  async function handleActivatePlan(cycle: BillingCycle) {
-    if (!user) return;
-    const tier = getTier(SELLER_PLAN, cycle);
-    setSubmitting(true);
-    try {
-      await createSubscription({
-        userId: user.id,
-        name: `${SELLER_PLAN.name} ${tier.label}`,
-        cost: tier.cost,
-        quantityAccounts: 1,
-        durationDays: tier.durationDays,
-        planType: tipoDePlan(SELLER_PLAN),
-      });
-      await refreshSellerStatus();
-      notify('¡Plan de vendedor activado!');
-      navigate('/panel', { replace: true });
-    } catch (err) {
-      notify(err instanceof Error ? err.message : 'No se pudo activar el plan', 'error');
-    } finally {
-      setSubmitting(false);
-    }
-  }
-
   return (
     <div id="sell" className="sell mx-auto max-w-2xl px-4 sm:px-6 py-12">
+      {/* React 19 lo sube al <head>: cada ruta con su título. */}
+      <title>Vender en Agora</title>
       <div id="sell__intro" className="sell__intro mb-10 text-center">
         <h1 id="sell__title" className="sell__title text-2xl font-semibold text-ink-900">Empieza a vender en Agora</h1>
         <p id="sell__subtitle" className="sell__subtitle mt-2 text-sm text-ink-500">Dos pasos y tu catálogo estará listo para tus clientes.</p>
@@ -193,8 +170,9 @@ export function BecomeSellerPage() {
         <Card className="p-6">
           <h2 id="sell__plan-title" className="sell__plan-title mb-1 font-medium text-ink-900">Elige tu plan de vendedor</h2>
           <p id="sell__plan-subtitle" className="sell__plan-subtitle mb-5 text-sm text-ink-500">Puedes cambiar de ciclo más adelante desde tu cuenta.</p>
-          <PlanPicker plan={SELLER_PLAN} onSubscribe={handleActivatePlan} submitting={submitting} ctaLabel="Activar plan de vendedor" />
-          <p id="sell__plan-note" className="sell__plan-note mt-3 text-center text-xs text-ink-400">Se registrará tu suscripción; el cobro se gestiona fuera de la plataforma por ahora.</p>
+          {/* El plan se paga por WhatsApp y lo activa el panel administrativo. */}
+          <PlanPicker plan={SELLER_PLAN} enlace={(tier) => enlaceParaSolicitar(SELLER_PLAN, tier, user?.username)} />
+          <p id="sell__plan-note" className="sell__plan-note mt-3 text-center text-xs text-ink-500">Te escribimos para confirmar el pago y activamos tu cuenta de negocio.</p>
         </Card>
       )}
     </div>

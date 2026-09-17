@@ -2,6 +2,9 @@ import { ArrowDownWideNarrow, ArrowUpNarrowWide, Banknote, DollarSign, MapPin, S
 import type { ReactNode } from 'react';
 import type { CategoryCount } from '@/hooks/useCategories';
 import { cn, soloPrecio } from '@/lib/utils';
+import { PROVINCIAS } from '@/lib/provincias';
+import { municipiosDe } from '@/lib/municipios';
+import { ZoneSelect } from '@/components/explore/ZoneSelect';
 
 export type SortOrder = 'asc' | 'desc';
 /**
@@ -33,6 +36,17 @@ interface FiltersPanelProps {
   locating: boolean;
   radiusKm: number;
   onRadiusKm: (v: number) => void;
+  /** Provincia elegida; cadena vacía es «Todas las provincias». */
+  provincia: string;
+  onProvincia: (v: string) => void;
+  /** Municipio elegido dentro de la provincia; vacío es «Todos los municipios». */
+  municipio: string;
+  onMunicipio: (v: string) => void;
+  /**
+   * Cuántos productos hay en cada sitio con el resto de filtros puestos. Se
+   * enseñan junto a cada opción para que se vea qué da elegirla antes de hacerlo.
+   */
+  conteoZona: { total: number; provincias: Record<string, number>; municipios: Record<string, number> };
   categories: CategoryCount[];
   activeCategory: string | null;
   onSelectCategory: (c: string) => void;
@@ -99,13 +113,15 @@ function Grupo({
   nombre,
   titulo,
   children,
+  className,
 }: {
   nombre: string;
   titulo: string;
   children: ReactNode;
+  className?: string;
 }) {
   return (
-    <section id={`filters__group--${nombre}`} className="filters__group">
+    <section id={`filters__group--${nombre}`} className={cn('filters__group', className)}>
       <h3
         id={`filters__legend--${nombre}`}
         className="filters__legend mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-ink-500"
@@ -131,6 +147,11 @@ export function FiltersPanel({
   locating,
   radiusKm,
   onRadiusKm,
+  provincia,
+  onProvincia,
+  municipio,
+  onMunicipio,
+  conteoZona,
   categories,
   activeCategory,
   onSelectCategory,
@@ -145,6 +166,34 @@ export function FiltersPanel({
   const uid = (nombre: string) => `${nombre}--${ambito}`;
   const campo =
     'h-[35px] w-full min-w-0 rounded-lg border border-ink-200 bg-ink-50 px-[9px] text-[13px] text-ink-900 placeholder:text-ink-400 outline-none focus:border-primary';
+  /**
+   * El botón de un desplegable de zona. En la barra lleva la forma de los chips
+   * —misma altura, mismo encendido—; en la hoja del móvil, campo entero: ahí se
+   * toca con el dedo.
+   */
+  const selector = (activo: boolean) =>
+    enFila
+      ? cn(
+          'cursor-pointer rounded-full py-[3px] pl-[11px] pr-2 text-[11px] font-medium outline-none transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-primary/40',
+          // Apagado —«Todas las provincias», «Todos los municipios»— va un punto
+          // más claro que los chips de al lado, para que se distinga que es un
+          // desplegable. «Más claro» es menos tinte en modo claro y más en oscuro.
+          activo
+            ? 'bg-primary text-white'
+            : 'bg-primary/10 text-ink-900 hover:bg-primary/20 dark:bg-primary/25 dark:hover:bg-primary/35',
+        )
+      : cn(campo, 'cursor-pointer', activo ? 'border-primary bg-primary/10 font-medium' : 'dark:bg-ink-100');
+  const conCuenta = (nombre: string, n: number | undefined) => `${nombre} (${n ?? 0})`;
+  const opcionesProvincia = [
+    { valor: '', texto: conCuenta('Todas las provincias', conteoZona.total) },
+    ...PROVINCIAS.map((p) => ({ valor: p, texto: conCuenta(p, conteoZona.provincias[p]) })),
+  ];
+  const opcionesMunicipio = provincia
+    ? [
+        { valor: '', texto: conCuenta('Todos los municipios', conteoZona.provincias[provincia]) },
+        ...municipiosDe(provincia).map((m) => ({ valor: m, texto: conCuenta(m, conteoZona.municipios[m]) })),
+      ]
+    : [];
 
   return (
     <div
@@ -189,7 +238,7 @@ export function FiltersPanel({
             value={minPrice}
             onChange={(e) => onMinPrice(soloPrecio(e.target.value))}
             id={uid('filters__price-min')}
-            className={campo}
+            className={cn(campo, enFila && 'w-[104px]')}
           />
           <span id={uid('filters__price-sep')} className="filters__price-sep text-ink-400">–</span>
           <input
@@ -199,7 +248,7 @@ export function FiltersPanel({
             value={maxPrice}
             onChange={(e) => onMaxPrice(soloPrecio(e.target.value))}
             id={uid('filters__price-max')}
-            className={campo}
+            className={cn(campo, enFila && 'w-[104px]')}
           />
         </div>
       </Grupo>
@@ -229,11 +278,41 @@ export function FiltersPanel({
         </div>
       </Grupo>
 
-      <Grupo nombre={uid('only')} titulo="Ubicación">
-        <div id={uid('filters__only')} className="filters__only flex flex-wrap gap-2">
+      {/* En la barra, la ubicación se queda con lo que sobra de la fila: así
+          sigue a la derecha de la moneda y, si el municipio no cabe, baja
+          dentro de su grupo en vez de empujar el grupo entero a otra fila. */}
+      <Grupo nombre={uid('only')} titulo="Ubicación" className={enFila ? 'min-w-0 flex-1' : undefined}>
+        <div id={uid('filters__only')} className={cn('filters__only flex gap-2', enFila ? 'flex-wrap items-center' : 'flex-col items-start')}>
           <Chip id={uid('filters__only-near')} activo={nearMe} onClick={onLocateMe} icon={<MapPin size={13} aria-hidden="true" />}>
             {locating ? 'Buscando…' : 'Cerca de mí'}
           </Chip>
+
+          {/* La zona se elige con desplegables: son 16 provincias y hasta 19
+              municipios, demasiados para chips. «Todas las provincias» es no
+              filtrar, pero se dice en voz alta para que se vea que el filtro
+              existe y en qué está. El municipio solo aparece con una provincia
+              elegida: sin ella no hay lista que ofrecer. */}
+          <ZoneSelect
+            id={uid('filters__province')}
+            label="Provincia"
+            valor={provincia}
+            opciones={opcionesProvincia}
+            onCambio={onProvincia}
+            className={enFila ? undefined : 'w-full'}
+            claseBoton={cn('filters__province', selector(Boolean(provincia)))}
+          />
+
+          {provincia && (
+            <ZoneSelect
+              id={uid('filters__municipality')}
+              label={`Municipio de ${provincia}`}
+              valor={municipio}
+              opciones={opcionesMunicipio}
+              onCambio={onMunicipio}
+              className={enFila ? undefined : 'w-full'}
+              claseBoton={cn('filters__municipality', selector(Boolean(municipio)))}
+            />
+          )}
         </div>
 
         {nearMe && (
@@ -256,7 +335,7 @@ export function FiltersPanel({
       </Grupo>
 
       {categories.length > 0 && (
-        <Grupo nombre={uid('category')} titulo="Categoría">
+        <Grupo nombre={uid('category')} titulo="Categoría" className={enFila ? 'w-full' : undefined}>
           <div id={uid('filters__categories')} className="filters__categories flex flex-wrap gap-x-2 gap-y-2.5">
             {categories.map(({ category: c, count }) => {
               const activa = activeCategory === c;
