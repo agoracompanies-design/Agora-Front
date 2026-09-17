@@ -13,6 +13,7 @@ import { ToastProvider } from "@/context/ToastContext";
 import { NotificationsProvider } from "@/context/NotificationsContext";
 import { FavoritesProvider } from "@/context/FavoritesContext";
 import { OnboardingGate } from "@/components/onboarding/OnboardingGate";
+import { BannedGate } from "@/components/layout/BannedGate";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import {
@@ -56,9 +57,11 @@ function RedirigirANegocio() {
  */
 function ConOnboarding() {
   return (
-    <OnboardingGate>
-      <Outlet />
-    </OnboardingGate>
+    <BannedGate>
+      <OnboardingGate>
+        <Outlet />
+      </OnboardingGate>
+    </BannedGate>
   );
 }
 

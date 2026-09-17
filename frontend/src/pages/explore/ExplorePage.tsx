@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { SlidersHorizontal, PackageSearch, Store, ArrowRight } from 'lucide-react';
+import { SlidersHorizontal, PackageSearch, Store, ArrowRight, X } from 'lucide-react';
 import { listProducts } from '@/api/product';
 import type { Product } from '@/types';
 import { ProductCard } from '@/components/product/ProductCard';
@@ -352,6 +352,13 @@ export function ExplorePage() {
   // hacerlo para el catálogo entero serían doscientas peticiones por carga.
   const calificaciones = useProductRatings(productosDeLaPagina);
   const hasActiveFilters = Boolean(minPrice || maxPrice || nearMe || category || provincia);
+  /**
+   * Cuántos filtros hay puestos, para decirlo en el móvil sin abrir el panel.
+   * El rango de precio cuenta como uno aunque se usen las dos casillas, y el
+   * municipio no suma aparte: es un detalle de la provincia.
+   */
+  const filtrosPuestos =
+    (minPrice || maxPrice ? 1 : 0) + (nearMe ? 1 : 0) + (category ? 1 : 0) + (provincia ? 1 : 0);
 
   function clearFilters() {
     setMinPrice('');
@@ -410,7 +417,24 @@ export function ExplorePage() {
         </div>
 
         {/* En móvil no hay panel lateral: los filtros se abren desde aquí. */}
-        <div id="explore__mobile-filters" className="explore__mobile-filters mb-4 flex justify-end lg:hidden">
+        <div id="explore__mobile-filters" className="explore__mobile-filters mb-4 flex items-center justify-end gap-2 lg:hidden">
+          {/* Con filtros puestos se dice aquí, al lado del botón, y se pueden
+              quitar de un toque: si no, hay que abrir el panel para recordar
+              qué había puesto y otro toque más para limpiarlo. */}
+          {hasActiveFilters && (
+            <span id="explore__active-filters" className="explore__active-filters inline-flex items-center gap-1 rounded-full bg-primary/15 py-1 pl-3 pr-1 text-xs font-medium text-ink-900">
+              {filtrosPuestos} {filtrosPuestos === 1 ? 'filtro' : 'filtros'}
+              <button
+                type="button"
+                onClick={clearFilters}
+                aria-label="Quitar los filtros"
+                id="explore__clear-filters"
+                className="explore__clear-filters flex h-5 w-5 items-center justify-center rounded-full text-ink-700 hover:bg-primary/25 hover:text-ink-900"
+              >
+                <X size={13} aria-hidden="true" />
+              </button>
+            </span>
+          )}
           <Button variant="outline" size="sm" onClick={() => setFiltersOpen(true)} icon={<SlidersHorizontal size={15} />}>
             Filtros
           </Button>

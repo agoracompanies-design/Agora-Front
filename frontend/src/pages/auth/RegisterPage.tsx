@@ -7,8 +7,9 @@ import { PasswordField } from '@/components/ui/PasswordField';
 import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/context/AuthContext';
 import { CONTACTO_EN_REGISTRO_LISTO } from '@/api/auth';
-import { avisoDeContacto, contactoValido } from '@/lib/contacto-cuenta';
-import { soloUsuario } from '@/lib/validacion';
+import { PhoneField, telefonoListo } from '@/components/ui/PhoneField';
+import { PAIS_POR_DEFECTO, telefonoCompleto } from '@/lib/paises';
+import { pareceCorreo, soloUsuario } from '@/lib/validacion';
 
 /**
  * Crear cuenta: usuario y contraseña, nada más.
@@ -27,21 +28,35 @@ export function RegisterPage() {
   const navigate = useNavigate();
 
   const [username, setUsername] = useState('');
-  // Correo o teléfono: con qué localizar a quien abre la cuenta. Solo se pide
-  // cuando el servidor sabe guardarlo; pedirlo para tirarlo daría la impresión
-  // de que la cuenta quedó verificada sin estarlo.
-  const [contacto, setContacto] = useState('');
+  // Con qué localizar a quien abre la cuenta. Por defecto el teléfono, que es
+  // lo que casi todo el mundo tiene aquí y por donde se habla luego; quien
+  // prefiera el correo lo marca y cambia el campo. Solo se pide cuando el
+  // servidor sabe guardarlo; pedirlo para tirarlo daría la impresión de que la
+  // cuenta quedó verificada sin estarlo.
+  const [usarCorreo, setUsarCorreo] = useState(false);
+  const [pais, setPais] = useState(PAIS_POR_DEFECTO);
+  const [numero, setNumero] = useState('');
+  const [correo, setCorreo] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  /** Lo que se manda: el correo tal cual, o el teléfono en formato internacional. */
+  const contacto = usarCorreo ? correo.trim() : telefonoCompleto(pais, numero);
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError('');
-    if (CONTACTO_EN_REGISTRO_LISTO && !contactoValido(contacto)) {
-      setError(avisoDeContacto(contacto) ?? 'Revisa el correo o el teléfono');
-      return;
+    if (CONTACTO_EN_REGISTRO_LISTO) {
+      if (usarCorreo && !pareceCorreo(correo)) {
+        setError('Revisa el correo: le falta el @ o el dominio');
+        return;
+      }
+      if (!usarCorreo && !telefonoListo(pais, numero)) {
+        setError('Revisa el teléfono: faltan cifras');
+        return;
+      }
     }
     if (password !== confirmPassword) {
       setError('Las contraseñas no coinciden');
@@ -86,15 +101,40 @@ export function RegisterPage() {
           placeholder="tu_usuario"
         />
         {CONTACTO_EN_REGISTRO_LISTO && (
-          <Input
-            label="Correo o teléfono"
-            required
-            autoComplete="email"
-            hint="Nos sirve para devolverte la cuenta si pierdes la contraseña."
-            value={contacto}
-            onChange={(e) => setContacto(e.target.value.trimStart())}
-            placeholder="tu@correo.cu o +53 5 555 5555"
-          />
+          <div id="register__contact" className="register__contact">
+            {usarCorreo ? (
+              <Input
+                label="Correo"
+                required
+                type="email"
+                autoComplete="email"
+                hint="Nos sirve para devolverte la cuenta si pierdes la contraseña."
+                value={correo}
+                onChange={(e) => setCorreo(e.target.value.trim())}
+                placeholder="tu@correo.cu"
+              />
+            ) : (
+              <PhoneField
+                id="register__phone"
+                pais={pais}
+                onPais={setPais}
+                numero={numero}
+                onNumero={setNumero}
+                required
+                hint="Nos sirve para devolverte la cuenta si pierdes la contraseña."
+              />
+            )}
+
+            <label id="register__use-email" className="register__use-email mt-2 flex w-max cursor-pointer items-center gap-2 text-sm text-ink-700">
+              <input
+                type="checkbox"
+                checked={usarCorreo}
+                onChange={(e) => setUsarCorreo(e.target.checked)}
+                className="h-4 w-4 cursor-pointer accent-primary"
+              />
+              Usar correo en vez del teléfono
+            </label>
+          </div>
         )}
         <PasswordField
           label="Contraseña"

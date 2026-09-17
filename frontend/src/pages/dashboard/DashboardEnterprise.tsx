@@ -6,7 +6,9 @@ import { Input, Select } from '@/components/ui/Field';
 import { PROVINCIAS } from '@/lib/provincias';
 import { municipiosDe } from '@/lib/municipios';
 import { SelectorBuscable } from '@/components/ui/SelectorBuscable';
-import { LARGO, normalizarWeb, pareceCorreo, pareceTelefono, pareceWeb, soloDigitos, soloTelefono, texto } from '@/lib/validacion';
+import { LARGO, normalizarWeb, pareceCorreo, pareceWeb, soloDigitos, texto } from '@/lib/validacion';
+import { PhoneField, telefonoListo } from '@/components/ui/PhoneField';
+import { PAIS_POR_DEFECTO, numeroNacional, paisDelNumero, telefonoCompleto } from '@/lib/paises';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { MoveRequest } from '@/components/dashboard/MoveRequest';
@@ -25,6 +27,7 @@ export function DashboardEnterprise() {
   const [zipCode, setZipCode] = useState('');
   const [country, setCountry] = useState('');
   const [email, setEmail] = useState('');
+  const [pais, setPais] = useState(PAIS_POR_DEFECTO);
   const [phone, setPhone] = useState('');
   const [website, setWebsite] = useState('');
   const [logo, setLogo] = useState<File | null>(null);
@@ -38,7 +41,11 @@ export function DashboardEnterprise() {
     setZipCode(enterprise.address?.zipCode ?? '');
     setCountry(enterprise.address?.country ?? '');
     setEmail(enterprise.contact?.email ?? '');
-    setPhone(enterprise.contact?.phone ?? '');
+    // El teléfono se guarda entero (+53…); aquí se reparte entre el selector de
+    // país y el número, que es como se edita.
+    const guardado = enterprise.contact?.phone ?? '';
+    setPais(paisDelNumero(guardado)?.iso ?? PAIS_POR_DEFECTO);
+    setPhone(numeroNacional(guardado));
     setWebsite(enterprise.contact?.website ?? '');
   }, [enterprise]);
 
@@ -53,7 +60,7 @@ export function DashboardEnterprise() {
       notify('Revisa el correo de contacto: falta el @ o el dominio', 'error');
       return;
     }
-    if (!pareceTelefono(phone)) {
+    if (!telefonoListo(pais, phone)) {
       notify('El teléfono necesita al menos seis cifras', 'error');
       return;
     }
@@ -66,7 +73,7 @@ export function DashboardEnterprise() {
       await updateEnterprise(enterprise.idUserEnterprise, {
         companyName,
         address: { street, city, state, zipCode, country },
-        contact: { email: email.trim(), phone: phone.trim(), website: normalizarWeb(website) || undefined },
+        contact: { email: email.trim(), phone: telefonoCompleto(pais, phone), website: normalizarWeb(website) || undefined },
         logo,
       });
       await refreshSellerStatus();
@@ -119,7 +126,7 @@ export function DashboardEnterprise() {
         <Input label="País" required autoComplete="country-name" maxLength={LARGO.pais} value={country} onChange={(e) => setCountry(texto(e.target.value, LARGO.pais))} />
         <div id="dash-enterprise__contact-row" className="dash-enterprise__contact-row grid grid-cols-2 gap-3">
           <Input label="Email de contacto" type="email" required autoComplete="email" maxLength={LARGO.correo} value={email} onChange={(e) => setEmail(e.target.value.trimStart())} />
-          <Input label="Teléfono" required type="tel" inputMode="tel" autoComplete="tel" placeholder="+53 5 555 5555" value={phone} onChange={(e) => setPhone(soloTelefono(e.target.value))} />
+          <PhoneField pais={pais} onPais={setPais} numero={phone} onNumero={setPhone} required />
         </div>
         <Input label="Sitio web (opcional)" type="url" inputMode="url" placeholder="mitienda.cu" maxLength={LARGO.web} value={website} onChange={(e) => setWebsite(e.target.value.trim())} />
         <Button type="submit" loading={submitting}>Guardar cambios</Button>

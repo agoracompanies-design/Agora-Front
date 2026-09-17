@@ -2,6 +2,19 @@ export interface AuthUser {
   id: string;
   username: string;
   permissions: string[];
+  /**
+   * Si la cuenta está baneada. Lo decide el backend tras las infracciones que
+   * él mismo captura; aquí solo se enseña la pantalla que lo dice.
+   *
+   * **Todavía no llega**: el servidor no tiene ni infracciones ni baneo (pedido
+   * en `bugs-para-arreglar.md`). El código está listo para cuando lleguen, y
+   * mientras tanto estos campos vienen vacíos y no cambia nada.
+   */
+  banned?: boolean;
+  bannedReason?: string | null;
+  bannedAt?: string | null;
+  /** Teléfono del grupo de trabajo que atendió a este cliente, para negociar. */
+  supportPhone?: string | null;
 }
 
 export interface LoginResponse {
