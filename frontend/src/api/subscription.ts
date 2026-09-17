@@ -36,22 +36,6 @@ export interface Subscription {
   } | null;
 }
 
-export interface SubscriptionInput {
-  userId: string;
-  name: string;
-  cost: number;
-  description?: string;
-  quantityAccounts: number;
-  durationDays: number;
-  /**
-   * Qué clase de plan es. El servidor lo guarda tal cual y, si no llega, da por
-   * hecho `buyer`: sin esto, un Plan Vendedor quedaba archivado como si fuera de
-   * comprador. Lo pone quien crea la suscripción, que aquí es la aplicación y en
-   * su día será el panel administrativo al confirmar el pago.
-   */
-  planType?: PlanType;
-}
-
 export type PlanType = 'buyer' | 'seller';
 
 /**
@@ -72,30 +56,6 @@ export function getMySubscriptionHistory() {
   return apiClient.get<Subscription[]>('/subscription/history').then((res) => res.data);
 }
 
-/**
- * Solo para el panel administrativo. Desde el commit `641de2e` el backend lo
- * cierra a la app de clientes (403 fuera del subdominio de administración):
- * la prueba la crea el servidor al registrar y los planes se piden por WhatsApp.
- */
-export function createSubscription(input: SubscriptionInput) {
-  return apiClient.post<Subscription>('/subscription', input).then((res) => res.data);
-}
-
 export function cancelSubscription(id: string) {
   return apiClient.delete<void>(`/subscription/${id}`).then((res) => res.data);
-}
-
-export function listAllSubscriptions() {
-  return apiClient
-    .get<Subscription[] | { data: Subscription[] } | { subscriptions: Subscription[] }>(
-      '/subscription/all',
-    )
-    .then((res) => {
-      const payload = res.data;
-      if (Array.isArray(payload)) return payload;
-      if (Array.isArray((payload as any)?.data)) return (payload as any).data;
-      if (Array.isArray((payload as any)?.subscriptions))
-        return (payload as any).subscriptions;
-      return [];
-    });
 }

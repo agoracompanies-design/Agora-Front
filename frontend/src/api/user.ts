@@ -14,7 +14,3 @@ export function deleteAccount(userId: string) {
 export function getUser(id: string) {
   return apiClient.get<AuthUser>(`/user/${id}`).then((res) => res.data);
 }
-
-export function listAllUsers() {
-  return apiClient.get<AuthUser[]>("/user").then((res) => res.data);
-}
