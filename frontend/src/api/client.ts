@@ -63,9 +63,21 @@ apiClient.interceptors.request.use((config) => {
 export class ApiError extends Error {
   status: number;
 
-  constructor(message: string, status: number) {
+  /**
+   * El cuerpo del error, cuando el servidor manda un objeto en vez de un texto.
+   *
+   * Lo hace en el baneo: `POST /auth/login` responde 403 con
+   * `{ code: 'USER_BANNED', reason, bannedAt, groupName, groupPhone }`, y con
+   * eso se arma la pantalla de cuenta bloqueada. Antes llegaba como JSON
+   * metido dentro de `message` y había que parsearlo dos veces; desde
+   * `51aa8fe` ya es un objeto.
+   */
+  datos?: Record<string, unknown>;
+
+  constructor(message: string, status: number, datos?: Record<string, unknown>) {
     super(message);
     this.status = status;
+    this.datos = datos;
   }
 }
 
@@ -182,9 +194,15 @@ apiClient.interceptors.response.use(
     }
 
     const raw = error.response?.data?.message;
+    const datos =
+      raw && typeof raw === 'object' && !Array.isArray(raw) ? (raw as Record<string, unknown>) : undefined;
     const message = Array.isArray(raw)
       ? raw.join(', ')
-      : raw ?? error.message ?? 'Ocurrió un error inesperado';
-    return Promise.reject(new ApiError(message, status));
+      : typeof raw === 'string'
+        ? raw
+        : (typeof datos?.message === 'string' ? datos.message : null) ??
+          error.message ??
+          'Ocurrió un error inesperado';
+    return Promise.reject(new ApiError(message, status, datos));
   },
 );

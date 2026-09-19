@@ -8,6 +8,9 @@ import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/context/AuthContext';
 import { soloUsuario } from '@/lib/validacion';
 import { ApiError } from '@/api/client';
+import { baneoDeError } from '@/lib/baneo';
+import type { InfoBaneo } from '@/lib/baneo';
+import { BannedScreen } from '@/components/layout/BannedGate';
 
 /**
  * El servidor responde distinto según el caso: «Usuario no encontrado» (404)
@@ -29,6 +32,7 @@ export function LoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [baneo, setBaneo] = useState<InfoBaneo | null>(null);
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: FormEvent) {
@@ -39,11 +43,18 @@ export function LoginPage() {
       await login(username, password);
       navigate('/', { replace: true });
     } catch (err) {
-      setError(mensajeDeAcceso(err));
+      // Una cuenta bloqueada no entra: el servidor lo dice en el propio acceso,
+      // con el motivo y el WhatsApp del grupo que la atendió. Eso no es un
+      // «usuario o contraseña incorrectos», así que no se cuenta como tal.
+      const bloqueada = baneoDeError(err);
+      if (bloqueada) setBaneo(bloqueada);
+      else setError(mensajeDeAcceso(err));
     } finally {
       setLoading(false);
     }
   }
+
+  if (baneo) return <BannedScreen usuario={username} info={baneo} />;
 
   return (
     <AuthLayout

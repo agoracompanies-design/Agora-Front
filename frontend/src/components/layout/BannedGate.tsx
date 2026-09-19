@@ -3,6 +3,7 @@ import { Ban, MessageCircle } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/Button';
 import { WHATSAPP_MODERACION, enlaceWhatsapp, telefonoLegible } from '@/lib/contacto';
+import type { InfoBaneo } from '@/lib/baneo';
 
 /**
  * Lo que ve una cuenta baneada: esta pantalla y nada más.
@@ -19,9 +20,40 @@ export function BannedGate({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth();
   if (!user?.banned) return <>{children}</>;
 
-  const telefono = user.supportPhone ?? WHATSAPP_MODERACION;
+  return (
+    <BannedScreen
+      usuario={user.username}
+      info={{
+        motivo: user.bannedReason ?? null,
+        desde: user.bannedAt ?? null,
+        grupo: null,
+        telefono: user.supportPhone ?? null,
+      }}
+      onSalir={logout}
+    />
+  );
+}
+
+/**
+ * La pantalla en sí, que también se enseña **sin sesión**: desde `51aa8fe` el
+ * servidor rechaza el acceso de una cuenta bloqueada con un 403, así que no
+ * llega a haber usuario. Los datos —motivo, fecha y el WhatsApp del grupo que
+ * lo atendió— vienen en ese mismo error.
+ */
+export function BannedScreen({
+  usuario,
+  info,
+  onSalir,
+}: {
+  usuario?: string;
+  info: InfoBaneo;
+  onSalir?: () => void;
+}) {
+  const telefono = info.telefono ?? WHATSAPP_MODERACION;
   const mensaje =
-    'Hola, mi cuenta de Agora (' + user.username + ') está bloqueada y quiero saber cómo resolverlo.';
+    'Hola, mi cuenta de Agora' +
+    (usuario ? ' (' + usuario + ')' : '') +
+    ' está bloqueada y quiero saber cómo resolverlo.';
   const wa = enlaceWhatsapp(telefono, mensaje);
 
   return (
@@ -35,17 +67,17 @@ export function BannedGate({ children }: { children: ReactNode }) {
         Tu cuenta está bloqueada
       </h1>
       <p id="banned__text" className="banned__text mt-3 max-w-lg text-base leading-relaxed text-ink-700">
-        {user.bannedReason
-          ? user.bannedReason
-          : 'Se bloqueó por incumplir las normas de Agora después de haberte avisado.'}
+        {info.motivo ?? 'Se bloqueó por incumplir las normas de Agora después de haberte avisado.'}
       </p>
-      {user.bannedAt && (
+      {info.desde && (
         <p id="banned__date" className="banned__date mt-1 text-sm text-ink-500">
-          Desde el {new Date(user.bannedAt).toLocaleDateString('es', { day: '2-digit', month: 'long', year: 'numeric' })}
+          Desde el {new Date(info.desde).toLocaleDateString('es', { day: '2-digit', month: 'long', year: 'numeric' })}
         </p>
       )}
       <p id="banned__help" className="banned__help mt-4 max-w-lg text-sm text-ink-600">
-        Escribe por WhatsApp al equipo que lleva tu cuenta para resolverlo.
+        {info.grupo
+          ? 'Escribe por WhatsApp a ' + info.grupo + ' para resolverlo.'
+          : 'Escribe por WhatsApp al equipo que lleva tu cuenta para resolverlo.'}
       </p>
 
       <div id="banned__actions" className="banned__actions mt-7 flex flex-wrap items-center justify-center gap-3">
@@ -61,7 +93,9 @@ export function BannedGate({ children }: { children: ReactNode }) {
             Escribir por WhatsApp {telefonoLegible(telefono)}
           </a>
         )}
-        <Button variant="ghost" onClick={logout}>Cerrar sesión</Button>
+        {onSalir && (
+          <Button variant="ghost" onClick={onSalir}>Cerrar sesión</Button>
+        )}
       </div>
     </main>
   );
