@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Pencil, Trash2, ImageOff, Package, ArrowDownAZ, ArrowUpZA, ArrowDown, ArrowUp } from 'lucide-react';
+import { Plus, Pencil, Trash2, Package, ArrowDownAZ, ArrowUpZA, ArrowDown, ArrowUp } from 'lucide-react';
 import { useMyProducts } from '@/hooks/useMyCatalog';
 import { useProductRatings } from '@/hooks/useProductRatings';
 import type { Product } from '@/types';
@@ -16,6 +16,7 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useToast } from '@/context/ToastContext';
 import { formatPrice } from '@/lib/utils';
 import { nombreDeCategoria } from '@/lib/categorias';
+import { ProductThumb } from '@/components/product/CategoryIcon';
 
 /** Criterios de orden del catálogo propio. */
 type Criterio = 'alfabetico' | 'calificacion' | 'precio';
@@ -155,7 +156,7 @@ export function DashboardProducts() {
                   <tr key={product.idProduct} className="border-b border-ink-100 last:border-0 hover:bg-ink-50/60">
                     <td className="w-16 p-3">
                       <div className="h-12 w-12 overflow-hidden rounded-lg bg-ink-100 flex items-center justify-center text-ink-300">
-                        {imageUrl ? <img src={imageUrl} alt="" className="h-full w-full object-cover" /> : <ImageOff size={16} />}
+                        <ProductThumb src={imageUrl} categoria={nombreDeCategoria(product)} />
                       </div>
                     </td>
                     <td className="p-3">

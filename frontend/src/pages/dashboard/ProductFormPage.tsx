@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, ImagePlus, ImageOff } from 'lucide-react';
+import { ArrowLeft, ImagePlus } from 'lucide-react';
 import { EDICION_DE_IMAGEN_LISTA, createProduct, getProduct, productImageUrl, updateProduct } from '@/api/product';
 import { Input, TextArea } from '@/components/ui/Field';
 import { PriceField } from '@/components/ui/PriceField';
@@ -21,6 +21,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { Link } from 'react-router-dom';
 import { categoriaPendiente, nombreDeCategoria } from '@/lib/categorias';
+import { ProductThumb } from '@/components/product/CategoryIcon';
 
 export function ProductFormPage() {
   const { id } = useParams<{ id: string }>();
@@ -182,7 +183,9 @@ export function ProductFormPage() {
               <span id="product-form__image-label" className="product-form__image-label mb-1.5 block text-sm font-medium text-ink-800">Imagen</span>
               <div id="product-form__image-row" className="product-form__image-row flex items-center gap-4">
                 <div id="product-form__image-preview" className="product-form__image-preview flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-ink-100 text-ink-300">
-                  {imageUrl ? <img src={imageUrl} alt="" className="h-full w-full object-cover" /> : <ImageOff size={22} />}
+                  {/* `key` reinicia la miniatura con cada foto: si la vieja no cargó,
+                      la nueva que se elija tiene que verse. */}
+                  <ProductThumb key={imageUrl ?? 'sin-foto'} src={imageUrl} categoria={category} size={24} />
                 </div>
                 <label id="product-form__image-button" className="product-form__image-button inline-flex cursor-pointer items-center gap-2 rounded-xl border border-ink-200 px-4 py-2 text-sm font-medium text-ink-700 hover:border-ink-400">
                   <ImagePlus size={15} />

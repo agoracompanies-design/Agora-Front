@@ -17,7 +17,16 @@ const AUMENTO = 2.5;
  * clics: quien está mirando de cerca no quiere descubrir que ha pulsado
  * «Guardar en favoritos» al mover el ratón.
  */
-export function ZoomableImage({ src, alt }: { src: string; alt: string }) {
+export function ZoomableImage({
+  src,
+  alt,
+  onError,
+}: {
+  src: string;
+  alt: string;
+  /** Si la foto no llega, quien la pinta pone otra cosa en su lugar. */
+  onError?: () => void;
+}) {
   const [conLupa, setConLupa] = useState(false);
   const [punto, setPunto] = useState({ x: 50, y: 50 });
   const marco = useRef<HTMLDivElement>(null);
@@ -86,6 +95,7 @@ export function ZoomableImage({ src, alt }: { src: string; alt: string }) {
           <img
             src={src}
             alt={alt}
+            onError={onError}
             id="product-detail__image"
             className={cn('product-detail__image h-full w-full object-contain', conLupa && 'invisible')}
           />

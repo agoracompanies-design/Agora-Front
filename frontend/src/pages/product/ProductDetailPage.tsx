@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Clock, CreditCard, Heart, ImageOff, MapPin, MessageCircle, Navigation, Phone, Store, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Clock, CreditCard, Heart, MapPin, MessageCircle, Navigation, Phone, Store, ExternalLink } from 'lucide-react';
 import { getProduct, listProducts, productImageUrl } from '@/api/product';
 import { averageRating, createRating, listRatingsByProduct } from '@/api/rating';
 import type { Product, Rating } from '@/types';
@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/Button';
 import { ProductCarousel } from '@/components/product/ProductCarousel';
 import { RatingStars } from '@/components/ui/RatingStars';
 import { ZoomableImage } from '@/components/product/ZoomableImage';
+import { CategoryIcon } from '@/components/product/CategoryIcon';
 import { PageSpinner } from '@/components/ui/Spinner';
 import { MapEmbed } from '@/components/ui/MapEmbed';
 import { AccordionItem } from '@/components/ui/Accordion';
@@ -29,6 +30,8 @@ export function ProductDetailPage() {
   const { isFavorite, toggleFavorite } = useFavorites();
 
   const [product, setProduct] = useState<Product | null>(null);
+  // La foto puede tener dirección y no llegar (403, archivo borrado).
+  const [fotoRota, setFotoRota] = useState(false);
   const [ratings, setRatings] = useState<Rating[]>([]);
   const [ratingsAvailable, setRatingsAvailable] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
@@ -41,6 +44,8 @@ export function ProductDetailPage() {
     getProduct(id)
       .then((data) => {
         setProduct(data);
+        // Otro producto, otra foto: lo de que la anterior no cargara no vale aquí.
+        setFotoRota(false);
         addRecentlyViewed(id);
       })
       .catch(() => notify('No se pudo cargar el producto', 'error'))
@@ -137,12 +142,12 @@ export function ProductDetailPage() {
         className="product-detail__layout grid grid-cols-1 gap-10 lg:grid-cols-5 lg:grid-rows-[auto_1fr]"
       >
         <div id="product-detail__media" className="product-detail__media lg:col-span-3 lg:col-start-1 lg:row-start-1">
-          {imageUrl ? (
-            <ZoomableImage src={imageUrl} alt={product.name} />
+          {imageUrl && !fotoRota ? (
+            <ZoomableImage src={imageUrl} alt={product.name} onError={() => setFotoRota(true)} />
           ) : (
-            <div id="product-detail__frame" className="product-detail__frame aspect-square w-full overflow-hidden rounded-2xl bg-ink-100">
-              <div id="product-detail__placeholder" className="product-detail__placeholder flex h-full w-full items-center justify-center text-ink-300">
-                <ImageOff size={40} />
+            <div id="product-detail__frame" className="product-detail__frame aspect-square w-full overflow-hidden rounded-2xl bg-primary/5">
+              <div id="product-detail__placeholder" className="product-detail__placeholder flex h-full w-full items-center justify-center">
+                <CategoryIcon categoria={nombreDeCategoria(product)} size={64} />
               </div>
             </div>
           )}

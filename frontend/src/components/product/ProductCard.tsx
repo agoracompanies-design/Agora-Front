@@ -1,7 +1,10 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Heart, ImageOff, Store } from 'lucide-react';
+import { Heart, Store } from 'lucide-react';
 import type { Product } from '@/types';
 import { productImageUrl } from '@/api/product';
+import { nombreDeCategoria } from '@/lib/categorias';
+import { CategoryIcon } from '@/components/product/CategoryIcon';
 import { formatAmount, cn } from '@/lib/utils';
 import { useFavorites } from '@/context/FavoritesContext';
 
@@ -68,6 +71,11 @@ export function ProductCard({
   compacta = false,
 }: ProductCardProps) {
   const imageUrl = productImageUrl(product.image);
+  // La foto puede tener dirección y aun así no llegar: un 403 del servidor, un
+  // archivo que ya no está. Sin esto el navegador deja el icono roto con el
+  // texto alternativo encima; así cae al mismo icono que un producto sin foto.
+  const [fotoRota, setFotoRota] = useState(false);
+  const conFoto = Boolean(imageUrl) && !fotoRota;
   // Los dos precios son independientes: un negocio puede poner solo uno, o
   // ambos con descuento por pagar en divisa. Se enseña el de la moneda pedida
   // y, si el producto no lo tiene, el otro; la etiqueta dice cuál es.
@@ -104,17 +112,21 @@ export function ProductCard({
           agotadoResaltado ? 'bg-red-100/60 dark:bg-red-950/40' : 'bg-ink-100',
         )}
       >
-        {imageUrl ? (
+        {conFoto ? (
           <img
-            src={imageUrl}
+            src={imageUrl as string}
             alt={product.name}
             loading="lazy"
+            onError={() => setFotoRota(true)}
             id={`product__image--${product.idProduct}`}
-          className="product__image h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+            className="product__image h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
           />
         ) : (
-          <div id={`product__placeholder--${product.idProduct}`} className="product__placeholder flex h-full w-full items-center justify-center text-ink-300">
-            <ImageOff size={20} aria-hidden="true" />
+          <div
+            id={`product__placeholder--${product.idProduct}`}
+            className="product__placeholder flex h-full w-full items-center justify-center bg-primary/5"
+          >
+            <CategoryIcon categoria={nombreDeCategoria(product)} size={compacta ? 26 : 32} />
           </div>
         )}
 

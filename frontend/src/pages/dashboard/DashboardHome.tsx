@@ -20,10 +20,13 @@ export function DashboardHome() {
       <div id="dash-home__stats" className="dash-home__stats grid grid-cols-1 sm:grid-cols-3 gap-4">
         <StatCard icon={<Package size={18} />} label="Productos" value={products.length} />
         <StatCard icon={<Wrench size={18} />} label="Servicios" value={services.length} />
+        {/* El nombre del plan que está vigente de verdad —antes decía siempre
+            «Plan vendedor», también en la prueba gratuita—, y los días que le
+            quedan, contados desde la fecha de vencimiento que da el servidor. */}
         <StatCard
           icon={<CalendarClock size={18} />}
-          label="Plan vendedor"
-          value={daysLeft !== null ? `${daysLeft} días` : subscription ? 'Activo' : 'Inactivo'}
+          label={subscription?.name ?? 'Suscripción'}
+          value={textoDeDias(daysLeft, Boolean(subscription))}
         />
       </div>
 
@@ -52,4 +55,11 @@ function StatCard({ icon, label, value }: { icon: ReactNode; label: string; valu
       <p className="text-sm text-ink-500">{label}</p>
     </Card>
   );
+}
+
+/** «7 días restantes», «1 día restante» o «Vence hoy»; sin fecha, si está activa o no. */
+function textoDeDias(dias: number | null, activa: boolean): string {
+  if (dias === null) return activa ? 'Activa' : 'Inactiva';
+  if (dias === 0) return 'Vence hoy';
+  return dias === 1 ? '1 día restante' : `${dias} días restantes`;
 }

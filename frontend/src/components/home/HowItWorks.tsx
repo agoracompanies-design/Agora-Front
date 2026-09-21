@@ -28,9 +28,10 @@ export function HowItWorks() {
         </h2>
       </div>
       <div id="how__steps" className="how__steps grid grid-cols-1 sm:grid-cols-3 gap-6">
-        {steps.map((step, i) => (
+        {/* Sin el número de fondo: salía por encima del borde y la tarjeta le
+            cortaba la mitad. El orden ya lo dicen el título y la rejilla. */}
+        {steps.map((step) => (
           <div key={step.title} className="relative rounded-2xl border border-ink-200/80 bg-ink-50 p-6">
-            <span className="absolute -top-3 -left-1 text-5xl font-bold text-ink-100 select-none">{i + 1}</span>
             <div className="relative flex h-11 w-11 items-center justify-center rounded-xl bg-ink-200 text-ink-700">
               <step.icon size={19} />
             </div>

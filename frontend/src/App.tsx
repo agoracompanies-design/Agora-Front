@@ -23,6 +23,7 @@ import {
   SoloSinSesion,
 } from "@/components/layout/ProtectedRoute";
 import { ScrollAlInicio } from "@/components/layout/ScrollAlInicio";
+import { HoverHint } from "@/components/ui/HoverHint";
 
 import { LoginPage } from "@/pages/auth/LoginPage";
 import { RegisterPage } from "@/pages/auth/RegisterPage";
@@ -75,6 +76,7 @@ export default function App() {
               <NotificationsProvider>
                 <FavoritesProvider>
                   <ScrollAlInicio />
+                  <HoverHint />
                   <Routes>
                     {/* Todo lo de dentro exige sesión: Agora no se navega sin cuenta. */}
                     <Route element={<ProtectedRoute />}>
