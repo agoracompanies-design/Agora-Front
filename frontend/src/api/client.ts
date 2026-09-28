@@ -2,10 +2,10 @@ import axios, { AxiosError } from 'axios';
 import type { AxiosRequestConfig } from 'axios';
 import { tryMockResponse } from './mockFallback';
 
-export const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000/api';
+export const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3001/api';
 
 export const apiClient = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: API_BASE_URL,  
   /**
    * Sin esto el navegador no manda la cookie del token de refresco: la web y la
    * API están en orígenes distintos (`:5173` y `:3000`), y ahí las cookies solo
