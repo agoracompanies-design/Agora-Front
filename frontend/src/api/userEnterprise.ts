@@ -17,12 +17,11 @@ export interface UserEnterpriseInput {
  * admite el archivo en el campo `image` y el logo se sirve público y cacheado
  * en `/user-enterprise/image/<fichero>`. Comprobado contra la API.
  *
- * Con una salvedad, que es la razón de `subirLogoAparte()` más abajo: el alta
- * guarda en esa columna la ruta del disco del servidor
- * (`D:\...\uploads\enterprises\...png`) en vez de la dirección servible, así
- * que un logo puesto al crear la empresa no se vería. El `PATCH` sí guarda la
- * dirección buena, y por ahí va el logo mientras no lo igualen —está pedido en
- * `bugs-para-arreglar.md`—.
+ * **Desde el 2026-10-06 el alta guarda igual que el `PATCH`.** Antes ponía en
+ * esa columna la ruta del disco del servidor en vez de la dirección servible,
+ * así que un logo puesto al crear la empresa no se veía y había que subirlo en
+ * una segunda petición. Comprobado contra la API: las dos guardan
+ * `/user-enterprise/image/<fichero>`.
  */
 export const LOGO_DE_EMPRESA_LISTO = true;
 
@@ -43,13 +42,12 @@ export function enterpriseLogoUrl(logo: string | null | undefined): string | nul
 }
 
 /**
- * El multipart lleva el logo y nada más.
+ * El multipart del `PATCH`, que lleva el logo y nada más.
  *
- * `address` y `contact` son objetos, y en multipart solo pueden viajar como
- * texto JSON, que el servidor no sabe leer: el `PATCH` responde 400 («address
- * must be an object») y el alta responde 200 pero los guarda vacíos. Medido el
- * 2026-09-16 contra `641de2e`. Así que los datos van siempre en JSON y el logo,
- * si lo hay, en una petición aparte.
+ * En la edición los datos siguen yendo en JSON y el logo aparte. En el **alta**
+ * ya no hace falta: desde el commit `9c56b97` del backend el `POST` sabe leer
+ * `address` y `contact` como texto JSON dentro del multipart, así que todo viaja
+ * junto (ver `createEnterprise`). Queda por igualar el `PATCH`.
  */
 function soloLogo(logo: File) {
   const form = new FormData();
@@ -59,14 +57,17 @@ function soloLogo(logo: File) {
 }
 
 /**
- * Sube el logo con un `PATCH` aparte, después de crear la empresa.
+ * RETIRADA el 2026-10-06. Ya no la llama nadie.
  *
- * El alta guarda en la columna la ruta del disco del servidor en vez de la
- * dirección servible, así que el logo puesto ahí no se vería. El `PATCH` sí la
- * guarda bien, y cuesta una petición más que nadie nota. Cuando el servidor
- * iguale los dos caminos, esto sobra y el logo vuelve a viajar en el alta.
+ * Subía el logo con un `PATCH` aparte después de crear la empresa, porque el
+ * alta guardaba mal la ruta. Desde el commit `9c56b97` del backend las dos
+ * guardan igual y el logo viaja en el alta, así que el alta cuesta **una
+ * petición en vez de dos** — con la conexión de allá, eso se nota.
+ *
+ * Se deja marcada y no borrada hasta la revisión previa a producción, que es la
+ * regla del proyecto.
  */
-async function subirLogoAparte(empresa: UserEnterprise, logo: File): Promise<UserEnterprise> {
+export async function subirLogoAparte(empresa: UserEnterprise, logo: File): Promise<UserEnterprise> {
   try {
     return await updateEnterprise(empresa.idUserEnterprise, { logo });
   } catch {
@@ -76,10 +77,43 @@ async function subirLogoAparte(empresa: UserEnterprise, logo: File): Promise<Use
   }
 }
 
+/**
+ * El cuerpo del alta: multipart si hay logo, JSON si no.
+ *
+ * Con logo tiene que ser multipart, y ahí los objetos viajan como texto JSON,
+ * que es justo lo que el backend aprendió a leer en su commit `9c56b97`. Sin
+ * logo se manda JSON a secas: pesa menos que un multipart con sus separadores,
+ * y aquí cada byte cuenta.
+ */
+function cuerpoDelAlta(input: UserEnterpriseInput): FormData | Omit<UserEnterpriseInput, 'logo'> {
+  const { logo, ...datos } = input;
+  if (!logo) return datos;
+
+  const form = new FormData();
+  form.append('companyName', datos.companyName);
+  form.append('address', JSON.stringify(datos.address));
+  form.append('contact', JSON.stringify(datos.contact));
+  if (datos.code !== undefined) form.append('code', String(datos.code));
+  // El servidor lo espera en `image`, el mismo nombre que la foto de producto.
+  form.append('image', logo);
+  return form;
+}
+
+/**
+ * Da de alta el negocio en **una sola petición**.
+ *
+ * Hasta el 2026-10-06 eran dos —los datos en JSON y el logo en un `PATCH`
+ * después—, porque el backend no sabía leer `address` ni `contact` en multipart
+ * y el alta guardaba mal la ruta del logo. Las dos cosas están resueltas, y se
+ * comprobó contra la API: el alta con logo guarda la dirección servible y los
+ * dos objetos llegan enteros.
+ */
 export async function createEnterprise(input: UserEnterpriseInput): Promise<UserEnterprise> {
-  const { logo, ...sinLogo } = input;
   const respuesta = await apiClient
-    .post<UserEnterprise | { enterprise: UserEnterprise; accessToken?: string }>('/user-enterprise', sinLogo)
+    .post<UserEnterprise | { enterprise: UserEnterprise; accessToken?: string }>(
+      '/user-enterprise',
+      cuerpoDelAlta(input),
+    )
     .then((res) => res.data);
 
   // Dar de alta la empresa concede los permisos para publicar, pero quien los
@@ -93,11 +127,11 @@ export async function createEnterprise(input: UserEnterpriseInput): Promise<User
   if (respuesta && typeof respuesta === 'object' && 'enterprise' in respuesta) {
     if (respuesta.accessToken) setToken(respuesta.accessToken);
     else await renovarAcceso().catch(() => {});
-    return logo ? subirLogoAparte(respuesta.enterprise, logo) : respuesta.enterprise;
+    return respuesta.enterprise;
   }
 
   await renovarAcceso().catch(() => {});
-  return logo ? subirLogoAparte(respuesta, logo) : respuesta;
+  return respuesta;
 }
 
 export function getMyEnterprise() {
