@@ -6,10 +6,17 @@
  * conducta, demanda—; la conversación ocurre por WhatsApp, no aquí dentro. Las
  * promociones no entran: viven en el carrusel.
  *
- * El backend todavía no tiene nada de esto, así que la bandeja se guarda en el
- * navegador, por usuario. Cuando existan los endpoints, solo cambia este
- * archivo: el resto de la aplicación habla con el contexto.
+ * **La bandeja viene del servidor** desde el 2026-10-06: el backend tiene módulo
+ * de notificaciones desde su commit `9c56b97`. Antes vivía en el navegador, así
+ * que se perdía al cambiar de equipo.
+ *
+ * Queda **una excepción**: el aviso de «pediste una categoría». Ese lo escribe
+ * la propia aplicación, y el backend no tiene todavía ni ese tipo de aviso ni
+ * forma de crear uno (pedido como SOL-10 y SOL-14). Hasta que exista, ese y
+ * solo ese sigue guardándose aquí, con el id marcado para distinguirlo.
  */
+
+import { WHATSAPP_VENTAS, enlaceWhatsapp } from './contacto';
 
 export type TipoAviso =
   /** Vencimientos de la suscripción, altas y bajas de plan. */
@@ -33,6 +40,53 @@ export interface Aviso {
   /** Qué hace ese enlace, en dos palabras. */
   readonly enlaceTexto?: string;
 }
+
+/** Lo que manda el servidor, traducido al vocabulario de la aplicación. */
+const TIPOS: Record<string, TipoAviso> = {
+  account: 'cuenta',
+  conduct: 'conducta',
+  demand: 'demanda',
+};
+
+/** Un aviso del servidor. Lo que no se reconozca se trata como de cuenta. */
+export function desdeApi(a: {
+  id: string;
+  kind: string;
+  title: string;
+  body: string;
+  sentAt: string;
+  read: boolean;
+  whatsappMessage?: string | null;
+}): Aviso {
+  // El servidor manda el **mensaje**, no la dirección. `enlace` es un `href`,
+  // así que hay que armar el `wa.me`: meter ahí el texto pelado pintaría un
+  // enlace que no lleva a ninguna parte, y `enlaceSeguro` lo dejaría pasar por
+  // resolverlo como ruta relativa.
+  const haciaVentas = a.whatsappMessage
+    ? enlaceWhatsapp(WHATSAPP_VENTAS, a.whatsappMessage)
+    : null;
+
+  return {
+    id: a.id,
+    // Ante la duda, el tipo que NO se puede silenciar: más vale que llegue.
+    tipo: TIPOS[a.kind] ?? 'cuenta',
+    titulo: a.title,
+    cuerpo: a.body,
+    enviadoEn: a.sentAt,
+    leido: a.read,
+    ...(haciaVentas ? { enlace: haciaVentas, enlaceTexto: 'Responder por WhatsApp' } : {}),
+  };
+}
+
+/**
+ * El prefijo de los avisos que escribe la aplicación y el servidor no conoce.
+ *
+ * Sirve para saber a dónde va el «marcar leído»: los del servidor por su
+ * endpoint, estos al navegador. Cuando el backend genere el de categoría, esto
+ * y el almacén local se van juntos.
+ */
+const PREFIJO_LOCAL = 'local-';
+export const esAvisoLocal = (id: string) => id.startsWith(PREFIJO_LOCAL);
 
 const CLAVE = 'agora_avisos';
 
@@ -71,7 +125,7 @@ export function contarSinLeer(avisos: readonly Aviso[]): number {
 export function anadirAviso(userId: string, aviso: Omit<Aviso, 'id' | 'enviadoEn' | 'leido'>): Aviso[] {
   const nuevo: Aviso = {
     ...aviso,
-    id: `av-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    id: `${PREFIJO_LOCAL}${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     enviadoEn: new Date().toISOString(),
     leido: false,
   };
