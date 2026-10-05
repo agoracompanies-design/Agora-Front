@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
-import { updateEnterprise } from '@/api/userEnterprise';
+import { cambiosDeEmpresa, updateEnterprise } from '@/api/userEnterprise';
 import { LogoField } from '@/components/business/LogoField';
 import { Input, Select } from '@/components/ui/Field';
 import { PROVINCIAS } from '@/lib/provincias';
@@ -70,12 +70,20 @@ export function DashboardEnterprise() {
     }
     setSubmitting(true);
     try {
-      await updateEnterprise(enterprise.idUserEnterprise, {
+      // Solo lo editado: lo que nadie tocó no viaja, y así no se pisa.
+      const cambios = cambiosDeEmpresa(enterprise, {
         companyName,
         address: { street, city, state, zipCode, country },
         contact: { email: email.trim(), phone: telefonoCompleto(pais, phone), website: normalizarWeb(website) || undefined },
-        logo,
+        ...(logo ? { logo } : {}),
       });
+
+      if (Object.keys(cambios).length === 0) {
+        notify('No hay nada que guardar');
+        return;
+      }
+
+      await updateEnterprise(enterprise.idUserEnterprise, cambios);
       await refreshSellerStatus();
       notify('Empresa actualizada');
     } catch (err) {

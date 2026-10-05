@@ -179,3 +179,49 @@ export async function updateEnterprise(id: string, input: Partial<UserEnterprise
 export function deleteEnterprise(id: string) {
   return apiClient.delete<void>(`/user-enterprise/${id}`).then((res) => res.data);
 }
+
+/**
+ * Lo que de verdad cambió, para no mandar la ficha entera en cada guardado.
+ *
+ * El `PATCH` del servidor hace merge **propiedad por propiedad** dentro de
+ * `address` y `contact` —lo que no llega se conserva—, así que se puede afinar
+ * hasta el subcampo: cambiar el teléfono manda `{ contact: { phone } }` y nada
+ * más.
+ *
+ * Por qué importa, más allá de ahorrar bytes: mandar el objeto entero convierte
+ * cada guardado en un «esto es ahora la ficha». Si dos personas editan a la vez,
+ * o si una pantalla trae datos viejos, se pisan campos que nadie tocó. Mandando
+ * solo lo editado, lo que no se toca no puede romperse.
+ *
+ * El logo va aparte: es un archivo, se compara por presencia y no por valor.
+ */
+export function cambiosDeEmpresa(
+  actual: UserEnterprise,
+  nuevo: UserEnterpriseInput,
+): Partial<UserEnterpriseInput> {
+  const cambios: Partial<UserEnterpriseInput> = {};
+
+  if (nuevo.companyName !== actual.companyName) cambios.companyName = nuevo.companyName;
+  if (nuevo.code !== undefined && nuevo.code !== actual.code) cambios.code = nuevo.code;
+  if (nuevo.logo) cambios.logo = nuevo.logo;
+
+  // `undefined` y `''` son lo mismo aquí: «no hay valor». Sin esto, un campo
+  // opcional vacío se mandaría una y otra vez como si cambiara.
+  const igual = (a: string | undefined | null, b: string | undefined | null) => (a || '') === (b || '');
+
+  const direccion = Object.fromEntries(
+    Object.entries(nuevo.address).filter(
+      ([clave, valor]) => !igual(valor as string, actual.address?.[clave as keyof typeof actual.address]),
+    ),
+  );
+  if (Object.keys(direccion).length > 0) cambios.address = direccion as UserEnterpriseInput['address'];
+
+  const contacto = Object.fromEntries(
+    Object.entries(nuevo.contact).filter(
+      ([clave, valor]) => !igual(valor as string, actual.contact?.[clave as keyof typeof actual.contact]),
+    ),
+  );
+  if (Object.keys(contacto).length > 0) cambios.contact = contacto as UserEnterpriseInput['contact'];
+
+  return cambios;
+}
