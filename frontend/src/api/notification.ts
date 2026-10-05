@@ -57,3 +57,34 @@ export function guardarAjustesDeAvisos(promotions: boolean) {
     .patch<AjustesDeAvisos>('/notification-settings', { promotions })
     .then((res) => res.data);
 }
+
+/**
+ * Una promoción, tal como la sirve el backend.
+ *
+ * `whatsappMessage` es el **texto** del mensaje, no una dirección: quien la
+ * pinte tiene que armar el `wa.me`.
+ */
+export interface PromocionApi {
+  id: string;
+  title: string;
+  body: string;
+  /** `todos` o `sin-empresa`. El servidor ya filtra; esto es informativo. */
+  audience?: string | null;
+  featured?: boolean;
+  /** Qué pasa al pulsar, en dos o tres palabras. */
+  action?: string | null;
+  whatsappMessage?: string | null;
+  /** Destino dentro de la aplicación, cuando lo prometido vive en una pantalla. */
+  href?: string | null;
+}
+
+/**
+ * Las promociones que le tocan a quien pregunta.
+ *
+ * **Devuelve vacío si el usuario las tiene silenciadas**: la decisión se respeta
+ * en el servidor, así que ninguna pantalla puede saltársela por descuido. El
+ * servidor filtra también por audiencia y por fechas, y deja una sola destacada.
+ */
+export function listarPromociones() {
+  return apiClient.get<PromocionApi[]>('/promotions').then((res) => res.data);
+}

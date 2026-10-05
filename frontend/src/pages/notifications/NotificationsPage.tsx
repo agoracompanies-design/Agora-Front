@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { Bell, CheckCheck } from 'lucide-react';
 import { useNotifications } from '@/context/NotificationsContext';
 import { NotificationsPanel } from '@/components/notifications/NotificationsPanel';
+import { PromotionsList } from '@/components/notifications/PromotionsList';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Button } from '@/components/ui/Button';
 
@@ -56,6 +57,13 @@ export function NotificationsPage() {
           </div>
         )}
       </div>
+
+      {/*
+        Fuera de `notifications__body` a propósito: las promociones se enseñan
+        **aunque no haya ningún aviso**. Dentro, el estado vacío de la bandeja se
+        las habría llevado por delante.
+      */}
+      <PromotionsList />
     </div>
   );
 }
