@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { Check, Plus, Search } from 'lucide-react';
 import { useApprovedCategories } from '@/hooks/useCategories';
-import { CATEGORIA_TEMPORAL } from '@/lib/categorias';
+import { MOTIVO_CATEGORIA, revisarCategoria, CATEGORIA_TEMPORAL } from '@/lib/categorias';
 import { cn } from '@/lib/utils';
 
 /**
@@ -44,7 +44,17 @@ export function CategoryPicker({
 
   // Escrita entera y ya existe: no hay nada que crear ni que sugerir.
   const yaExiste = categories.some((c) => c.toLowerCase() === escrito.toLowerCase());
-  const puedeCrear = escrito.length >= 2 && !yaExiste && coincidencias.length === 0;
+
+  /**
+   * Lo que se pediría, ya limpio y capitalizado, o por qué no se puede pedir.
+   *
+   * Se revisa aquí y no al enviar para que el error se vea **mientras se
+   * escribe**: enterarse de que el nombre no vale después de rellenar el
+   * producto entero es la peor forma de descubrirlo.
+   */
+  const revisada = useMemo(() => revisarCategoria(escrito), [escrito]);
+  const hayQueEstrenarla = escrito.length >= 2 && !yaExiste && coincidencias.length === 0;
+  const puedeCrear = hayQueEstrenarla && !revisada.motivo;
 
   function elegir(categoria: string) {
     onChange(categoria);
@@ -127,7 +137,7 @@ export function CategoryPicker({
               onMouseDown={(e) => {
                 e.preventDefault();
                 setAbierto(false);
-                onCrearNueva(escrito);
+                onCrearNueva(revisada.nombre);
               }}
               id="category-picker__create"
               className={cn(
@@ -136,11 +146,22 @@ export function CategoryPicker({
               )}
             >
               <Plus size={15} aria-hidden="true" />
-              Crear nueva: «{escrito}»
+              Crear nueva: «{revisada.nombre}»
             </button>
           )}
 
-          {!isLoading && !puedeCrear && coincidencias.length === 0 && (
+          {/* No vale: se dice qué pasa, en vez de esconder el botón sin más. */}
+          {!isLoading && hayQueEstrenarla && revisada.motivo && (
+            <p
+              id="category-picker__invalid"
+              role="status"
+              className="category-picker__invalid px-3 py-2 text-sm text-red-500"
+            >
+              {MOTIVO_CATEGORIA[revisada.motivo]}
+            </p>
+          )}
+
+          {!isLoading && !hayQueEstrenarla && coincidencias.length === 0 && (
             <p id="category-picker__empty" className="category-picker__empty px-3 py-2 text-sm text-ink-500">
               Escribe al menos dos letras.
             </p>
