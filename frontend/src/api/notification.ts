@@ -42,3 +42,18 @@ export function marcarAvisoLeido(id: string) {
     .patch<BandejaApi>(`/notifications/${encodeURIComponent(id)}/read`)
     .then((res) => res.data);
 }
+
+/** Lo único que el usuario puede silenciar: las promociones. */
+export interface AjustesDeAvisos {
+  promotions: boolean;
+}
+
+export function leerAjustesDeAvisos() {
+  return apiClient.get<AjustesDeAvisos>('/notification-settings').then((res) => res.data);
+}
+
+export function guardarAjustesDeAvisos(promotions: boolean) {
+  return apiClient
+    .patch<AjustesDeAvisos>('/notification-settings', { promotions })
+    .then((res) => res.data);
+}

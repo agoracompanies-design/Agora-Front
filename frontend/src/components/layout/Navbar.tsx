@@ -1,11 +1,13 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
-import { Bell, Heart, LayoutGrid, LogOut, Store, User as UserIcon, ChevronDown, Menu, X , ShieldCheck } from 'lucide-react';
+import { Bell, Heart, LayoutGrid, LogOut, Megaphone, Store, User as UserIcon, ChevronDown, Menu, X , ShieldCheck } from 'lucide-react';
 import { Logo } from './Logo';
 import { ThemeToggle } from '@/components/ui/ThemeToggle';
 import { useNotifications } from '@/context/NotificationsContext';
 import { useAuth } from '@/context/AuthContext';
 import { useFavorites } from '@/context/FavoritesContext';
+import { useToast } from '@/context/ToastContext';
+import { guardarAjustesDeAvisos, leerAjustesDeAvisos } from '@/api/notification';
 import { cn, initials } from '@/lib/utils';
 
 export function Navbar() {
@@ -16,6 +18,46 @@ export function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const { notify } = useToast();
+
+  /**
+   * Si el usuario quiere promociones. `null` mientras no se sabe.
+   *
+   * Se pide **al abrir el menú**, no al cargar la aplicación: es un dato que
+   * solo hace falta si alguien va a tocarlo, y aquí cada petición que se evita
+   * se nota.
+   */
+  const [promociones, setPromociones] = useState<boolean | null>(null);
+  const [guardandoPromos, setGuardandoPromos] = useState(false);
+
+  useEffect(() => {
+    if (!menuOpen || !user || promociones !== null) return;
+    let cancelado = false;
+    void leerAjustesDeAvisos()
+      .then((a) => !cancelado && setPromociones(a.promotions))
+      // Si no se puede leer, no se enseña un interruptor que miente sobre su
+      // estado: la fila se queda fuera hasta que el servidor conteste.
+      .catch(() => undefined);
+    return () => {
+      cancelado = true;
+    };
+  }, [menuOpen, user, promociones]);
+
+  /** Cambia en el acto y manda la petición detrás; si falla, se deshace. */
+  async function cambiarPromociones(quiere: boolean) {
+    const antes = promociones;
+    setPromociones(quiere);
+    setGuardandoPromos(true);
+    try {
+      const ajustes = await guardarAjustesDeAvisos(quiere);
+      setPromociones(ajustes.promotions);
+    } catch {
+      setPromociones(antes);
+      notify('No se pudo guardar. Inténtalo otra vez.', 'error');
+    } finally {
+      setGuardandoPromos(false);
+    }
+  }
 
   useEffect(() => {
     function onClickOutside(e: MouseEvent) {
@@ -166,6 +208,39 @@ export function Navbar() {
                   >
                     <UserIcon size={15} /> Mi cuenta
                   </Link>
+
+                  {/*
+                    Lo único que se puede silenciar son las promociones: los
+                    avisos de cuenta y de conducta no son opcionales, porque sin
+                    ellos alguien puede quedarse sin servicio sin enterarse.
+
+                    `checkbox` nativo y no un botón disfrazado: el navegador ya
+                    sabe anunciarlo y manejarlo con el teclado.
+                  */}
+                  {promociones !== null && (
+                    <label
+                      htmlFor="navbar__menu-promos-input"
+                      id="navbar__menu-promos"
+                      className="navbar__menu-promos mt-1 flex cursor-pointer items-center gap-2 border-t border-ink-100 px-3 py-2.5 text-sm text-ink-700"
+                    >
+                      <Megaphone size={15} aria-hidden="true" />
+                      <span className="flex-1">
+                        Promociones
+                        <span className="block text-xs text-ink-500">
+                          Ofertas y novedades. Los avisos de tu cuenta llegan igual.
+                        </span>
+                      </span>
+                      <input
+                        type="checkbox"
+                        id="navbar__menu-promos-input"
+                        checked={promociones}
+                        disabled={guardandoPromos}
+                        onChange={(e) => void cambiarPromociones(e.target.checked)}
+                        className="navbar__menu-promos-input h-5 w-5 shrink-0 accent-primary disabled:opacity-50"
+                      />
+                    </label>
+                  )}
+
                   <button
                     onClick={handleLogout}
                     id="navbar__menu-logout" className="navbar__menu-logout flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-red-600 hover:bg-red-500/10"
