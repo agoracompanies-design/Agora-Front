@@ -15,7 +15,20 @@ import { CATEGORIA_TEMPORAL } from './categorias';
  * moderador, porque el backend todavía no notifica a nadie (está en su backlog).
  */
 
-/** El mensaje con el que se avisa al moderador de que hay algo esperando. */
+/**
+ * RETIRADO el 2026-10-06, junto con `enlaceModeracion` y `SendRequestDialog`.
+ *
+ * Avisaba al moderador por WhatsApp de que había una categoría esperando. Se
+ * quita por dos motivos:
+ *
+ * 1. **Ya no hace falta**: el panel administrativo tiene la lista de pendientes
+ *    en su pestaña de Negocios, con corregir, aprobar y descartar.
+ * 2. **Sacaba datos del sistema**: el mensaje llevaba el id del usuario y el del
+ *    producto hacia un tercero, para decir algo que el panel ya sabe. Lo que
+ *    sale por ahí puede interceptarse, y no había razón para que saliera.
+ *
+ * Se deja marcado y no borrado hasta la revisión previa a producción.
+ */
 export function mensajeParaModerador(s: {
   categoria: string;
   productoNombre: string;

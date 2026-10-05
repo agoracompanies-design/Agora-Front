@@ -5,6 +5,12 @@ import { CATEGORIA_TEMPORAL } from '@/lib/categorias';
 import { enlaceModeracion } from '@/lib/solicitudes-categoria';
 
 /**
+ * RETIRADO el 2026-10-06. Ya no lo usa nadie.
+ *
+ * El aviso al moderador vive ahora en el panel, y este diálogo sacaba del
+ * sistema el id del usuario y el del producto por WhatsApp. Se deja marcado y
+ * no borrado hasta la revisión previa a producción.
+ *
  * El producto ya está publicado; ahora hay que hacer llegar la solicitud.
  *
  * Se abre WhatsApp desde un enlace y no automáticamente al guardar: una

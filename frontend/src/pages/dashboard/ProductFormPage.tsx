@@ -14,7 +14,6 @@ import { usePegarImagen } from '@/hooks/usePegarImagen';
 import { CategoryPicker } from '@/components/dashboard/CategoryPicker';
 import { UnitPicker } from '@/components/dashboard/UnitPicker';
 import { NewCategoryDialog } from '@/components/dashboard/NewCategoryDialog';
-import { SendRequestDialog } from '@/components/dashboard/SendRequestDialog';
 import { anotarCategoriaPedida } from '@/lib/solicitudes-categoria';
 import { useNotifications } from '@/context/NotificationsContext';
 import { useAuth } from '@/context/AuthContext';
@@ -43,13 +42,6 @@ export function ProductFormPage() {
   const [categoriaPedida, setCategoriaPedida] = useState('');
   /** La que pidió y sigue sin aprobarse, para poder decírselo al editar. */
   const [pendiente, setPendiente] = useState<string | null>(null);
-  const [porEnviar, setPorEnviar] = useState<{
-    categoria: string;
-    productoNombre: string;
-    productoId: string;
-    usuario: string;
-    userId: string;
-  } | null>(null);
   const [stock, setStock] = useState(true);
   const [image, setImage] = useState<File | null>(null);
   const [conversion, setConversion] = useState<{ antes: number; despues: number } | null>(null);
@@ -247,15 +239,6 @@ export function ProductFormPage() {
           </Button>
         </form>
       </Card>
-
-      <SendRequestDialog
-        open={Boolean(porEnviar)}
-        datos={porEnviar ?? { categoria: '', productoNombre: '', productoId: '', usuario: '', userId: '' }}
-        onCerrar={() => {
-          setPorEnviar(null);
-          navigate('/panel/productos');
-        }}
-      />
 
       <NewCategoryDialog
         categoria={categoriaAPedir}
