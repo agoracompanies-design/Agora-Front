@@ -139,9 +139,9 @@ export function RegisterPage() {
         <PasswordField
           label="Contraseña"
           required
-          minLength={6}
+          minLength={8}
           autoComplete="new-password"
-          hint="Mínimo 6 caracteres"
+          hint="Mínimo 8 caracteres"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="••••••••"

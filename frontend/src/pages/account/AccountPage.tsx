@@ -224,10 +224,17 @@ export function AccountPage() {
             value={currentPassword}
             onChange={(e) => setCurrentPassword(e.target.value)}
           />
+          {/*
+            Ocho, igual que al registrarse. El servidor todavía acepta seis aquí
+            —su DTO de cambio no se actualizó con el de alta—, así que esta
+            pantalla es hoy lo único que impide debilitar una contraseña ya
+            puesta. Pedido que lo igualen en SOL-26.
+          */}
           <PasswordField
             label="Nueva contraseña"
             required
-            minLength={6}
+            minLength={8}
+            hint="Mínimo 8 caracteres"
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
           />
