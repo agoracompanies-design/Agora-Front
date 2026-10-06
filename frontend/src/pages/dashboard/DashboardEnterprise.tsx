@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { cambiosDeEmpresa, updateEnterprise } from '@/api/userEnterprise';
 import { LogoField } from '@/components/business/LogoField';
-import { Input, Select } from '@/components/ui/Field';
+import { Input, Select, TextArea } from '@/components/ui/Field';
 import { PROVINCIAS } from '@/lib/provincias';
 import { municipiosDe } from '@/lib/municipios';
 import { SelectorBuscable } from '@/components/ui/SelectorBuscable';
@@ -32,6 +32,14 @@ export function DashboardEnterprise() {
   const [website, setWebsite] = useState('');
   const [logo, setLogo] = useState<File | null>(null);
 
+  /** La ficha ampliada: lo que el backend guarda desde su commit `55c1994`. */
+  const [reference, setReference] = useState('');
+  const [mapLink, setMapLink] = useState('');
+  const [openDays, setOpenDays] = useState('');
+  const [openTime, setOpenTime] = useState('');
+  const [closeTime, setCloseTime] = useState('');
+  const [affiliateCode, setAffiliateCode] = useState('');
+
   useEffect(() => {
     if (!enterprise) return;
     setCompanyName(enterprise.companyName);
@@ -47,6 +55,13 @@ export function DashboardEnterprise() {
     setPais(paisDelNumero(guardado)?.iso ?? PAIS_POR_DEFECTO);
     setPhone(numeroNacional(guardado));
     setWebsite(enterprise.contact?.website ?? '');
+    setReference(enterprise.reference ?? '');
+    setMapLink(enterprise.mapLink ?? '');
+    setOpenDays(enterprise.openDays ?? '');
+    // El servidor devuelve `09:00:00` y el `input type="time"` quiere `09:00`.
+    setOpenTime((enterprise.openTime ?? '').slice(0, 5));
+    setCloseTime((enterprise.closeTime ?? '').slice(0, 5));
+    setAffiliateCode(enterprise.affiliateCode ?? '');
   }, [enterprise]);
 
   if (!enterprise) return null;
@@ -68,6 +83,14 @@ export function DashboardEnterprise() {
       notify('El sitio web no parece una dirección válida', 'error');
       return;
     }
+    if (!pareceEnlaceDeMapa(mapLink)) {
+      notify('El enlace del mapa tiene que empezar por https://', 'error');
+      return;
+    }
+    if (!horarioCompleto(openTime, closeTime)) {
+      notify('Pon la hora de apertura y la de cierre, o ninguna de las dos', 'error');
+      return;
+    }
     setSubmitting(true);
     try {
       // Solo lo editado: lo que nadie tocó no viaja, y así no se pisa.
@@ -75,6 +98,12 @@ export function DashboardEnterprise() {
         companyName,
         address: { street, city, state, zipCode, country },
         contact: { email: email.trim(), phone: telefonoCompleto(pais, phone), website: normalizarWeb(website) || undefined },
+        reference,
+        mapLink: mapLink.trim(),
+        openDays,
+        openTime,
+        closeTime,
+        affiliateCode,
         ...(logo ? { logo } : {}),
       });
 
@@ -137,6 +166,75 @@ export function DashboardEnterprise() {
           <PhoneField pais={pais} onPais={setPais} numero={phone} onNumero={setPhone} required />
         </div>
         <Input label="Sitio web (opcional)" type="url" inputMode="url" placeholder="mitienda.cu" maxLength={LARGO.web} value={website} onChange={(e) => setWebsite(e.target.value.trim())} />
+
+        {/*
+          Cómo llegar y cuándo. Son las dos preguntas de quien quiere ir, y
+          hasta ahora el servidor no tenía dónde guardarlas.
+        */}
+        <fieldset id="dash-enterprise__visit" className="dash-enterprise__visit space-y-3 border-t border-ink-200 pt-4">
+          <legend className="dash-enterprise__visit-title text-sm font-medium text-ink-800">
+            Cómo llegar y cuándo
+          </legend>
+
+          <TextArea
+            label="Referencia para llegar (opcional)"
+            rows={2}
+            placeholder="Frente al parque, al lado de la farmacia"
+            hint="Aquí casi nadie busca por el número del portal."
+            maxLength={LARGO.referencia}
+            value={reference}
+            onChange={(e) => setReference(texto(e.target.value, LARGO.referencia))}
+          />
+
+          <Input
+            label="Enlace del mapa (opcional)"
+            type="url"
+            inputMode="url"
+            placeholder="https://maps.app.goo.gl/…"
+            hint="El que compartes por WhatsApp. Tiene que empezar por https://"
+            maxLength={LARGO.enlaceMapa}
+            value={mapLink}
+            onChange={(e) => setMapLink(e.target.value.trim())}
+          />
+
+          <Input
+            label="Días que abres (opcional)"
+            placeholder="Lunes a sábado"
+            maxLength={LARGO.diasAbiertos}
+            value={openDays}
+            onChange={(e) => setOpenDays(texto(e.target.value, LARGO.diasAbiertos))}
+          />
+
+          {/*
+            Dos campos y no uno: con las horas por separado se puede decir si un
+            negocio está abierto ahora mismo. Y van las dos o ninguna — media
+            franja no le sirve a nadie.
+          */}
+          <div id="dash-enterprise__hours" className="dash-enterprise__hours grid grid-cols-2 gap-3">
+            <Input
+              label="Abre a las (opcional)"
+              type="time"
+              value={openTime}
+              onChange={(e) => setOpenTime(e.target.value)}
+            />
+            <Input
+              label="Cierra a las (opcional)"
+              type="time"
+              hint="Si cierras de madrugada, pon 18:00 y 01:00."
+              value={closeTime}
+              onChange={(e) => setCloseTime(e.target.value)}
+            />
+          </div>
+
+          <Input
+            label="Código de afiliado (opcional)"
+            placeholder="AGORA-2026"
+            maxLength={LARGO.codigoAfiliado}
+            value={affiliateCode}
+            onChange={(e) => setAffiliateCode(texto(e.target.value, LARGO.codigoAfiliado))}
+          />
+        </fieldset>
+
         <Button type="submit" loading={submitting}>Guardar cambios</Button>
       </form>
     </Card>

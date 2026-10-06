@@ -25,6 +25,11 @@ export const LARGO = {
   correo: 120,
   web: 200,
   descripcion: 500,
+  /** Los seis de la ficha ampliada. Son los topes de columna del backend. */
+  referencia: 200,
+  enlaceMapa: 500,
+  diasAbiertos: 100,
+  codigoAfiliado: 50,
 } as const;
 
 /**
@@ -91,4 +96,35 @@ export function pareceWeb(valor: string): boolean {
   } catch {
     return false;
   }
+}
+
+
+/**
+ * Un enlace de mapa aceptable: solo `https:`.
+ *
+ * Lo pega la gente desde WhatsApp, así que entra texto que no controlamos. Sin
+ * este filtro cabría un `javascript:` en un atributo `href` de la ficha pública
+ * de un negocio, que es de todo lo que hay el peor sitio donde dejarlo.
+ *
+ * Vacío vale: el campo es opcional.
+ */
+export function pareceEnlaceDeMapa(valor: string): boolean {
+  const limpio = valor.trim();
+  if (!limpio) return true;
+  try {
+    return new URL(limpio).protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * El horario: **o las dos horas o ninguna**.
+ *
+ * Media franja —«abre a las 9» y nada más— no le sirve a quien quiere ir. Que
+ * el cierre sea menor que la apertura **sí vale**: un negocio que cierra a la
+ * una de la madrugada pone 18:00 → 01:00.
+ */
+export function horarioCompleto(apertura: string, cierre: string): boolean {
+  return Boolean(apertura) === Boolean(cierre);
 }
