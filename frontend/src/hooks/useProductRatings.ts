@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { averageRating, listRatingsByProduct } from '@/api/rating';
+import { getProductRatingSummary } from '@/api/rating';
 import type { Product } from '@/types';
 
 export interface Calificacion {
@@ -11,10 +11,13 @@ export interface Calificacion {
 /**
  * Las calificaciones de un puñado de productos, por id.
  *
- * Se piden de una en una porque el catálogo no las trae y no hay endpoint que
- * las devuelva juntas: son tantas peticiones como productos. Aquí es asumible
- * —un negocio maneja decenas, no miles— pero es lo primero que hay que cambiar
- * si el catálogo llega a crecer, o mejor, pedir que `Product` traiga su media.
+ * Se piden de una en una porque el catálogo no las trae: son tantas peticiones
+ * como productos. Pero desde el commit `55c1994` del backend cada una devuelve
+ * **solo el resumen** —media y votos— en vez de todas las calificaciones con su
+ * usuario: antes eran cientos de filas para enseñar un número.
+ *
+ * Lo siguiente sería que `GET /products` trajera `average` y `count` en cada
+ * fila, y entonces estas peticiones desaparecen. Pedido en SOL-13.
  */
 export function useProductRatings(products: Product[]): Record<string, Calificacion> {
   const [calificaciones, setCalificaciones] = useState<Record<string, Calificacion>>({});
@@ -31,9 +34,9 @@ export function useProductRatings(products: Product[]): Record<string, Calificac
 
     Promise.allSettled(
       ids.split(',').map((id) =>
-        listRatingsByProduct(id).then((notas) => ({
+        getProductRatingSummary(id).then((r) => ({
           id,
-          calificacion: { media: averageRating(notas), votos: notas.length },
+          calificacion: { media: r.average ?? 0, votos: r.count },
         })),
       ),
     ).then((resultados) => {

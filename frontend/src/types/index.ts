@@ -58,6 +58,26 @@ export interface UserEnterprise {
   code: number | null;
   latitude: number | null;
   longitude: number | null;
+
+  /**
+   * Lo que el negocio necesita contar y antes no cabía. Llegó en el commit
+   * `55c1994` del backend; hasta entonces se perdía al guardar.
+   */
+
+  /**
+   * Cómo se llega hasta la puerta. En Cuba las direcciones se dan por
+   * referencias («frente al parque»), no por número de portal.
+   */
+  reference?: string | null;
+  /** El enlace de la ubicación, tal como se comparte por WhatsApp. */
+  mapLink?: string | null;
+  /** «Lunes a sábado», «Todos los días menos el domingo». */
+  openDays?: string | null;
+  /** `HH:MM` de 24 horas. O las dos o ninguna: media franja no sirve. */
+  openTime?: string | null;
+  closeTime?: string | null;
+  /** Lleva letras, por eso no es el `code` numérico. */
+  affiliateCode?: string | null;
 }
 
 /**

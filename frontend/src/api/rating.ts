@@ -25,3 +25,24 @@ export function averageRating(ratings: Rating[]): number {
   if (ratings.length === 0) return 0;
   return ratings.reduce((sum, r) => sum + r.quantity, 0) / ratings.length;
 }
+
+/**
+ * El resumen de un producto: media, cuántos votos y la nota de quien pregunta.
+ *
+ * Existe desde el commit `55c1994` del backend. Antes había que bajarse **todas**
+ * las calificaciones del producto —con el usuario de cada una— para calcular una
+ * media en el teléfono: cientos de filas para enseñar un número, con la conexión
+ * que hay aquí, y datos de otras personas que no pintaban nada en el navegador.
+ */
+export interface ResumenDeCalificacion {
+  average: number | null;
+  count: number;
+  /** La nota de quien pregunta, o `null` si todavía no calificó. */
+  mine: number | null;
+}
+
+export function getProductRatingSummary(productId: string) {
+  return apiClient
+    .get<ResumenDeCalificacion>(`/ratings/product/${productId}/summary`)
+    .then((res) => res.data);
+}

@@ -8,7 +8,26 @@ export interface UserEnterpriseInput {
   code?: number;
   /** El logo del negocio. Solo viaja cuando el servidor sepa recibirlo. */
   logo?: File | null;
+
+  /** Lo que el backend guarda desde su commit `55c1994`. Ver `UserEnterprise`. */
+  reference?: string;
+  mapLink?: string;
+  openDays?: string;
+  /** `HH:MM` de 24 horas; el servidor valida el formato. */
+  openTime?: string;
+  closeTime?: string;
+  affiliateCode?: string;
 }
+
+/** Los campos sueltos de la ficha, los que no van dentro de un objeto. */
+const CAMPOS_SUELTOS = [
+  'reference',
+  'mapLink',
+  'openDays',
+  'openTime',
+  'closeTime',
+  'affiliateCode',
+] as const;
 
 /**
  * Si el servidor guarda ya el logo de un negocio.
@@ -94,6 +113,10 @@ function cuerpoDelAlta(input: UserEnterpriseInput): FormData | Omit<UserEnterpri
   form.append('address', JSON.stringify(datos.address));
   form.append('contact', JSON.stringify(datos.contact));
   if (datos.code !== undefined) form.append('code', String(datos.code));
+  for (const campo of CAMPOS_SUELTOS) {
+    const valor = datos[campo];
+    if (valor) form.append(campo, valor);
+  }
   // El servidor lo espera en `image`, el mismo nombre que la foto de producto.
   form.append('image', logo);
   return form;
@@ -202,6 +225,15 @@ export function cambiosDeEmpresa(
   const cambios: Partial<UserEnterpriseInput> = {};
 
   if (nuevo.companyName !== actual.companyName) cambios.companyName = nuevo.companyName;
+  for (const campo of CAMPOS_SUELTOS) {
+    if ((nuevo[campo] || '') === (actual[campo] || '')) continue;
+    // Vaciar una hora **tiene que ir como `null`**: el servidor valida
+    // `openTime` y `closeTime` con `@IsMilitaryTime()` y una cadena vacía la
+    // rechaza con «must be a valid representation of military time», que no hay
+    // forma de que quien borra su horario entienda. Comprobado el 2026-10-06.
+    const esHora = campo === 'openTime' || campo === 'closeTime';
+    cambios[campo] = (esHora && !nuevo[campo] ? null : nuevo[campo]) as string | undefined;
+  }
   if (nuevo.code !== undefined && nuevo.code !== actual.code) cambios.code = nuevo.code;
   if (nuevo.logo) cambios.logo = nuevo.logo;
 
