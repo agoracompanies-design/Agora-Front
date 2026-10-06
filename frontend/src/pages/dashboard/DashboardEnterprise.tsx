@@ -71,7 +71,11 @@ export function DashboardEnterprise() {
     if (!enterprise) return;
     // Lo que no se puede juzgar tecleando —si el correo está entero, si el
     // teléfono tiene cifras suficientes— se mira aquí, antes de salir.
-    if (!pareceCorreo(email)) {
+    // El correo es opcional desde el 2026-10-06: aquí mucha gente no tiene. Si
+    // se escribe uno, tiene que estar entero; si no, se sigue sin él. El
+    // teléfono queda como único contacto obligatorio, que es por donde se
+    // cierra el trato.
+    if (email.trim() && !pareceCorreo(email)) {
       notify('Revisa el correo de contacto: falta el @ o el dominio', 'error');
       return;
     }
@@ -131,6 +135,12 @@ export function DashboardEnterprise() {
         <Input label="Nombre de la empresa / mercado" required maxLength={LARGO.empresa} value={companyName} onChange={(e) => setCompanyName(texto(e.target.value, LARGO.empresa))} />
         <div id="dash-enterprise__address-row" className="dash-enterprise__address-row grid grid-cols-2 gap-3">
           {/* La provincia primero: de ella depende qué municipios hay. */}
+          {/*
+            Sigue siendo obligatoria aunque el servidor la acepte vacía: el
+            municipio —que sí exige— se elige de la lista de su provincia, así
+            que sin provincia no hay forma de poner municipio. Relajarla aquí no
+            daría libertad, solo dejaría el formulario sin salida.
+          */}
           <Select
             label="Provincia"
             required
@@ -158,11 +168,11 @@ export function DashboardEnterprise() {
             textoDeshabilitado="Elige primero la provincia"
           />
           <Input label="Calle" required autoComplete="address-line1" maxLength={LARGO.direccion} value={street} onChange={(e) => setStreet(texto(e.target.value, LARGO.direccion))} />
-          <Input label="Código postal" required inputMode="numeric" autoComplete="postal-code" value={zipCode} onChange={(e) => setZipCode(soloDigitos(e.target.value))} />
+          <Input label="Código postal (opcional)" inputMode="numeric" autoComplete="postal-code" value={zipCode} onChange={(e) => setZipCode(soloDigitos(e.target.value))} />
         </div>
         <Input label="País" required autoComplete="country-name" maxLength={LARGO.pais} value={country} onChange={(e) => setCountry(texto(e.target.value, LARGO.pais))} />
         <div id="dash-enterprise__contact-row" className="dash-enterprise__contact-row grid grid-cols-2 gap-3">
-          <Input label="Email de contacto" type="email" required autoComplete="email" maxLength={LARGO.correo} value={email} onChange={(e) => setEmail(e.target.value.trimStart())} />
+          <Input label="Email de contacto (opcional)" type="email" autoComplete="email" maxLength={LARGO.correo} value={email} onChange={(e) => setEmail(e.target.value.trimStart())} />
           <PhoneField pais={pais} onPais={setPais} numero={phone} onNumero={setPhone} required />
         </div>
         <Input label="Sitio web (opcional)" type="url" inputMode="url" placeholder="mitienda.cu" maxLength={LARGO.web} value={website} onChange={(e) => setWebsite(e.target.value.trim())} />
