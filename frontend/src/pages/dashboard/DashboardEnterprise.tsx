@@ -193,7 +193,7 @@ export function DashboardEnterprise() {
             hint="Aquí casi nadie busca por el número del portal."
             maxLength={LARGO.referencia}
             value={reference}
-            onChange={(e) => setReference(texto(e.target.value, LARGO.referencia))}
+            onChange={(e) => setReference(textoMultilinea(e.target.value, LARGO.referencia))}
           />
 
           <Input

@@ -61,9 +61,37 @@ export function soloUsuario(valor: string): string {
     .slice(0, LARGO.usuario);
 }
 
-/** Texto normal: se limita el largo y se quitan los saltos de línea. */
+/**
+ * Texto normal, de una línea: se limpia y se limita el largo.
+ *
+ * **Esto no para una inyección SQL, y no pretende hacerlo.** Contra eso solo
+ * sirve que el servidor use consultas parametrizadas, que es lo que hace
+ * TypeORM: el valor viaja aparte de la consulta y nunca se concatena en ella.
+ * Filtrar comillas aquí daría una falsa sensación de seguridad y rompería
+ * nombres legítimos — «Café D'Prisa», «O'Reilly» —.
+ *
+ * Lo que sí evita, que son riesgos reales de un campo de texto libre:
+ *
+ * 1. **Caracteres de control invisibles.** `‮` da la vuelta al texto al
+ *    pintarlo: un negocio podría llamarse de una forma y leerse de otra. Y los
+ *    de ancho cero sirven para colar dos nombres que parecen el mismo.
+ * 2. **Marcado.** React escapa lo que pinta, así que `<b>` sale como texto; pero
+ *    este dato lo leen también el panel y, el día de mañana, un informe o un
+ *    correo, donde puede no haber escape. Quitarlo en origen cuesta nada.
+ * 3. **Espacios repetidos**, que hacen que «Bodega  El Vedado» y «Bodega El
+ *    Vedado» parezcan dos negocios distintos.
+ */
 export function texto(valor: string, largo: number): string {
-  return valor.replace(/[\r\n]+/g, ' ').slice(0, largo);
+  return (
+    valor
+      // El salto va **antes** que los controles: si se borrara como uno más,
+      // «línea1» y «línea2» quedarían pegadas en una sola palabra.
+      .replace(/[\r\n]+/g, ' ')
+      .replace(/[\u0000-\u001F\u007F-\u009F​-‏‪-‮⁦-⁩]/g, '')
+      .replace(/[<>]/g, '')
+      .replace(/\s+/g, ' ')
+      .slice(0, largo)
+  );
 }
 
 /** ¿Tiene forma de correo? Se usa al enviar, no al teclear. */
@@ -127,4 +155,19 @@ export function pareceEnlaceDeMapa(valor: string): boolean {
  */
 export function horarioCompleto(apertura: string, cierre: string): boolean {
   return Boolean(apertura) === Boolean(cierre);
+}
+
+/**
+ * Lo mismo que `texto()`, para un campo de varias líneas.
+ *
+ * Mantiene los saltos pero no deja que se acumulen: tres líneas en blanco
+ * seguidas solo sirven para empujar el resto de la ficha fuera de la pantalla.
+ */
+export function textoMultilinea(valor: string, largo: number): string {
+  return valor
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F\u200B-\u200F\u202A-\u202E\u2066-\u2069]/g, '')
+    .replace(/[<>]/g, '')
+    .replace(/[ \t]+/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .slice(0, largo);
 }
