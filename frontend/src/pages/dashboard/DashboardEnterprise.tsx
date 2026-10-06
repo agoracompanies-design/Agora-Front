@@ -210,17 +210,17 @@ export function DashboardEnterprise() {
             negocio está abierto ahora mismo. Y van las dos o ninguna — media
             franja no le sirve a nadie.
           */}
-          <div id="dash-enterprise__hours" className="dash-enterprise__hours grid grid-cols-2 gap-3">
+          <div id="dash-enterprise__hours" className="dash-enterprise__hours grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Input
-              label="Abre a las (opcional)"
+              label="Abre a las"
               type="time"
               value={openTime}
               onChange={(e) => setOpenTime(e.target.value)}
             />
             <Input
-              label="Cierra a las (opcional)"
+              label="Cierra a las"
               type="time"
-              hint="Si cierras de madrugada, pon 18:00 y 01:00."
+              hint="Opcional, pero o las dos o ninguna. Si cierras de madrugada, pon 18:00 y 01:00."
               value={closeTime}
               onChange={(e) => setCloseTime(e.target.value)}
             />
