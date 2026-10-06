@@ -6,7 +6,17 @@ import { Input, Select, TextArea } from '@/components/ui/Field';
 import { PROVINCIAS } from '@/lib/provincias';
 import { municipiosDe } from '@/lib/municipios';
 import { SelectorBuscable } from '@/components/ui/SelectorBuscable';
-import { LARGO, normalizarWeb, pareceCorreo, pareceWeb, soloDigitos, texto } from '@/lib/validacion';
+import {
+  LARGO,
+  horarioCompleto,
+  normalizarWeb,
+  pareceCorreo,
+  pareceEnlaceDeMapa,
+  pareceWeb,
+  soloDigitos,
+  texto,
+  textoMultilinea,
+} from '@/lib/validacion';
 import { PhoneField, telefonoListo } from '@/components/ui/PhoneField';
 import { PAIS_POR_DEFECTO, numeroNacional, paisDelNumero, telefonoCompleto } from '@/lib/paises';
 import { Button } from '@/components/ui/Button';

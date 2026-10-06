@@ -69,6 +69,10 @@ function PromotionCard({ promocion }: { promocion: PromocionApi }) {
    * 2026-10-06), con lo que el enlace acababa llevando a
    * `/avisos/Hola, quiero pasarme al plan anual…`. Un destino de verdad empieza
    * por `/`. Pedido como SOL-11.
+   *
+   * Lo que sí garantiza `enlaceSeguro` es que de aquí sale una ruta **de dentro
+   * y relativa**, que es lo único que `<Link to>` sabe usar: una dirección que
+   * solo parecía interna —`/\otro-sitio.com`— se queda fuera.
    */
   const crudo = promocion.href?.trim();
   const dentro = crudo?.startsWith('/') ? enlaceSeguro(crudo) : null;

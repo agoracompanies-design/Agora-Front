@@ -99,9 +99,6 @@ export function ProductFormPage() {
       return;
     }
     setSubmitting(true);
-    // Cuál es el producto del que se habla: el que se está editando, o el que
-    // acaba de nacer. Hace falta para la solicitud de categoría.
-    let idGuardado = id ?? '';
     try {
       if (isEditing && id) {
         await updateProduct(id, {
@@ -120,7 +117,7 @@ export function ProductFormPage() {
           notify('Necesitas una empresa registrada para publicar productos', 'error');
           return;
         }
-        const creado = await createProduct({
+        await createProduct({
           name,
           priceCup: priceCup ? Number(priceCup) : null,
           priceUsd: priceUsd ? Number(priceUsd) : null,
@@ -131,13 +128,15 @@ export function ProductFormPage() {
           userEnterpriseId: enterprise.idUserEnterprise,
           image,
         });
-        idGuardado = creado.idProduct;
         notify('Producto publicado');
       }
       // La sugerencia ya la registró el backend al recibir un nombre que no
-      // existe: aquí solo queda dejar constancia en la bandeja del negocio y
-      // ofrecerle avisar al moderador, porque el backend todavía no notifica
-      // a nadie de que hay algo pendiente.
+      // existe: aquí solo queda dejar constancia en la bandeja del negocio, que
+      // es donde verá en qué queda.
+      //
+      // Antes de esto se abría un diálogo para mandársela al moderador por
+      // WhatsApp. Ya no: la solicitud le llega al grupo que atiende al negocio
+      // desde el panel, sin sacar del sistema ni la cuenta ni el producto.
       if (categoriaPedida && user) {
         anotarCategoriaPedida({
           userId: user.id,
@@ -145,8 +144,6 @@ export function ProductFormPage() {
           productoNombre: name,
         });
         recargarAvisos();
-        setPorEnviar({ categoria: categoriaPedida, productoNombre: name, productoId: idGuardado, usuario: user.username, userId: user.id });
-        return;
       }
       navigate('/panel/productos');
     } catch (err) {

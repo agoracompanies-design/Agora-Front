@@ -2,7 +2,7 @@ import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft, ExternalLink, Mail, MapPin, Phone, Store } from 'lucide-react';
 import { enlaceLlamada, telefonoLegible } from '@/lib/contacto';
-import { correoValido } from '@/lib/contacto-cuenta';
+import { enlaceDeCorreo } from '@/lib/enlaces';
 import { getEnterprise } from '@/api/userEnterprise';
 import { listProducts } from '@/api/product';
 import { listServicesByEnterprise } from '@/api/service';
@@ -203,8 +203,16 @@ export function EnterprisePage() {
                       <dt className="sr-only">Correo</dt>
                       <Mail size={14} className="shrink-0" aria-hidden="true" />
                       <dd>
-                        {correoValido(enterprise.contact.email) ? (
-                          <a href={`mailto:${enterprise.contact.email}`} className="hover:text-ink-900 hover:underline">
+                        {/* El correo lo escribe el negocio y lo lee cualquiera
+                            que entre, así que no se pega tal cual detrás de
+                            `mailto:`: con un `?bcc=` o un `&body=` deja el
+                            correo de quien pulsa ya preparado. Si no es una
+                            dirección limpia se enseña sin enlace. */}
+                        {enlaceDeCorreo(enterprise.contact.email) ? (
+                          <a
+                            href={enlaceDeCorreo(enterprise.contact.email)!}
+                            className="hover:text-ink-900 hover:underline"
+                          >
                             {enterprise.contact.email}
                           </a>
                         ) : (
