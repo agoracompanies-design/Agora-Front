@@ -225,16 +225,21 @@ export function AccountPage() {
             onChange={(e) => setCurrentPassword(e.target.value)}
           />
           {/*
-            Ocho, igual que al registrarse. El servidor todavía acepta seis aquí
-            —su DTO de cambio no se actualizó con el de alta—, así que esta
-            pantalla es hoy lo único que impide debilitar una contraseña ya
-            puesta. Pedido que lo igualen en SOL-26.
+            De ocho a setenta y dos, que es lo que exige el servidor desde el
+            commit `231f7e4`. Antes su DTO de cambio aceptaba seis y esta
+            pantalla era lo único que impedía debilitar una contraseña ya
+            puesta; eso era SOL-27, y ya está cerrado.
+
+            El tope no es un capricho: bcrypt ignora lo que pase de 72 bytes, así
+            que sin él dos contraseñas distintas podrían valer lo mismo. Se pone
+            aquí para que se vea al escribir, en vez de descubrirlo con un 400.
           */}
           <PasswordField
             label="Nueva contraseña"
             required
             minLength={8}
-            hint="Mínimo 8 caracteres"
+            maxLength={72}
+            hint="Entre 8 y 72 caracteres"
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
           />

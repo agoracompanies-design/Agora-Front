@@ -136,12 +136,16 @@ export function RegisterPage() {
             </label>
           </div>
         )}
+        {/* Los dos topes son los del servidor. El de abajo no es evidente:
+            bcrypt ignora lo que pase de 72 bytes, así que sin él dos
+            contraseñas distintas podrían valer lo mismo. */}
         <PasswordField
           label="Contraseña"
           required
           minLength={8}
+          maxLength={72}
           autoComplete="new-password"
-          hint="Mínimo 8 caracteres"
+          hint="Entre 8 y 72 caracteres"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="••••••••"
