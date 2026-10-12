@@ -157,7 +157,7 @@ export function BecomeSellerPage() {
               <Input label="Código postal" required inputMode="numeric" autoComplete="postal-code" value={zipCode} onChange={(e) => setZipCode(soloDigitos(e.target.value))} />
             </div>
             <Input label="País" required autoComplete="country-name" maxLength={LARGO.pais} value={country} onChange={(e) => setCountry(texto(e.target.value, LARGO.pais))} />
-            <div id="sell__contact-row" className="sell__contact-row grid grid-cols-2 gap-3">
+            <div id="sell__contact-row" className="sell__contact-row grid grid-rows-2 gap-3">
               <Input label="Email de contacto" type="email" required autoComplete="email" maxLength={LARGO.correo} value={email} onChange={(e) => setEmail(e.target.value.trimStart())} />
               <PhoneField pais={pais} onPais={setPais} numero={phone} onNumero={setPhone} required />
             </div>

@@ -108,7 +108,7 @@ export function RegisterPage() {
                 required
                 type="email"
                 autoComplete="email"
-                hint="Lo usaremos para verificar su cuenta y recuperarla si olvidas la contraseña."
+                hint="Lo usaremos para verificar su cuenta y recuperarla si olvida la contraseña."
                 value={correo}
                 onChange={(e) => setCorreo(e.target.value.trim())}
                 placeholder="tu@correo.cu"
@@ -121,7 +121,7 @@ export function RegisterPage() {
                 numero={numero}
                 onNumero={setNumero}
                 required
-                hint="Lo usaremos para verificar su cuenta y recuperarla si olvidas la contraseña."
+                hint="Lo usaremos para verificar su cuenta y recuperarla si olvida la contraseña."
               />
             )}
 
