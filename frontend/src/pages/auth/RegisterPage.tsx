@@ -82,7 +82,7 @@ export function RegisterPage() {
       subtitle="Con un usuario y una contraseña ya estás dentro"
       footer={
         <>
-          ¿Ya tienes cuenta? <AuthLink to="/iniciar-sesion">Inicia sesión</AuthLink>
+          ¿Ya tienes una cuenta? <AuthLink to="/iniciar-sesion">Inicia sesión</AuthLink>
         </>
       }
     >
@@ -108,7 +108,7 @@ export function RegisterPage() {
                 required
                 type="email"
                 autoComplete="email"
-                hint="Nos sirve para devolverte la cuenta si pierdes la contraseña."
+                hint="Lo usaremos para verificar su cuenta y recuperarla si olvidas la contraseña."
                 value={correo}
                 onChange={(e) => setCorreo(e.target.value.trim())}
                 placeholder="tu@correo.cu"
@@ -121,7 +121,7 @@ export function RegisterPage() {
                 numero={numero}
                 onNumero={setNumero}
                 required
-                hint="Nos sirve para devolverte la cuenta si pierdes la contraseña."
+                hint="Lo usaremos para verificar su cuenta y recuperarla si olvidas la contraseña."
               />
             )}
 
@@ -132,7 +132,7 @@ export function RegisterPage() {
                 onChange={(e) => setUsarCorreo(e.target.checked)}
                 className="h-4 w-4 cursor-pointer accent-primary"
               />
-              Usar correo en vez del teléfono
+              Registrarme con correo electrónico
             </label>
           </div>
         )}
@@ -168,7 +168,7 @@ export function RegisterPage() {
           Crear cuenta
         </Button>
         <p id="register__seller-note" className="register__seller-note text-center text-xs text-ink-500">
-          ¿Vas a vender? Crea tu cuenta y da de alta tu negocio desde dentro.
+          ¿Vas a vender? Crea tu cuenta y registra tu negocio
         </p>
       </form>
     </AuthLayout>

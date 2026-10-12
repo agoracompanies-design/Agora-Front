@@ -62,7 +62,7 @@ export function LoginPage() {
       subtitle="Inicia sesión para continuar en Agora"
       footer={
         <>
-          ¿No tienes cuenta? <AuthLink to="/registrarse">Crea una</AuthLink>
+          ¿No tienes cuenta? <AuthLink to="/registrarse">Regístrate</AuthLink>
         </>
       }
     >
