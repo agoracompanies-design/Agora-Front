@@ -104,9 +104,13 @@ function Fila({ aviso, onLeer }: { aviso: Aviso; onLeer: () => void }) {
           target="_blank"
           rel="noreferrer"
           id={`inbox__item-link--${aviso.id}`}
-          className="inbox__item-link mx-3 mb-2 flex items-center gap-1.5 text-xs font-medium text-primary hover:underline"
+          // El `py` no es estética: sin él el enlace medía 16 px de alto y en
+          // un teléfono se falla al tocarlo. Con el relleno pasa de los 24 px
+          // que pide la WCAG 2.5.8, y el `-ml-1` lo devuelve a su sitio para
+          // que el texto siga alineado con el del aviso.
+          className="inbox__item-link mx-3 mb-2 -ml-1 inline-flex w-fit items-center gap-1.5 rounded-lg px-1 py-1.5 text-xs font-medium text-primary hover:underline"
         >
-          <MessageCircle size={12} aria-hidden="true" /> {aviso.enlaceTexto ?? 'Abrir WhatsApp'}
+          <MessageCircle size={14} aria-hidden="true" /> {aviso.enlaceTexto ?? 'Abrir WhatsApp'}
         </a>
       )}
     </li>
