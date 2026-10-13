@@ -341,3 +341,38 @@
   }
 }
 
+
+/* ---------------------------------------------------------------------------
+   El arco del cambio de tema
+
+   `startViewTransition` pinta dos capas: la pantalla de antes y la de después.
+   Por defecto las funde, y un fundido sobre un cambio de tema se ve sucio. Se
+   quita el fundido para que la de arriba entre solo por el recorte circular
+   que le aplica `ThemeToggle`, y se la pone por encima para que el arco se vea
+   avanzar sobre la anterior.
+
+   La duración y el centro van en el componente, que es quien sabe dónde está
+   el botón que lo lanzó.
+--------------------------------------------------------------------------- */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-old(root) {
+  z-index: 0;
+}
+
+::view-transition-new(root) {
+  z-index: 1;
+}
+
+/* Quien pide no moverse, no se mueve: el tema cambia de golpe. */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(root),
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none !important;
+  }
+}

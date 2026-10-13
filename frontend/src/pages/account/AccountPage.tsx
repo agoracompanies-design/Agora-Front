@@ -162,8 +162,12 @@ export function AccountPage() {
               </div>
             </details>
 
-            <div id="membership__actions" className="membership__actions flex items-center gap-3 border-t border-ink-200 pt-3">
-              <Button variant="outline" size="sm" onClick={() => setConfirmCancel(true)}>
+            {/* En el teléfono el botón y la advertencia no caben en una línea:
+                el botón se encogía, el texto se partía en dos y se salía de su
+                propio borde, porque la altura del tamaño `sm` es fija. Apilados
+                en móvil y el botón sin encogerse. */}
+            <div id="membership__actions" className="membership__actions flex flex-col items-start gap-2 border-t border-ink-200 pt-3 sm:flex-row sm:items-center sm:gap-3">
+              <Button variant="outline" size="sm" className="shrink-0 whitespace-nowrap" onClick={() => setConfirmCancel(true)}>
                 Cancelar membresía
               </Button>
               <p id="membership__actions-hint" className="membership__actions-hint text-xs text-ink-400">

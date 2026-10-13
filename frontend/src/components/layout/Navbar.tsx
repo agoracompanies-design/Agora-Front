@@ -254,6 +254,28 @@ export function Navbar() {
         </div>
 
         <div id="navbar__mobile-actions" className="navbar__mobile-actions flex items-center gap-1 md:hidden">
+          {/* Los avisos también aquí. Estaban solo en la barra de escritorio, y
+              en el teléfono no había forma de llegar a ellos: ni en la barra ni
+              dentro del menú. El contador es justo lo que hay que ver sin
+              abrir nada. */}
+          {isAuthenticated && (
+            <Link
+              to="/avisos"
+              aria-label={sinLeer > 0 ? `Avisos (${sinLeer} sin leer)` : 'Avisos'}
+              id="navbar__mobile-notifications"
+              className="navbar__mobile-notifications relative flex h-9 w-9 items-center justify-center rounded-full text-ink-500 hover:bg-ink-100 hover:text-ink-900"
+            >
+              <Bell size={18} />
+              {sinLeer > 0 && (
+                <span
+                  id="navbar__mobile-notifications-count"
+                  className="navbar__mobile-notifications-count absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-danger px-1 text-[10px] font-semibold text-white"
+                >
+                  {sinLeer}
+                </span>
+              )}
+            </Link>
+          )}
           <ThemeToggle id="theme-toggle--mobile" />
           <button id="navbar__mobile-toggle" className="navbar__mobile-toggle p-2 text-ink-700" onClick={() => setMobileOpen((v) => !v)} aria-label="Menú">
             {mobileOpen ? <X size={22} /> : <Menu size={22} />}

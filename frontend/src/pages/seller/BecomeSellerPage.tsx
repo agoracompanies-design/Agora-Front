@@ -123,7 +123,10 @@ export function BecomeSellerPage() {
           <form onSubmit={handleCreateEnterprise} id="sell__form" className="sell__form space-y-4">
             <LogoField nombre={companyName} archivo={logo} onArchivo={setLogo} />
             <Input label="Nombre de la empresa / mercado" required maxLength={LARGO.empresa} value={companyName} onChange={(e) => setCompanyName(texto(e.target.value, LARGO.empresa))} placeholder="Mercado La Esquina" />
-            <div id="sell__address-row" className="sell__address-row grid grid-cols-2 gap-3">
+            {/* Cuatro campos en dos columnas caben en un portátil, no en un
+                teléfono: a 375 px cada uno se queda en 160 y el municipio no
+                deja leer lo que hay escrito. En móvil, uno por línea. */}
+            <div id="sell__address-row" className="sell__address-row grid gap-3 sm:grid-cols-2">
               {/* La provincia primero: de ella depende qué municipios hay. Al
                   cambiarla se limpia el municipio, que si no quedaría uno de
                   otra provincia. */}
@@ -157,7 +160,11 @@ export function BecomeSellerPage() {
               <Input label="Código postal" required inputMode="numeric" autoComplete="postal-code" value={zipCode} onChange={(e) => setZipCode(soloDigitos(e.target.value))} />
             </div>
             <Input label="País" required autoComplete="country-name" maxLength={LARGO.pais} value={country} onChange={(e) => setCountry(texto(e.target.value, LARGO.pais))} />
-            <div id="sell__contact-row" className="sell__contact-row grid grid-rows-2 gap-3">
+            {/* Uno debajo del otro en el teléfono. Antes era `grid-rows-2`, que
+                al fijar las filas reparte los campos por COLUMNAS: el email y
+                el móvil salían pegados a lo ancho y el teléfono quedaba
+                aplastado contra el borde. */}
+            <div id="sell__contact-row" className="sell__contact-row grid gap-3 sm:grid-cols-2">
               <Input label="Email de contacto" type="email" required autoComplete="email" maxLength={LARGO.correo} value={email} onChange={(e) => setEmail(e.target.value.trimStart())} />
               <PhoneField pais={pais} onPais={setPais} numero={phone} onNumero={setPhone} required />
             </div>
