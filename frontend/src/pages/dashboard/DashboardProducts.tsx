@@ -162,13 +162,39 @@ export function DashboardProducts() {
                     <td className="p-3">
                       <p className="font-medium text-ink-900">{product.name}</p>
                       <p className="text-xs text-ink-500">{nombreDeCategoria(product)}</p>
+                      {/* Hasta que no hay sitio de sobra, el precio, la nota y
+                          el stock no tienen columna propia: bajan aquí, debajo
+                          del nombre. Medido a 375: con sus tres columnas,
+                          «Eliminar» caía entera fuera de la pantalla (387–425)
+                          y el marco la recortaba sin dejar forma de llegar a
+                          ella. */}
+                      <span className="dash-products__meta mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 lg:hidden">
+                        <span className="dash-products__meta-price text-sm font-medium text-ink-700">
+                          {moneda === 'CUP'
+                            ? formatPrice(product.priceCup, 'CUP') ?? formatPrice(product.priceUsd, 'USD')
+                            : formatPrice(product.priceUsd, 'USD') ?? formatPrice(product.priceCup, 'CUP')}
+                        </span>
+                        <span className="dash-products__meta-rating inline-flex items-center gap-1 whitespace-nowrap">
+                          <span className="text-xs font-medium text-ink-900">
+                            {(calificaciones[product.idProduct]?.media ?? 0).toFixed(1)}
+                          </span>
+                          <RatingStars value={calificaciones[product.idProduct]?.media ?? 0} size={11} />
+                        </span>
+                        <Badge variant={product.stock ? 'success' : 'danger'}>{product.stock ? 'Disponible' : 'Agotado'}</Badge>
+                      </span>
                     </td>
-                    <td className="p-3 text-ink-700">
+                    <td className="hidden p-3 text-ink-700 lg:table-cell">
                       {moneda === 'CUP'
                         ? formatPrice(product.priceCup, 'CUP') ?? formatPrice(product.priceUsd, 'USD')
                         : formatPrice(product.priceUsd, 'USD') ?? formatPrice(product.priceCup, 'CUP')}
                     </td>
-                    <td className="p-3">
+                    {/* Las seis columnas solo caben a partir de `lg`. El corte
+                        no es el del teléfono sino el del menú lateral: desde
+                        `md` la navegación se pone al lado y se lleva 208 px, así
+                        que a 768 quedan menos de 500 para la tabla y «Eliminar»
+                        volvía a salirse —medido—. Por debajo de `lg`, el precio,
+                        la nota y el stock van debajo del nombre. */}
+                    <td className="hidden p-3 lg:table-cell">
                       {/* La nota delante y las estrellas detrás: el número es
                           lo que se compara de un vistazo entre filas. */}
                       <span className="dash-products__rating inline-flex items-center gap-1.5 whitespace-nowrap">
@@ -178,7 +204,7 @@ export function DashboardProducts() {
                         <RatingStars value={calificaciones[product.idProduct]?.media ?? 0} size={13} />
                       </span>
                     </td>
-                    <td className="p-3">
+                    <td className="hidden p-3 lg:table-cell">
                       <Badge variant={product.stock ? 'success' : 'danger'}>{product.stock ? 'Disponible' : 'Agotado'}</Badge>
                     </td>
                     <td className="p-3 text-right">

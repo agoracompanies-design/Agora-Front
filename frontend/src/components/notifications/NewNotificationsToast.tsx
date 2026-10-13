@@ -53,7 +53,12 @@ export function NewNotificationsToast() {
       role="status"
       aria-live="polite"
       className={cn(
-        'new-notices pointer-events-none fixed inset-x-0 top-16 z-40 flex justify-center px-4',
+        // Pegado bajo la cabecera tapaba lo primero de cada página: en el panel
+        // se comía el «Volver a Agora» —comprobado, al pulsar ahí respondía el
+        // aviso y no el enlace—. En el teléfono baja al pie, que está libre y
+        // además queda a mano; de tableta para arriba sigue arriba, donde hay
+        // sitio de sobra.
+        'new-notices pointer-events-none fixed inset-x-0 bottom-4 z-40 flex justify-center px-4 sm:bottom-auto sm:top-16',
       )}
     >
       <div

@@ -37,7 +37,11 @@ export function DashboardLayout() {
         <SellerPitch tieneEmpresa={Boolean(enterprise)} yaTienePlan={daAccesoDeNegocio(subscription)} />
       ) : (
       <div id="dashboard__layout" className="dashboard__layout flex flex-col md:flex-row gap-8">
-        <nav id="dashboard__nav" className="dashboard__nav flex md:flex-col gap-1 md:w-52 shrink-0 overflow-x-auto">
+        {/* En el teléfono las cuatro secciones no caben en una línea: medido a
+            375, «Mi empresa» quedaba en 383–515, fuera de la pantalla. Antes se
+            salvaba con un desplazamiento lateral, pero nada decía que estuviera
+            ahí. Se parten en dos líneas, que se ven enteras. */}
+        <nav id="dashboard__nav" className="dashboard__nav flex flex-wrap md:flex-nowrap md:flex-col gap-1 md:w-52 shrink-0">
           {links.map(({ to, label, icon: Icon, end }) => (
             <NavLink
               key={to}

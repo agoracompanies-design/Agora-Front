@@ -206,7 +206,12 @@ export function ProductFormPage() {
             <PriceField label="Precio (USD)" value={priceUsd} onChange={setPriceUsd} placeholder="0.00" />
           </div>
 
-          <div id="product-form__meta-row" className="product-form__meta-row grid grid-cols-2 gap-3">
+          {/* Unidad y categoría llevan nombres largos («Alimentos y bebidas»):
+              a media pantalla de teléfono se cortan. Una debajo de otra en
+              móvil. El aviso de la categoría pendiente ocupa la fila entera: es
+              un párrafo, no una columna, y partido a la mitad quedaba en una
+              tira de texto de pocos caracteres por línea. */}
+          <div id="product-form__meta-row" className="product-form__meta-row grid gap-3 sm:grid-cols-2">
             <UnitPicker value={unit} onChange={setUnit} />
             <CategoryPicker
               value={category}
@@ -217,7 +222,7 @@ export function ProductFormPage() {
               onCrearNueva={setCategoriaAPedir}
             />
             {pendiente && (
-              <p id="product-form__pending" className="product-form__pending mt-1.5 text-xs text-ink-500">
+              <p id="product-form__pending" className="product-form__pending text-xs text-ink-500 sm:col-span-2">
                 Pediste «{pendiente}» y sigue esperando revisión. Si ya está aprobada, búscala aquí
                 arriba y elígela.
               </p>

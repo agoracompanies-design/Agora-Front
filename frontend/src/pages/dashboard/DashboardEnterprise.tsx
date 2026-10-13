@@ -143,7 +143,11 @@ export function DashboardEnterprise() {
       <form onSubmit={handleSubmit} id="dash-enterprise__form" className="dash-enterprise__form space-y-4">
         <LogoField nombre={companyName} actual={enterprise?.image} archivo={logo} onArchivo={setLogo} />
         <Input label="Nombre de la empresa / mercado" required maxLength={LARGO.empresa} value={companyName} onChange={(e) => setCompanyName(texto(e.target.value, LARGO.empresa))} />
-        <div id="dash-enterprise__address-row" className="dash-enterprise__address-row grid grid-cols-2 gap-3">
+        {/* Cuatro campos en dos columnas caben en un portátil, no en un
+            teléfono: a 375 px cada uno se queda en 160 y el municipio no deja
+            leer lo que hay escrito. En móvil, uno por línea. Es el mismo
+            formulario que `/vender`, así que la regla es la misma. */}
+        <div id="dash-enterprise__address-row" className="dash-enterprise__address-row grid gap-3 sm:grid-cols-2">
           {/* La provincia primero: de ella depende qué municipios hay. */}
           {/*
             Sigue siendo obligatoria aunque el servidor la acepte vacía: el
@@ -181,7 +185,9 @@ export function DashboardEnterprise() {
           <Input label="Código postal (opcional)" inputMode="numeric" autoComplete="postal-code" value={zipCode} onChange={(e) => setZipCode(soloDigitos(e.target.value))} />
         </div>
         <Input label="País" required autoComplete="country-name" maxLength={LARGO.pais} value={country} onChange={(e) => setCountry(texto(e.target.value, LARGO.pais))} />
-        <div id="dash-enterprise__contact-row" className="dash-enterprise__contact-row grid grid-cols-2 gap-3">
+        {/* El teléfono lleva dentro el selector de país y el número: partido a
+            la mitad no se puede teclear. Uno debajo del otro en el móvil. */}
+        <div id="dash-enterprise__contact-row" className="dash-enterprise__contact-row grid gap-3 sm:grid-cols-2">
           <Input label="Email de contacto (opcional)" type="email" autoComplete="email" maxLength={LARGO.correo} value={email} onChange={(e) => setEmail(e.target.value.trimStart())} />
           <PhoneField pais={pais} onPais={setPais} numero={phone} onNumero={setPhone} required />
         </div>
