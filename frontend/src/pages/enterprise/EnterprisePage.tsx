@@ -5,7 +5,8 @@ import { enlaceLlamada, telefonoLegible } from '@/lib/contacto';
 import { enlaceDeCorreo } from '@/lib/enlaces';
 import { getEnterprise } from '@/api/userEnterprise';
 import { listProducts } from '@/api/product';
-import { listServicesByEnterprise } from '@/api/service';
+import { listServicesByEnterprise, serviceImageUrl } from '@/api/service';
+import { ServiceThumb } from '@/components/product/CategoryIcon';
 import type { Product, Service, UserEnterprise } from '@/types';
 import { EnterpriseLogo } from '@/components/business/EnterpriseLogo';
 import { ProductCard } from '@/components/product/ProductCard';
@@ -249,12 +250,22 @@ export function EnterprisePage() {
               <h2 className="text-sm font-semibold text-ink-900">Servicios</h2>
               <ul className="space-y-3">
                 {services.map((service) => (
-                  <li key={service.idService} className="text-sm">
-                    <p className="font-medium text-ink-800">{service.name}</p>
-                    <p className="text-ink-500 line-clamp-2">{service.description}</p>
-                    <p className="mt-0.5 text-ink-900 font-medium">
-                      {formatPrice(service.priceUsd, 'USD') ?? formatPrice(service.priceCup, 'CUP')}
-                    </p>
+                  <li key={service.idService} className="enterprise__service flex gap-3 text-sm">
+                    {/* La foto solo ocupa sitio si la hay: sin ella, el texto
+                        se queda con el ancho entero, que en esta columna
+                        estrecha es lo que importa. */}
+                    {service.image && (
+                      <span className="enterprise__service-thumb flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-ink-100 text-ink-300">
+                        <ServiceThumb src={serviceImageUrl(service.image)} />
+                      </span>
+                    )}
+                    <span className="enterprise__service-body min-w-0">
+                      <p className="font-medium text-ink-800">{service.name}</p>
+                      <p className="text-ink-500 line-clamp-2">{service.description}</p>
+                      <p className="mt-0.5 text-ink-900 font-medium">
+                        {formatPrice(service.priceUsd, 'USD') ?? formatPrice(service.priceCup, 'CUP')}
+                      </p>
+                    </span>
                   </li>
                 ))}
               </ul>

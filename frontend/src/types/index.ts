@@ -124,6 +124,13 @@ export interface Service {
   priceCup: number | null;
   priceUsd: number | null;
   description: string;
+  /**
+   * La foto del servicio, como ruta servible (`/services/image/<fichero>`),
+   * igual que en producto. Opcional: un servicio puede no tener foto, y además
+   * el servidor todavía no guarda ninguna —ver `IMAGEN_DE_SERVICIO_LISTA` en
+   * `api/service.ts`—, así que hoy llega siempre vacía.
+   */
+  image?: string | null;
   userEnterpriseId: string;
   userEnterprise?: UserEnterprise;
 }

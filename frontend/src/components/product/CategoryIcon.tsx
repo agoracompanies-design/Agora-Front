@@ -127,3 +127,22 @@ export function ProductThumb({
   if (!src || rota) return <CategoryIcon categoria={categoria} size={size} conNombre={false} />;
   return <img src={src} alt="" onError={() => setRota(true)} className="h-full w-full object-cover" />;
 }
+
+/**
+ * La misma miniatura, para servicios.
+ *
+ * Un servicio no tiene categoría de la que sacar un icono, así que cuando no
+ * hay foto —o no carga— se queda la llave inglesa, que es lo que ya los
+ * representa en el menú del panel.
+ */
+export function ServiceThumb({ src, size = 18 }: { src: string | null; size?: number }) {
+  const [rota, setRota] = useState(false);
+  if (!src || rota) {
+    return (
+      <span className="service-thumb flex h-full w-full items-center justify-center text-primary/70">
+        {createElement(Wrench, { size, strokeWidth: 1.5, 'aria-hidden': true })}
+      </span>
+    );
+  }
+  return <img src={src} alt="" onError={() => setRota(true)} className="h-full w-full object-cover" />;
+}
