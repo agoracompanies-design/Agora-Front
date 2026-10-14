@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Clock, CreditCard, Heart, MapPin, MessageCircle, Navigation, Phone, Store, ExternalLink } from 'lucide-react';
 import { getProduct, listProducts, productImageUrl } from '@/api/product';
-import { averageRating, createRating, listRatingsByProduct } from '@/api/rating';
-import type { Product, Rating } from '@/types';
+import { averageRating, createRating, getProductRatingSummary, listRatingsByProduct } from '@/api/rating';
+import type { ResumenDeCalificacion } from '@/api/rating';
+import type { Product } from '@/types';
 import { Badge } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { ProductCarousel } from '@/components/product/ProductCarousel';
@@ -32,7 +33,16 @@ export function ProductDetailPage() {
   const [product, setProduct] = useState<Product | null>(null);
   // La foto puede tener dirección y no llegar (403, archivo borrado).
   const [fotoRota, setFotoRota] = useState(false);
-  const [ratings, setRatings] = useState<Rating[]>([]);
+  /**
+   * La nota del producto: media, cuántos votaron y la de uno.
+   *
+   * Se pide al resumen y no a la lista entera. La lista, además de traerse
+   * cientos de filas para enseñar un número, **ya no dice de quién es cada
+   * una** —`userId` se quitó de ahí por privacidad—, así que con ella era
+   * imposible saber si uno ya calificó: el aviso «ya calificaste» no salía
+   * nunca y el formulario se ofrecía otra vez para acabar en un 409.
+   */
+  const [resumen, setResumen] = useState<ResumenDeCalificacion | null>(null);
   const [ratingsAvailable, setRatingsAvailable] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [submittingRating, setSubmittingRating] = useState(false);
@@ -51,9 +61,18 @@ export function ProductDetailPage() {
       .catch(() => notify('No se pudo cargar el producto', 'error'))
       .finally(() => setIsLoading(false));
 
-    listRatingsByProduct(id)
-      .then(setRatings)
-      .catch(() => setRatingsAvailable(false));
+    getProductRatingSummary(id)
+      .then(setResumen)
+      .catch(() => {
+        // Contra un servidor que todavía no tenga el resumen, se cae a la
+        // lista: se pierde saber si uno ya calificó, pero la media se sigue
+        // viendo. Vale más eso que una ficha sin nota.
+        listRatingsByProduct(id)
+          .then((lista) =>
+            setResumen({ average: averageRating(lista), count: lista.length, mine: null }),
+          )
+          .catch(() => setRatingsAvailable(false));
+      });
 
     // Una sola petición para las dos filas de abajo: el mismo negocio y la
     // misma categoría salen de ella, en vez de pedir el catálogo dos veces.
@@ -62,12 +81,36 @@ export function ProductDetailPage() {
       .catch(() => setRelacionados([]));
   }, [id, notify]);
 
+  /**
+   * Calificar el producto.
+   *
+   * Solo se llega aquí sin haber calificado antes: un segundo `POST` lo rechaza
+   * el servidor con un 409, y cambiar la nota puesta todavía no se puede —hace
+   * falta el identificador de la propia calificación, que el resumen no
+   * devuelve; está pedido—.
+   */
   async function handleRate(quantity: number) {
     if (!id || !user) return;
     setSubmittingRating(true);
     try {
-      const rating = await createRating({ quantity, userId: user.id, productId: id });
-      setRatings((prev) => [...prev, rating]);
+      await createRating({ quantity, userId: user.id, productId: id });
+      // La media se vuelve a pedir en vez de calcularla aquí: el servidor es
+      // quien sabe cuántos votos hay, y así no se queda un número inventado si
+      // alguien calificó mientras tanto.
+      //
+      // Si esa segunda petición no llega —aquí se cae la conexión a cada
+      // rato—, el voto ya está puesto: se apunta en pantalla con lo que se
+      // sabe. Dejarlo en nada volvería a ofrecer calificar, y el intento
+      // acabaría en un «ya calificaste este producto».
+      const fresco = await getProductRatingSummary(id).catch(() => null);
+      setResumen(
+        fresco ??
+          ((previo) => ({
+            average: previo?.average ?? quantity,
+            count: (previo?.count ?? 0) + 1,
+            mine: quantity,
+          }))(resumen),
+      );
       notify('¡Gracias por tu calificación!');
     } catch (error) {
       notify(error instanceof Error ? error.message : 'No se pudo enviar la calificación', 'error');
@@ -99,9 +142,12 @@ export function ProductDetailPage() {
     .filter((p) => nombreDeCategoria(p) === nombreDeCategoria(product))
     .filter((p) => p.userEnterprise?.idUserEnterprise !== enterprise?.idUserEnterprise)
     .slice(0, 12);
-  const avg = averageRating(ratings);
-  const myRating = ratings.find((r) => r.userId === user?.id);
-  const canRate = isAuthenticated && hasPermission(user?.permissions, Permissions.RATING_CREATE) && !myRating;
+  const avg = resumen?.average ?? 0;
+  const votos = resumen?.count ?? 0;
+  /** La nota que puso quien mira, o `null` si todavía no calificó. */
+  const miNota = resumen?.mine ?? null;
+  const canRate =
+    isAuthenticated && hasPermission(user?.permissions, Permissions.RATING_CREATE) && miNota === null;
   const mapUrl =
     enterprise?.latitude && enterprise?.longitude
       ? `https://www.google.com/maps/search/?api=1&query=${enterprise.latitude},${enterprise.longitude}`
@@ -170,9 +216,9 @@ export function ProductDetailPage() {
               </button>
             </div>
             <h1 id="product-detail__name" className="product-detail__name text-2xl font-semibold text-ink-900">{product.name}</h1>
-            {ratingsAvailable && ratings.length > 0 && (
+            {ratingsAvailable && votos > 0 && (
               <div id="product-detail__rating" className="product-detail__rating mt-2">
-                <RatingStars value={avg} count={ratings.length} />
+                <RatingStars value={avg} count={votos} />
               </div>
             )}
           </div>
@@ -274,9 +320,12 @@ export function ProductDetailPage() {
               {submittingRating && <p id="product-detail__rate-sending" className="product-detail__rate-sending mt-2 text-xs text-ink-400">Enviando…</p>}
             </div>
           )}
-          {myRating && (
+          {miNota !== null && (
             <p id="product-detail__rated" className="product-detail__rated text-sm text-ink-500">
-              Ya calificaste este producto con <span className="font-medium text-ink-800">{myRating.quantity} estrellas</span>
+              Ya calificaste este producto con{' '}
+              <span className="font-medium text-ink-800">
+                {miNota} {miNota === 1 ? 'estrella' : 'estrellas'}
+              </span>
             </p>
           )}
         </div>

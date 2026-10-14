@@ -78,23 +78,58 @@ function hashDe(codigo: string): string {
 }
 
 export function csp(): Plugin {
+  /** La URL de la API, resuelta por Vite. Se guarda en `configResolved`. */
+  let urlDeLaApi = '';
+
   return {
     name: 'agora-csp',
     // Solo al construir: en desarrollo rompería la recarga en caliente.
     apply: 'build',
+
+    configResolved(config) {
+      // `config.env` trae lo de los ficheros `.env*` además de lo del proceso;
+      // `process.env` solo, que es lo que había antes, se perdía un
+      // `.env.production` y dejaba la política sin el origen de la API.
+      urlDeLaApi = (config.env.VITE_API_URL as string | undefined) ?? '';
+
+      /*
+       * Sin esta variable el sitio se publica muerto, y en silencio.
+       *
+       * Pasan dos cosas a la vez, y ninguna se ve hasta que alguien abre la
+       * web: el cliente se queda con la dirección de reserva, que apunta al
+       * equipo de quien visita, y esta política sale con `connect-src 'self'`
+       * sin la API, así que el navegador bloquearía las llamadas aunque la
+       * dirección fuera buena. Las fotos, igual.
+       *
+       * Comprobado construyendo sin ella: termina con éxito y produce eso. Así
+       * que aquí se para. Vale más un build que falla que una web en blanco.
+       */
+      if (!urlDeLaApi) {
+        throw new Error(
+          'Falta VITE_API_URL. Sin ella la web se construye apuntando a localhost y con una ' +
+            'política que bloquea la API: quedaría publicada y muerta. Ponla en el entorno del ' +
+            'servidor o en un fichero `.env.production`, por ejemplo ' +
+            'VITE_API_URL=https://api.tudominio.cu/api',
+        );
+      }
+
+      try {
+        new URL(urlDeLaApi);
+      } catch {
+        throw new Error(
+          `VITE_API_URL no es una dirección válida: «${urlDeLaApi}». Tiene que llevar el ` +
+            'esquema, por ejemplo https://api.tudominio.cu/api',
+        );
+      }
+    },
+
     transformIndexHtml: {
       order: 'post',
       handler(html) {
         // El origen de la API sale de la misma variable que usa el cliente, así
-        // que no hay dos sitios que puedan decir cosas distintas.
-        const url = process.env.VITE_API_URL ?? '';
-        const origenes = new Set<string>();
-        try {
-          if (url) origenes.add(new URL(url).origin);
-        } catch {
-          // Una variable mal escrita no puede tumbar el build: se queda sin
-          // añadir y la política lo dirá en el navegador, que es donde se ve.
-        }
+        // que no hay dos sitios que puedan decir cosas distintas. Que exista y
+        // sea válida ya se comprobó al resolver la configuración.
+        const origenes = new Set<string>([new URL(urlDeLaApi).origin]);
 
         // Los scripts en línea que ya trae el HTML, por su hash. Hoy es uno
         // —el que pinta el tema oscuro antes del primer dibujo—, pero se

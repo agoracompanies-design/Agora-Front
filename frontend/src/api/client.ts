@@ -2,7 +2,19 @@ import axios, { AxiosError } from 'axios';
 import type { AxiosRequestConfig } from 'axios';
 import { tryMockResponse } from './mockFallback';
 
-export const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3001/api';
+/**
+ * Dónde está la API.
+ *
+ * La dirección de reserva es **solo para desarrollo**: el puerto 3000 es donde
+ * escucha el backend aquí, el mismo que dice `.env.example`. Antes ponía 3001,
+ * que no es ningún sitio.
+ *
+ * Al construir para producción no se llega a usar: el plugin de la política de
+ * seguridad para el build si falta `VITE_API_URL`, porque un sitio publicado
+ * apuntando a `localhost` no falla —se queda en blanco— y eso no se ve hasta
+ * que alguien lo abre.
+ */
+export const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000/api';
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,  
