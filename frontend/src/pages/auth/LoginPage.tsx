@@ -71,7 +71,7 @@ export function LoginPage() {
           target="_blank"
           rel="noreferrer"
           id="login__recover"
-          className="login__recover inline-flex items-center gap-1.5 rounded-lg py-1.5 text-ink-500 transition-colors hover:text-ink-900"
+          className="login__recover mx-auto mt-4 flex w-fit items-center gap-1.5 rounded-lg py-1.5 text-base text-ink-500 transition-colors hover:text-ink-900"
         >
           <MessageCircle size={14} aria-hidden="true" />
           ¿Olvidaste tu contraseña?
@@ -110,7 +110,7 @@ export function LoginPage() {
           Iniciar sesión
         </Button>
 
-        <p id="login__register" className="login__register text-sm text-ink-500">
+        <p id="login__register" className="login__register text-base text-ink-500">
           ¿No tienes cuenta? <AuthLink to="/registrarse">Regístrate</AuthLink>
         </p>
       </form>
