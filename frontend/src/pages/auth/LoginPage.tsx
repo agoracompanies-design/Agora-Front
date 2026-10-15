@@ -11,6 +11,8 @@ import { ApiError } from '@/api/client';
 import { baneoDeError } from '@/lib/baneo';
 import type { InfoBaneo } from '@/lib/baneo';
 import { BannedScreen } from '@/components/layout/BannedGate';
+import { enlaceParaRecuperarAcceso } from '@/lib/contacto';
+import { MessageCircle } from 'lucide-react';
 
 /**
  * El servidor responde distinto según el caso: «Usuario no encontrado» (404)
@@ -97,6 +99,20 @@ export function LoginPage() {
         <Button type="submit" className="w-full" size="lg" loading={loading}>
           Iniciar sesión
         </Button>
+
+        {/* Recuperar la contraseña se hace hablando con un moderador: no hay
+            correo con enlace. Es un `a` y no un `button` porque lleva fuera.
+            El `py` le da el alto que necesita para poder tocarlo en un móvil. */}
+        <a
+          href={enlaceParaRecuperarAcceso(username)}
+          target="_blank"
+          rel="noreferrer"
+          id="login__recover"
+          className="login__recover mx-auto flex w-fit items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm text-ink-500 transition-colors hover:text-ink-900"
+        >
+          <MessageCircle size={14} aria-hidden="true" />
+          ¿Olvidaste tu contraseña?
+        </a>
       </form>
     </AuthLayout>
   );

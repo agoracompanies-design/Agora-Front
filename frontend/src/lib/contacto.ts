@@ -12,6 +12,25 @@ export const WHATSAPP_VENTAS = '5350000000';
  */
 export const WHATSAPP_MODERACION = '5350000000';
 
+/**
+ * Recuperar el acceso: un chat de WhatsApp con un moderador.
+ *
+ * No hay correo de recuperación ni enlace con token, y es a propósito: aquí
+ * mucha gente entra con un número de teléfono y sin correo que mirar, y un
+ * correo que no llega deja a la persona fuera sin saber por qué. Lo decide una
+ * persona, que es quien puede comprobar quién es.
+ *
+ * El nombre de usuario viaja en el mensaje si lo escribió: le ahorra la primera
+ * pregunta a quien atiende. Si no, se manda el mensaje a secas.
+ */
+export function enlaceParaRecuperarAcceso(usuario?: string): string {
+  const nombre = usuario?.trim();
+  const mensaje = nombre
+    ? `Hola, no puedo entrar en Agora y necesito recuperar mi contraseña. Mi usuario es «${nombre}».`
+    : 'Hola, no puedo entrar en Agora y necesito recuperar mi contraseña.';
+  return `https://wa.me/${WHATSAPP_MODERACION}?text=${encodeURIComponent(mensaje)}`;
+}
+
 
 // ---------------------------------------------------------------------------
 // El teléfono de un negocio
