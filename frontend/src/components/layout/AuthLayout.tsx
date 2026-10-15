@@ -75,13 +75,18 @@ export function AuthLayout({ title, subtitle, children, footer }: AuthLayoutProp
                 </h2>
                 <p id="access__subtitle" className="access__subtitle mt-2 text-sm text-ink-500">{subtitle}</p>
                 <div id="access__body" className="access__body mt-8">{children}</div>
-                <p id="access__footer" className="access__footer mt-6 text-sm text-ink-500">{footer}</p>
               </div>
             </div>
 
+            {/* El pie de la tarjeta va al fondo, no pegado al formulario: es la
+                salida secundaria de la pantalla —recuperar el acceso, o ir a la
+                otra— y ahí no le compite al botón. Queda fuera del panel que
+                centra el contenido, así que lo empuja abajo el `flex-1`. */}
+            <p id="access__footer" className="access__footer mt-6 text-sm text-ink-500">{footer}</p>
+
             {/* Pie de esta sección, no del documento: por eso no lleva rol de
                 contentinfo (un `footer` solo es landmark si cuelga del body). */}
-            <footer id="access__legal" className="access__legal mt-8 text-center">
+            <footer id="access__legal" className="access__legal mt-3 text-center">
               <small id="auth__copyright" className="auth__copyright text-xs text-ink-500">© {new Date().getFullYear()} Agora</small>
             </footer>
           </section>
