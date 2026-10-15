@@ -62,10 +62,20 @@ export function LoginPage() {
     <AuthLayout
       title="Bienvenido de nuevo"
       subtitle="Inicia sesión para continuar en Agora"
+      // Abajo del todo, recuperar la contraseña: es la salida de emergencia,
+      // no el camino que se espera que siga nadie. El de registrarse va pegado
+      // al botón, que es la acción alternativa de verdad.
       footer={
-        <>
-          ¿No tienes cuenta? <AuthLink to="/registrarse">Regístrate</AuthLink>
-        </>
+        <a
+          href={enlaceParaRecuperarAcceso(username)}
+          target="_blank"
+          rel="noreferrer"
+          id="login__recover"
+          className="login__recover inline-flex items-center gap-1.5 rounded-lg py-1.5 text-ink-500 transition-colors hover:text-ink-900"
+        >
+          <MessageCircle size={14} aria-hidden="true" />
+          ¿Olvidaste tu contraseña?
+        </a>
       }
     >
       {/* React 19 sube estas etiquetas al <head>: cada ruta con su título. */}
@@ -100,19 +110,9 @@ export function LoginPage() {
           Iniciar sesión
         </Button>
 
-        {/* Recuperar la contraseña se hace hablando con un moderador: no hay
-            correo con enlace. Es un `a` y no un `button` porque lleva fuera.
-            El `py` le da el alto que necesita para poder tocarlo en un móvil. */}
-        <a
-          href={enlaceParaRecuperarAcceso(username)}
-          target="_blank"
-          rel="noreferrer"
-          id="login__recover"
-          className="login__recover mx-auto flex w-fit items-center gap-1.5 rounded-lg px-2 py-1.5 text-sm text-ink-500 transition-colors hover:text-ink-900"
-        >
-          <MessageCircle size={14} aria-hidden="true" />
-          ¿Olvidaste tu contraseña?
-        </a>
+        <p id="login__register" className="login__register text-sm text-ink-500">
+          ¿No tienes cuenta? <AuthLink to="/registrarse">Regístrate</AuthLink>
+        </p>
       </form>
     </AuthLayout>
   );
