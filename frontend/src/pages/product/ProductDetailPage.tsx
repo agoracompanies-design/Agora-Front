@@ -154,7 +154,19 @@ export function ProductDetailPage() {
    * crea otra fila, la actualiza—, y hay un índice único que lo sostiene. Así
    * que el mismo gesto sirve para las dos cosas.
    */
-  const canRate = isAuthenticated && hasPermission(user?.permissions, Permissions.RATING_CREATE);
+  /**
+   * Nadie califica lo suyo.
+   *
+   * Un negocio podría ponerse cinco estrellas en cada producto que publica, y
+   * en un sitio que vive de que las notas se crean eso lo vacía de valor. Aquí
+   * solo se esconde el control: **el servidor tiene que rechazarlo**, porque
+   * esto se salta con cualquier cliente. Está pedido.
+   */
+  const esMio = Boolean(
+    user && enterprise?.userId && enterprise.userId === user.id,
+  );
+  const canRate =
+    isAuthenticated && hasPermission(user?.permissions, Permissions.RATING_CREATE) && !esMio;
   const mapUrl =
     enterprise?.latitude && enterprise?.longitude
       ? `https://www.google.com/maps/search/?api=1&query=${enterprise.latitude},${enterprise.longitude}`
