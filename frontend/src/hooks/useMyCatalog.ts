@@ -51,7 +51,21 @@ export function useMyProducts() {
     try {
       const mios: Product[] = [];
       for (let pagina = 1; pagina <= VUELTAS_MAXIMAS; pagina += 1) {
-        const data = await listProducts({ limit: POR_VUELTA, page: pagina });
+        /*
+         * Si una página no llega, se para y se enseña lo encontrado hasta ahí.
+         *
+         * Antes el fallo salía del bucle y se perdía todo lo recogido: el panel
+         * volvía a decir «Productos (0)» teniendo productos, que es justo lo
+         * que se arregló. Y con la conexión de aquí, que se caiga la cuarta
+         * petición de seis no es raro. Mejor enseñar tres productos que
+         * ninguno.
+         */
+        let data;
+        try {
+          data = await listProducts({ limit: POR_VUELTA, page: pagina });
+        } catch {
+          break;
+        }
         if (vuelta.current !== mia) return; // llegó tarde: manda otra recarga
         const lote = data.products ?? [];
         mios.push(...lote.filter((p) => p.userEnterpriseId === enterprise.idUserEnterprise));

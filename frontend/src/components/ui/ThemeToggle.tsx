@@ -47,7 +47,10 @@ export function ThemeToggle({ id = 'theme-toggle', className }: { id?: string; c
       toggleTheme();
     });
 
-    void transicion.ready.then(() => {
+    // Dos pulsaciones seguidas cancelan la transición anterior, y esa promesa
+    // se rechaza. No es un fallo —el tema cambia igual—, pero sin recogerlo
+    // queda un rechazo suelto en la consola.
+    void transicion.ready.catch(() => null).then(() => {
       document.documentElement.animate(
         {
           clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${radio}px at ${x}px ${y}px)`],

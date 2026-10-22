@@ -11,6 +11,7 @@ import { Card } from '@/components/ui/Card';
 import { PageSpinner } from '@/components/ui/Spinner';
 import { aWebp, pesoLegible } from '@/lib/imagen';
 import { usePegarImagen } from '@/hooks/usePegarImagen';
+import { useVistaPrevia } from '@/hooks/useVistaPrevia';
 import { CategoryPicker } from '@/components/dashboard/CategoryPicker';
 import { UnitPicker } from '@/components/dashboard/UnitPicker';
 import { NewCategoryDialog } from '@/components/dashboard/NewCategoryDialog';
@@ -153,9 +154,11 @@ export function ProductFormPage() {
     }
   }
 
-  if (loading) return <PageSpinner />;
+  // Antes del `return` de carga: un hook no puede quedar detrás de una salida
+  // temprana, porque entonces unas veces se llama y otras no.
+  const imageUrl = useVistaPrevia(image, productImageUrl(existingImage));
 
-  const imageUrl = image ? URL.createObjectURL(image) : productImageUrl(existingImage);
+  if (loading) return <PageSpinner />;
 
   return (
     <div id="product-form" className="product-form max-w-2xl">

@@ -47,7 +47,14 @@ function cuerpo(input: Partial<ServiceInput>): FormData | Partial<ServiceInput> 
 
   const form = new FormData();
   for (const [clave, valor] of Object.entries(datos)) {
-    if (valor !== undefined && valor !== null) form.append(clave, String(valor));
+    if (valor === undefined) continue;
+    /*
+     * Un `null` es una orden —«deja este precio en blanco»—, no un campo que
+     * sobra. Descartarlo hacía imposible borrar un precio al editar con foto
+     * nueva: el campo se quedaba con el valor viejo. Viaja como cadena vacía,
+     * que es lo único que admite un multipart.
+     */
+    form.append(clave, valor === null ? '' : String(valor));
   }
   // El servidor lo espera en `image`, el mismo nombre que la foto de producto.
   form.append('image', image);

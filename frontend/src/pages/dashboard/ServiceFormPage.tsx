@@ -17,6 +17,7 @@ import { Card } from '@/components/ui/Card';
 import { PageSpinner } from '@/components/ui/Spinner';
 import { aWebp, pesoLegible } from '@/lib/imagen';
 import { usePegarImagen } from '@/hooks/usePegarImagen';
+import { useVistaPrevia } from '@/hooks/useVistaPrevia';
 import { ServiceThumb } from '@/components/product/CategoryIcon';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
@@ -113,9 +114,11 @@ export function ServiceFormPage() {
     }
   }
 
-  if (loading) return <PageSpinner />;
+  // Antes del `return` de carga: un hook no puede quedar detrás de una salida
+  // temprana, porque entonces unas veces se llama y otras no.
+  const imageUrl = useVistaPrevia(image, serviceImageUrl(existingImage));
 
-  const imageUrl = image ? URL.createObjectURL(image) : serviceImageUrl(existingImage);
+  if (loading) return <PageSpinner />;
 
   return (
     <div id="service-form" className="service-form max-w-2xl">

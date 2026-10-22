@@ -259,13 +259,16 @@ export function EnterprisePage() {
                         <ServiceThumb src={serviceImageUrl(service.image)} />
                       </span>
                     )}
-                    <span className="enterprise__service-body min-w-0">
+                    {/* `div` y no `span`: dentro van párrafos, y un `span` no
+                        puede contenerlos —el navegador los saca fuera y el
+                        diseño se descoloca solo en algunos—. */}
+                    <div className="enterprise__service-body min-w-0">
                       <p className="font-medium text-ink-800">{service.name}</p>
                       <p className="text-ink-500 line-clamp-2">{service.description}</p>
                       <p className="mt-0.5 text-ink-900 font-medium">
                         {formatPrice(service.priceUsd, 'USD') ?? formatPrice(service.priceCup, 'CUP')}
                       </p>
-                    </span>
+                    </div>
                   </li>
                 ))}
               </ul>

@@ -26,7 +26,11 @@ import type { Plugin } from 'vite';
 
 /** De dónde carga cada cosa. Cada línea tiene su porqué. */
 function politica(origenesDeApi: string[]): string {
-  const api = origenesDeApi.join(' ');
+  // `null` es lo que devuelve `new URL(...).origin` para una dirección opaca,
+  // y escrito en la política no significa nada: se descarta antes de llegar.
+  const api = origenesDeApi.filter((o) => o && o !== 'null').join(' ');
+  /** Lo que se añade a una directiva: nada si no hay origen que añadir. */
+  const conApi = api ? ` ${api}` : '';
   return [
     // Lo que no se diga expresamente, solo de casa.
     "default-src 'self'",
@@ -47,10 +51,10 @@ function politica(origenesDeApi: string[]): string {
     // `blob:` es para la vista previa de la foto que se sube, antes de que
     // exista en el servidor. Las piezas del mapa son de OpenStreetMap, y las
     // fotos de los productos las sirve la API.
-    `img-src 'self' data: blob: https://*.tile.openstreetmap.org ${api}`,
+    `img-src 'self' data: blob: https://*.tile.openstreetmap.org${conApi}`,
 
     // A quién se le habla: a la API y a nadie más.
-    `connect-src 'self' ${api}`,
+    `connect-src 'self'${conApi}`,
 
     // Esta aplicación no mete ninguna página dentro de otra.
     "frame-src 'none'",
@@ -113,13 +117,22 @@ export function csp(): Plugin {
         );
       }
 
-      try {
-        new URL(urlDeLaApi);
-      } catch {
-        throw new Error(
-          `VITE_API_URL no es una dirección válida: «${urlDeLaApi}». Tiene que llevar el ` +
-            'esquema, por ejemplo https://api.tudominio.cu/api',
-        );
+      /*
+       * Una ruta relativa —`/api`— es válida y además es la forma más común de
+       * publicar esto: la API detrás del mismo dominio, servida por un proxy
+       * inverso. Ahí no hay origen que añadir a la política, porque `'self'` ya
+       * lo cubre. Exigir esquema rompía ese despliegue.
+       */
+      if (!urlDeLaApi.startsWith('/')) {
+        try {
+          new URL(urlDeLaApi);
+        } catch {
+          throw new Error(
+            `VITE_API_URL no es una dirección válida: «${urlDeLaApi}». O una ruta del mismo ` +
+              'dominio, como /api, o una dirección con su esquema, como ' +
+              'https://api.tudominio.cu/api',
+          );
+        }
       }
     },
 
@@ -129,7 +142,11 @@ export function csp(): Plugin {
         // El origen de la API sale de la misma variable que usa el cliente, así
         // que no hay dos sitios que puedan decir cosas distintas. Que exista y
         // sea válida ya se comprobó al resolver la configuración.
-        const origenes = new Set<string>([new URL(urlDeLaApi).origin]);
+        // Con una ruta relativa no hay origen que añadir: la API vive en el
+        // mismo sitio que la web y `'self'` ya la cubre.
+        const origenes = new Set<string>(
+          urlDeLaApi.startsWith('/') ? [] : [new URL(urlDeLaApi).origin],
+        );
 
         // Los scripts en línea que ya trae el HTML, por su hash. Hoy es uno
         // —el que pinta el tema oscuro antes del primer dibujo—, pero se

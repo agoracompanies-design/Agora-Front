@@ -75,8 +75,16 @@ export function RatingStars({ id, value, count, size = 15, interactive = false, 
       </div>
       {!interactive && (
         <span className="sr-only">
-          {value.toFixed(1).replace('.', ',')} de 5
-          {count !== undefined && `, ${count} ${count === 1 ? 'calificación' : 'calificaciones'}`}
+          {/* Sin votos no hay un «0,0 de 5» que anunciar: eso afirmaría que el
+              producto está calificado con cero, que es lo peor que se le puede
+              decir de algo que nadie ha probado todavía. */}
+          {value === 0 && !count
+            ? 'Sin calificaciones todavía'
+            : `${value.toFixed(1).replace('.', ',')} de 5${
+                count !== undefined
+                  ? `, ${count} ${count === 1 ? 'calificación' : 'calificaciones'}`
+                  : ''
+              }`}
         </span>
       )}
       {count !== undefined && (

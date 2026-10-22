@@ -58,7 +58,12 @@ export function NewNotificationsToast() {
         // aviso y no el enlace—. En el teléfono baja al pie, que está libre y
         // además queda a mano; de tableta para arriba sigue arriba, donde hay
         // sitio de sobra.
-        'new-notices pointer-events-none fixed inset-x-0 bottom-4 z-40 flex justify-center px-4 sm:bottom-auto sm:top-16',
+        // Por encima de la pila de avisos pasajeros, que en el teléfono ocupa
+        // casi todo el ancho abajo a la derecha (`bottom-5`, `z-50`). Al
+        // bajarlo aquí se solapaban: el mismo estorbo que se quitó de arriba,
+        // mudado al pie. Subirle la `z` no servía —escondería los toasts—, así
+        // que se aparta.
+        'new-notices pointer-events-none fixed inset-x-0 bottom-24 z-40 flex justify-center px-4 sm:bottom-auto sm:top-16',
       )}
     >
       <div
