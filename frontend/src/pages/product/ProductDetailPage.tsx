@@ -93,7 +93,7 @@ export function ProductDetailPage() {
     if (!id || !user) return;
     setSubmittingRating(true);
     try {
-      await createRating({ quantity, userId: user.id, productId: id });
+      await createRating({ quantity, productId: id });
       // La media se vuelve a pedir en vez de calcularla aquí: el servidor es
       // quien sabe cuántos votos hay, y así no se queda un número inventado si
       // alguien calificó mientras tanto.
@@ -146,8 +146,15 @@ export function ProductDetailPage() {
   const votos = resumen?.count ?? 0;
   /** La nota que puso quien mira, o `null` si todavía no calificó. */
   const miNota = resumen?.mine ?? null;
-  const canRate =
-    isAuthenticated && hasPermission(user?.permissions, Permissions.RATING_CREATE) && miNota === null;
+  /**
+   * Calificar, y también cambiar la nota puesta.
+   *
+   * Ya no hace falta no haber calificado: desde el commit `392c430` el servidor
+   * **reescribe** la nota de uno si vuelve a mandarla —un segundo `POST` no
+   * crea otra fila, la actualiza—, y hay un índice único que lo sostiene. Así
+   * que el mismo gesto sirve para las dos cosas.
+   */
+  const canRate = isAuthenticated && hasPermission(user?.permissions, Permissions.RATING_CREATE);
   const mapUrl =
     enterprise?.latitude && enterprise?.longitude
       ? `https://www.google.com/maps/search/?api=1&query=${enterprise.latitude},${enterprise.longitude}`
@@ -315,12 +322,23 @@ export function ProductDetailPage() {
 
           {ratingsAvailable && canRate && (
             <div id="product-detail__rate" className="product-detail__rate rounded-2xl border border-ink-200 p-4">
-              <p id="product-detail__rate-title" className="product-detail__rate-title mb-2 text-sm font-medium text-ink-800">¿Ya probaste este producto? Califícalo</p>
-              <RatingStars value={0} interactive onChange={handleRate} size={22} />
+              <p id="product-detail__rate-title" className="product-detail__rate-title mb-2 text-sm font-medium text-ink-800">
+                {miNota === null ? '¿Ya probaste este producto? Califícalo' : 'Tu calificación'}
+              </p>
+              {/* Las estrellas salen con la nota puesta: tocar otra la cambia,
+                  y el servidor reescribe la misma fila. */}
+              <RatingStars value={miNota ?? 0} interactive onChange={handleRate} size={22} />
+              {miNota !== null && !submittingRating && (
+                <p id="product-detail__rate-hint" className="product-detail__rate-hint mt-2 text-xs text-ink-500">
+                  Puedes cambiarla cuando quieras: se guarda sobre la anterior.
+                </p>
+              )}
               {submittingRating && <p id="product-detail__rate-sending" className="product-detail__rate-sending mt-2 text-xs text-ink-400">Enviando…</p>}
             </div>
           )}
-          {miNota !== null && (
+          {/* Sin permiso para calificar no hay estrellas que tocar, pero si ya
+              calificó antes conviene que vea con cuánto. */}
+          {miNota !== null && !canRate && (
             <p id="product-detail__rated" className="product-detail__rated text-sm text-ink-500">
               Ya calificaste este producto con{' '}
               <span className="font-medium text-ink-800">
