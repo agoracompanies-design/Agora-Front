@@ -7,26 +7,30 @@
 export const WHATSAPP_VENTAS = '5350000000';
 
 /**
- * Moderación: aquí llegan las solicitudes para crear una categoría y quien no
- * puede entrar en su cuenta.
+ * Moderación: aquí llegan las solicitudes para crear o mover una categoría y
+ * quien quiere reclamar una cuenta bloqueada.
  *
- * Este **sí es un número real**, el de Joel, puesto el 2026-10-22 porque
- * recuperar la contraseña se hace hablando con una persona y hasta entonces el
- * enlace abría un chat con un número que no existe. El de ventas de arriba
- * sigue siendo un marcador.
+ * Este **sí es un número real**, el de Joel, puesto el 2026-10-22. Lo que NO
+ * entra por aquí desde el 2026-10-23 es recuperar una contraseña: eso dejaba a
+ * una persona poniendo la clave de otra. El de ventas de arriba sigue siendo un
+ * marcador.
  */
 export const WHATSAPP_MODERACION = '5350926557';
 
 /**
- * Recuperar el acceso: un chat de WhatsApp con un moderador.
+ * RETIRADA el 2026-10-23. No la llama nadie.
  *
- * No hay correo de recuperación ni enlace con token, y es a propósito: aquí
- * mucha gente entra con un número de teléfono y sin correo que mirar, y un
- * correo que no llega deja a la persona fuera sin saber por qué. Lo decide una
- * persona, que es quien puede comprobar quién es.
+ * Recuperar la contraseña hablando con un moderador significa que **una persona
+ * pone o ve la clave de otra**, y eso no debe poder pasar: nadie de aquí dentro
+ * tiene por qué conocer la contraseña de nadie. Por eso la vía se quita entera y
+ * no vuelve ni como último recurso —el día que el correo o el SMS fallen, lo que
+ * toca es arreglar el envío, no abrir una puerta por la que alguien mira—.
  *
- * El nombre de usuario viaja en el mensaje si lo escribió: le ahorra la primera
- * pregunta a quien atiende. Si no, se manda el mensaje a secas.
+ * Lo que la sustituye: `pages/auth/RecoverPage.tsx`, con el código de seis
+ * dígitos de `api/recuperacion.ts`.
+ *
+ * Se deja escrita, sin usar, hasta la revisión previa a producción, que es
+ * cuando se limpia lo retirado.
  */
 export function enlaceParaRecuperarAcceso(usuario?: string): string {
   const nombre = usuario?.trim();

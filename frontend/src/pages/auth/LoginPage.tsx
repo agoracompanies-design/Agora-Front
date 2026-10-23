@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { AuthLayout, AuthLink } from '@/components/layout/AuthLayout';
 import { Input } from '@/components/ui/Field';
 import { PasswordField } from '@/components/ui/PasswordField';
@@ -11,10 +11,7 @@ import { ApiError } from '@/api/client';
 import { baneoDeError } from '@/lib/baneo';
 import type { InfoBaneo } from '@/lib/baneo';
 import { BannedScreen } from '@/components/layout/BannedGate';
-import { enlaceParaRecuperarAcceso } from '@/lib/contacto';
-import { KeyRound, MessageCircle } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { RECUPERACION_LISTA } from '@/api/recuperacion';
+import { KeyRound } from 'lucide-react';
 
 /**
  * El servidor responde distinto según el caso: «Usuario no encontrado» (404)
@@ -67,32 +64,24 @@ export function LoginPage() {
       // Abajo del todo, recuperar la contraseña: es la salida de emergencia,
       // no el camino que se espera que siga nadie. El de registrarse va pegado
       // al botón, que es la acción alternativa de verdad.
-      // Mientras el servidor no sepa mandar el código, esto sigue llevando a
-      // WhatsApp: funciona y hay alguien contestando. Cambiarlo antes dejaría a
-      // quien no puede entrar peor que ahora, con una pantalla que no hace
-      // nada. En cuanto `RECUPERACION_LISTA` valga `true`, lleva a la pantalla.
+      /*
+       * Siempre a la pantalla, nunca a WhatsApp.
+       *
+       * Recuperar hablando con un moderador significa que **una persona pone o
+       * ve la contraseña de otra**, y eso no debe poder pasar: nadie de aquí
+       * dentro tiene por qué conocer la clave de nadie. Que la pantalla aún no
+       * esté conectada es un problema de calendario; lo otro era un problema de
+       * diseño, y de los que no se arreglan pidiendo discreción.
+       */
       footer={
-        RECUPERACION_LISTA ? (
-          <Link
-            to="/recuperar"
-            id="login__recover"
-            className="login__recover mx-auto mt-4 flex w-fit items-center gap-1.5 rounded-lg py-1.5 text-base text-ink-500 transition-colors hover:text-ink-900"
-          >
-            <KeyRound size={14} aria-hidden="true" />
-            ¿Olvidaste tu contraseña?
-          </Link>
-        ) : (
-          <a
-            href={enlaceParaRecuperarAcceso(username)}
-            target="_blank"
-            rel="noreferrer"
-            id="login__recover"
-            className="login__recover mx-auto mt-4 flex w-fit items-center gap-1.5 rounded-lg py-1.5 text-base text-ink-500 transition-colors hover:text-ink-900"
-          >
-            <MessageCircle size={14} aria-hidden="true" />
-            ¿Olvidaste tu contraseña?
-          </a>
-        )
+        <Link
+          to="/recuperar"
+          id="login__recover"
+          className="login__recover mx-auto mt-4 flex w-fit items-center gap-1.5 rounded-lg py-1.5 text-base text-ink-500 transition-colors hover:text-ink-900"
+        >
+          <KeyRound size={14} aria-hidden="true" />
+          ¿Olvidaste tu contraseña?
+        </Link>
       }
     >
       {/* React 19 sube estas etiquetas al <head>: cada ruta con su título. */}

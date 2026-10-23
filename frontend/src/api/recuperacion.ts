@@ -6,10 +6,14 @@ import { apiClient } from './client';
  * **Todavía no.** No hay rutas, ni tabla de códigos, ni envío de correo o SMS.
  * Está pedido como punto 5, con este mismo contrato.
  *
- * Mientras valga `false`, el acceso sigue mandando a WhatsApp —que funciona y
- * deja a alguien atendiendo— y esta pantalla se puede abrir a mano para verla,
- * avisando de que no está conectada. Cambiar esto a `true` es lo único que hace
- * falta el día que el servidor responda.
+ * Mientras valga `false` **no hay forma de recuperar una contraseña**, y se
+ * asume a propósito: la vía de antes era escribirle a un moderador por WhatsApp,
+ * y eso significaba que alguien de aquí dentro ponía o veía la clave de otra
+ * persona. Se quitó por eso, no por descuido. La pantalla avisa de que todavía
+ * no está conectada en vez de aparentar que mandó algo.
+ *
+ * Cambiar esto a `true` es lo único que hace falta el día que el servidor
+ * responda.
  */
 export const RECUPERACION_LISTA = false;
 

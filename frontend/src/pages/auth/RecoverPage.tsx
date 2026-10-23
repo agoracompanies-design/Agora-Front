@@ -65,7 +65,7 @@ export function RecoverPage() {
   function sinServidor(): boolean {
     if (RECUPERACION_LISTA) return false;
     setError(
-      'Esta pantalla todavía no está conectada: el servidor aún no sabe mandar el código. Mientras tanto, escribe por WhatsApp desde el acceso.',
+      'Esta pantalla todavía no está conectada: el servidor aún no sabe mandar el código. Vuelve a intentarlo en unos días.',
     );
     return true;
   }
