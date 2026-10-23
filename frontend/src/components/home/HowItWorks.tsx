@@ -4,17 +4,17 @@ const steps = [
   {
     icon: Search,
     title: 'Busca y filtra',
-    description: 'Encuentra productos por precio, categoría o cerca de tu ubicación con un clic.',
+    description: 'Encuentra productos por precio, categoría y la ubicación con un clic.',
   },
   {
     icon: MessageCircle,
-    title: 'Contacta al vendedor',
-    description: 'Revisa la ficha del producto y comunícate directo con la mypime o mercado.',
+    title: 'Contacta al Proveedor',
+    description: 'Revisa la ficha del producto y comunícate con el proveedor.',
   },
   {
     icon: Star,
     title: 'Visita y califica',
-    description: 'Ve directo al vendedor sin rodeos y deja tu reseña para ayudar a otros usuarios.',
+    description: 'Contacta al proveedor y califica la calidad para ayudar a otros usuarios.',
   },
 ];
 
@@ -24,7 +24,7 @@ export function HowItWorks() {
       <div id="how__intro" className="how__intro mb-10 max-w-lg">
         <span id="how__eyebrow" className="how__eyebrow text-xs font-semibold uppercase tracking-wider text-ink-500">Cómo funciona</span>
         <h2 id="how__title" className="how__title mt-2 text-2xl sm:text-3xl font-semibold text-ink-900">
-          Buscar en Agora toma <span className="font-bold">tres pasos</span>
+          Buscar en Ágora toma <span className="font-bold">tres pasos</span>
         </h2>
       </div>
       <div id="how__steps" className="how__steps grid grid-cols-1 sm:grid-cols-3 gap-6">

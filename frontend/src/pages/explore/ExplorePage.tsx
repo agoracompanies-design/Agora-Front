@@ -404,7 +404,7 @@ export function ExplorePage() {
   return (
     <div>
       {/* React 19 lo sube al <head>: cada ruta con su título. */}
-      <title>Explorar · Agora</title>
+      <title>Explorar · Ágora</title>
       {/* El h1 de la página no tiene por qué verse: era un titular decorativo
           y lo que manda aquí es el buscador. */}
       <h1 id="explore__title" className="explore__title sr-only">Explorar productos de tu ciudad</h1>
@@ -523,7 +523,7 @@ export function ExplorePage() {
       </div>
 
       <p id="explore__count" className="explore__count mx-auto max-w-6xl px-4 pb-8 text-center text-sm text-ink-500 sm:px-6">
-        {total} producto{total === 1 ? '' : 's'} publicados por vendedores en Agora
+        {total} producto{total === 1 ? '' : 's'} publicados por proveedores en Ágora
       </p>
 
       {!isSeller && (
@@ -538,7 +538,7 @@ export function ExplorePage() {
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium text-ink-900">¿Tienes un negocio?</p>
-              <p className="text-xs text-ink-500">Publica tu catálogo en Agora</p>
+              <p className="text-xs text-ink-500">Publica tu catálogo en Ágora</p>
             </div>
             <ArrowRight size={15} className="shrink-0 text-ink-400 transition-transform group-hover:translate-x-0.5" />
           </Link>

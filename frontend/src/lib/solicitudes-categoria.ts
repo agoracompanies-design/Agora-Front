@@ -40,7 +40,7 @@ export function mensajeParaModerador(s: {
   // moverlo de «Otros» a la categoría aprobada: sin él tendría que buscarlo por
   // el nombre entre los que esperan, y dos negocios pueden vender lo mismo con
   // el mismo nombre.
-  return `Categoría nueva esperando revisión en Agora
+  return `Categoría nueva esperando revisión en Ágora
 
 Producto: ${s.productoNombre}
 Id del producto: ${s.productoId}

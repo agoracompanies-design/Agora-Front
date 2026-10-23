@@ -67,7 +67,7 @@ export function olvidarUbicacion(): void {
 /** Qué decirle a quien no consiguió compartir su ubicación. */
 export function porQueFallo(error: GeolocationPositionError): string {
   if (error.code === error.PERMISSION_DENIED) {
-    return 'Tienes la ubicación bloqueada para Agora. Actívala desde el candado de la barra de direcciones.';
+    return 'Tienes la ubicación bloqueada para Ágora. Actívala desde el candado de la barra de direcciones.';
   }
   if (error.code === error.TIMEOUT) {
     return 'Tu ubicación está tardando demasiado. Vuelve a intentarlo o filtra por provincia.';

@@ -25,7 +25,7 @@ export function Membership() {
       <div id="plans__intro" className="plans__intro mb-8 max-w-lg">
         <span id="plans__eyebrow" className="plans__eyebrow text-xs font-semibold uppercase tracking-wider text-ink-500">Membresías</span>
         <h2 id="plans__title" className="plans__title mt-2 text-2xl sm:text-3xl font-semibold text-ink-900">
-          Elige cómo usar <span className="font-bold">Agora</span>
+          Elige cómo usar <span className="font-bold">Ágora</span>
         </h2>
       </div>
 

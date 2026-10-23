@@ -61,7 +61,7 @@ export function LoginPage() {
   return (
     <AuthLayout
       title="Bienvenido de nuevo"
-      subtitle="Inicia sesión para continuar en Agora"
+      subtitle="Inicia sesión para continuar en Ágora"
       // Abajo del todo, recuperar la contraseña: es la salida de emergencia,
       // no el camino que se espera que siga nadie. El de registrarse va pegado
       // al botón, que es la acción alternativa de verdad.
@@ -79,8 +79,8 @@ export function LoginPage() {
       }
     >
       {/* React 19 sube estas etiquetas al <head>: cada ruta con su título. */}
-      <title>Iniciar sesión · Agora</title>
-      <meta name="description" content="Entra en Agora para buscar y comparar lo que venden las mypimes y mercados de tu ciudad." />
+      <title>Iniciar sesión · Ágora</title>
+      <meta name="description" content="Entra en Ágora para buscar y comparar lo que venden las mypimes y mercados de tu ciudad." />
 
       <form onSubmit={handleSubmit} id="login" className="login space-y-4">
         <Input
@@ -111,7 +111,7 @@ export function LoginPage() {
         </Button>
 
         <p id="login__register" className="login__register text-base text-ink-500">
-          ¿No tienes cuenta? <AuthLink to="/registrarse">Regístrate</AuthLink>
+          ¿No tienes cuenta? <AuthLink to="/registrarse">Crea una cuenta</AuthLink>
         </p>
       </form>
     </AuthLayout>

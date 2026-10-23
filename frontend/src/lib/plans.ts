@@ -31,9 +31,8 @@ export const BUYER_PLAN: PlanConfig = {
   ],
   features: [
     'Búsqueda y filtros ilimitados',
-    'Ubicación y reseñas de vendedores',
+    'Ubicación y reseñas de proveedores',
     'Contacto directo con mypimes y mercados',
-    'Favoritos y alertas de tus búsquedas',
   ],
 };
 
@@ -45,10 +44,10 @@ export const SELLER_PLAN: PlanConfig = {
     { cycle: 'yearly', label: 'Anual', cost: 96, durationDays: 365, savingsLabel: 'Ahorra 20%' },
   ],
   features: [
-    'Productos y servicios ilimitados',
-    'Apareces en búsquedas por ubicación',
-    'Recibe calificaciones de tus clientes',
-    'Panel para gestionar tu catálogo',
+    'Productos, servicios y precios',
+    'Ubica a los clientes cerca de ti',
+    'Conoce la calidad de tus productos',
+    'Publica tu catálogo',
   ],
 };
 
@@ -137,7 +136,7 @@ export function getTier(plan: PlanConfig, cycle: BillingCycle): PlanTier {
  */
 export function enlaceParaSolicitar(plan: PlanConfig, tier: PlanTier, usuario?: string): string {
   const mensaje =
-    `Hola, quiero activar el ${plan.name} de Agora (${tier.label}, ${tier.cost} USD por ${tier.durationDays} días).` +
+    `Hola, quiero activar el ${plan.name} de Ágora (${tier.label}, ${tier.cost} USD por ${tier.durationDays} días).` +
     (usuario ? ` Mi usuario es ${usuario}.` : '');
   return `https://wa.me/${WHATSAPP_VENTAS}?text=${encodeURIComponent(mensaje)}`;
 }

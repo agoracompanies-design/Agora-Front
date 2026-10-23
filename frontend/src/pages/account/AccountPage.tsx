@@ -98,7 +98,7 @@ export function AccountPage() {
   return (
     <div id="account" className="account mx-auto max-w-2xl px-4 sm:px-6 py-10 space-y-6">
       {/* React 19 lo sube al <head>: cada ruta con su título. */}
-      <title>Tu cuenta · Agora</title>
+      <title>Tu cuenta · Ágora</title>
       <div id="account__identity" className="account__identity flex items-center gap-4">
         <span id="account__initials" className="account__initials flex h-14 w-14 items-center justify-center rounded-full bg-primary text-lg font-semibold text-white">
           {initials(user.username)}
@@ -171,7 +171,7 @@ export function AccountPage() {
                 Cancelar membresía
               </Button>
               <p id="membership__actions-hint" className="membership__actions-hint text-xs text-ink-400">
-                Sin membresía al día no se puede usar Agora.
+                Sin membresía al día no se puede usar Ágora.
               </p>
             </div>
           </div>
@@ -188,7 +188,7 @@ export function AccountPage() {
       <Card className="motion-pref p-6">
         <h2 className="mb-1.5 font-semibold text-ink-900">Accesibilidad</h2>
         <p className="mb-4 text-sm text-ink-500">
-          Agora usa movimiento en algunos sitios: el fondo del carrusel, el marcador de los mapas y las
+          Ágora usa movimiento en algunos sitios: el fondo del carrusel, el marcador de los mapas y las
           transiciones entre pantallas. Puedes apagarlo todo.
         </p>
 
@@ -272,7 +272,7 @@ export function AccountPage() {
       <ConfirmDialog
         open={confirmCancel}
         title="Cancelar membresía"
-        description="Perderás el acceso a Agora en cuanto se cancele, y tu negocio dejará de aparecer si tienes uno. Tu cuenta y tu catálogo se quedan como están: vuelven en cuanto actives otra membresía."
+        description="Perderás el acceso a Ágora en cuanto se cancele, y tu negocio dejará de aparecer si tienes uno. Tu cuenta y tu catálogo se quedan como están: vuelven en cuanto actives otra membresía."
         confirmLabel="Cancelar membresía"
         loading={cancelando}
         onConfirm={handleCancel}

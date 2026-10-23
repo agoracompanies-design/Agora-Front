@@ -13,7 +13,7 @@ export function Logo({ id = 'logo', className, dark = false }: { id?: string; cl
         A
       </span>
       <span className={cn('logo__word text-[1.05rem] font-semibold tracking-tight', dark ? 'text-white' : 'text-ink-900')}>
-        Agora
+        Ágora
       </span>
     </Link>
   );
