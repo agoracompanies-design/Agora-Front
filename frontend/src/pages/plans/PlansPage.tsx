@@ -41,7 +41,7 @@ export function PlansPage() {
         </div>
         <h1 id="plans-page__title" className="plans-page__title text-2xl font-semibold text-ink-900">
           {tieneAcceso
-            ? `Elige tu ${isSeller ? 'plan de vendedor' : 'membresía de comprador'}`
+            ? `Elige tu ${isSeller ? 'plan de proveedor' : 'membresía de comprador'}`
             : 'Tu suscripción ya no está activa'}
         </h1>
         <p id="plans-page__subtitle" className="plans-page__subtitle mt-2 text-sm text-ink-500">

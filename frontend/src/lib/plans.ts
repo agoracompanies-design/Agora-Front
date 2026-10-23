@@ -37,7 +37,7 @@ export const BUYER_PLAN: PlanConfig = {
 };
 
 export const SELLER_PLAN: PlanConfig = {
-  name: 'Plan Vendedor',
+  name: 'Plan Proveedor',
   tiers: [
     { cycle: 'monthly', label: 'Mensual', cost: 10, durationDays: 30, savingsLabel: null },
     { cycle: 'quarterly', label: 'Trimestral', cost: 27, durationDays: 90, savingsLabel: 'Ahorra 10%' },
