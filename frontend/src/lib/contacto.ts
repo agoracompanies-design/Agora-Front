@@ -17,30 +17,6 @@ export const WHATSAPP_VENTAS = '5350000000';
  */
 export const WHATSAPP_MODERACION = '5350926557';
 
-/**
- * RETIRADA el 2026-10-23. No la llama nadie.
- *
- * Recuperar la contraseña hablando con un moderador significa que **una persona
- * pone o ve la clave de otra**, y eso no debe poder pasar: nadie de aquí dentro
- * tiene por qué conocer la contraseña de nadie. Por eso la vía se quita entera y
- * no vuelve ni como último recurso —el día que el correo o el SMS fallen, lo que
- * toca es arreglar el envío, no abrir una puerta por la que alguien mira—.
- *
- * Lo que la sustituye: `pages/auth/RecoverPage.tsx`, con el código de seis
- * dígitos de `api/recuperacion.ts`.
- *
- * Se deja escrita, sin usar, hasta la revisión previa a producción, que es
- * cuando se limpia lo retirado.
- */
-export function enlaceParaRecuperarAcceso(usuario?: string): string {
-  const nombre = usuario?.trim();
-  const mensaje = nombre
-    ? `Hola, no puedo entrar en Agora y necesito recuperar mi contraseña. Mi usuario es «${nombre}».`
-    : 'Hola, no puedo entrar en Agora y necesito recuperar mi contraseña.';
-  return `https://wa.me/${WHATSAPP_MODERACION}?text=${encodeURIComponent(mensaje)}`;
-}
-
-
 // ---------------------------------------------------------------------------
 // El teléfono de un negocio
 // ---------------------------------------------------------------------------

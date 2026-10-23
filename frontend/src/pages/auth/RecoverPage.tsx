@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { FormEvent, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Check, HelpCircle, Mail, Smartphone } from 'lucide-react';
@@ -11,8 +11,10 @@ import { Button } from '@/components/ui/Button';
 import {
   INTENTOS_DEL_CODIGO,
   MINUTOS_DEL_CODIGO,
-  RECUPERACION_LISTA,
+  SEGUNDOS_ENTRE_CODIGOS,
+  VIAS_DISPONIBLES,
   cambiarPassword,
+  esServidorSinRecuperacion,
   pedirCodigo,
   recordarUsuario,
   verificarCodigo,
@@ -23,18 +25,26 @@ import { cn } from '@/lib/utils';
 
 type Paso = 'datos' | 'codigo' | 'password' | 'listo';
 
+/** Lo que se le dice a quien usa un servidor que todavía no tiene estas rutas. */
+const SIN_RECUPERACION =
+  'Este servidor todavía no sabe mandar el código. Está pedido; inténtalo en unos días.';
+
 /**
  * Recuperar el acceso sin depender de que alguien conteste.
  *
  * Tres pasos, los de siempre: se dice quién eres y por dónde avisarte, llega un
  * código de seis dígitos, y con él se pone la contraseña nueva.
  *
- * Dos decisiones que no se ven pero mandan:
+ * Tres decisiones que no se ven pero mandan:
  *
  * - **Se pasa al paso del código exista la cuenta o no.** Si esta pantalla
  *   dijera «ese usuario no existe», sería una forma cómoda de averiguar qué
  *   cuentas hay registradas. Quien se equivocó de datos no recibe nada y se
  *   entera ahí, que es lo mismo que le pasaría con un correo que no llega.
+ * - **Los intentos se cuentan aquí, no en el servidor.** La respuesta de fallo
+ *   es siempre la misma frase a propósito: decir cuántos quedan la convertiría
+ *   en un medidor para quien prueba códigos desde fuera. Lo que se pinta es una
+ *   ayuda para quien se equivocó tecleando, no un dato del servidor.
  * - **El contacto se escribe igual que en el registro**, con el mismo selector
  *   de país: así el número que se teclea aquí tiene la forma del que está
  *   guardado, y no falla por un espacio o un prefijo.
@@ -48,7 +58,7 @@ export function RecoverPage() {
   const [enviando, setEnviando] = useState(false);
 
   const [username, setUsername] = useState('');
-  const [via, setVia] = useState<Via>('phone');
+  const [via, setVia] = useState<Via>(VIAS_DISPONIBLES[0]);
   const [correo, setCorreo] = useState('');
   const [pais, setPais] = useState(PAIS_POR_DEFECTO);
   const [telefono, setTelefono] = useState('');
@@ -58,16 +68,43 @@ export function RecoverPage() {
   const [ticket, setTicket] = useState('');
   const [password, setPassword] = useState('');
 
+  // Cuenta atrás para poder pedir otro código. El servidor descarta los que
+  // llegan demasiado seguidos sin decirlo —responde 200 igual—, así que si no se
+  // enseñara aquí, volver a pulsar parecería funcionar y no llegaría nada.
+  const [esperaParaReenviar, setEsperaParaReenviar] = useState(0);
+  const reloj = useRef<number | undefined>(undefined);
+
+  useEffect(() => {
+    if (esperaParaReenviar <= 0) return;
+    reloj.current = window.setTimeout(
+      () => setEsperaParaReenviar((s) => s - 1),
+      1000,
+    );
+    return () => window.clearTimeout(reloj.current);
+  }, [esperaParaReenviar]);
+
+  const hayQueElegirVia = VIAS_DISPONIBLES.length > 1;
   const contacto = via === 'email' ? correo.trim() : telefonoCompleto(pais, telefono);
   const contactoListo = via === 'email' ? pareceCorreo(correo) : telefonoListo(pais, telefono);
 
-  /** Sin servidor detrás no se finge que algo se mandó. */
-  function sinServidor(): boolean {
-    if (RECUPERACION_LISTA) return false;
-    setError(
-      'Esta pantalla todavía no está conectada: el servidor aún no sabe mandar el código. Vuelve a intentarlo en unos días.',
-    );
-    return true;
+  /**
+   * Pide el código y dice si se puede seguir.
+   *
+   * Un 404 es lo único que se cuenta: significa que estas rutas no existen en el
+   * servidor que hay delante. Cualquier otro error se calla y se sigue al paso
+   * siguiente, porque distinguirlos diría si la cuenta existe.
+   */
+  async function mandarCodigo(): Promise<boolean> {
+    try {
+      await pedirCodigo({ username: username.trim(), via, contacto });
+      return true;
+    } catch (err) {
+      if (esServidorSinRecuperacion(err)) {
+        setError(SIN_RECUPERACION);
+        return false;
+      }
+      return true;
+    }
   }
 
   async function enviarDatos(e: FormEvent) {
@@ -86,37 +123,54 @@ export function RecoverPage() {
       );
       return;
     }
-    if (sinServidor()) return;
 
     setEnviando(true);
-    try {
-      await pedirCodigo({ username: username.trim(), via, contacto });
-    } catch {
-      // Da igual lo que respondiera: no se cuenta nada que permita saber si la
-      // cuenta existe. Se sigue al paso del código de todas formas.
-    } finally {
-      setEnviando(false);
-      setFallos(0);
-      setCodigo('');
-      setPaso('codigo');
-    }
+    const sigue = await mandarCodigo();
+    setEnviando(false);
+    if (!sigue) return;
+
+    setFallos(0);
+    setCodigo('');
+    setEsperaParaReenviar(SEGUNDOS_ENTRE_CODIGOS);
+    setPaso('codigo');
+  }
+
+  async function reenviarCodigo() {
+    setError('');
+    setAviso('');
+    setEnviando(true);
+    const sigue = await mandarCodigo();
+    setEnviando(false);
+    if (!sigue) return;
+
+    setFallos(0);
+    setCodigo('');
+    setEsperaParaReenviar(SEGUNDOS_ENTRE_CODIGOS);
+    setAviso('Te mandamos otro código.');
   }
 
   async function enviarCodigo(e: FormEvent) {
     e.preventDefault();
     setError('');
+    setAviso('');
     if (codigo.length !== 6) {
       setError('El código tiene seis dígitos.');
       return;
     }
-    if (sinServidor()) return;
 
     setEnviando(true);
     try {
-      const { ticket: t } = await verificarCodigo({ username: username.trim(), codigo });
+      const { ticket: t } = await verificarCodigo({
+        username: username.trim(),
+        codigo,
+      });
       setTicket(t);
       setPaso('password');
-    } catch {
+    } catch (err) {
+      if (esServidorSinRecuperacion(err)) {
+        setError(SIN_RECUPERACION);
+        return;
+      }
       const quedan = INTENTOS_DEL_CODIGO - (fallos + 1);
       setFallos((f) => f + 1);
       setError(
@@ -124,7 +178,10 @@ export function RecoverPage() {
           ? `Ese código no es. Te ${quedan === 1 ? 'queda 1 intento' : `quedan ${quedan} intentos`}.`
           : 'Se acabaron los intentos. Pide un código nuevo.',
       );
-      if (quedan <= 0) setPaso('datos');
+      if (quedan <= 0) {
+        setCodigo('');
+        setPaso('datos');
+      }
     } finally {
       setEnviando(false);
     }
@@ -137,14 +194,22 @@ export function RecoverPage() {
       setError('La contraseña necesita al menos ocho caracteres.');
       return;
     }
-    if (sinServidor()) return;
 
     setEnviando(true);
     try {
       await cambiarPassword({ ticket, password });
       setPaso('listo');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'No se pudo cambiar la contraseña.');
+      setError(
+        esServidorSinRecuperacion(err)
+          ? SIN_RECUPERACION
+          : 'Se acabó el tiempo para cambiarla. Pide un código nuevo.',
+      );
+      // El permiso dura cinco minutos: si caducó no hay nada que reintentar
+      // desde aquí, así que se vuelve al principio en vez de dejar en pantalla
+      // un formulario que ya no puede funcionar.
+      setPassword('');
+      setPaso('datos');
     } finally {
       setEnviando(false);
     }
@@ -157,17 +222,25 @@ export function RecoverPage() {
       setError('Escribe primero el correo o el teléfono con el que te registraste.');
       return;
     }
-    if (sinServidor()) return;
     try {
       await recordarUsuario({ via, contacto });
-    } catch {
+    } catch (err) {
+      if (esServidorSinRecuperacion(err)) {
+        setError(SIN_RECUPERACION);
+        return;
+      }
       // Igual que arriba: no se dice si existe.
     }
     setAviso('Si esa cuenta existe, te mandamos el nombre de usuario por esa vía.');
   }
 
   const titulos: Record<Paso, { title: string; subtitle: string }> = {
-    datos: { title: 'Recuperar el acceso', subtitle: 'Dinos quién eres y por dónde avisarte' },
+    datos: {
+      title: 'Recuperar el acceso',
+      subtitle: hayQueElegirVia
+        ? 'Dinos quién eres y por dónde avisarte'
+        : 'Dinos quién eres y a qué correo avisarte',
+    },
     codigo: {
       title: 'Revisa tu ' + (via === 'email' ? 'correo' : 'teléfono'),
       subtitle: `Escribe el código de seis dígitos. Vale ${MINUTOS_DEL_CODIGO} minutos.`,
@@ -211,17 +284,6 @@ export function RecoverPage() {
     >
       <title>Recuperar el acceso · Agora</title>
 
-      {!RECUPERACION_LISTA && (
-        <p
-          id="recover__pending"
-          role="status"
-          className="recover__pending mb-4 rounded-xl border border-amber-600/40 bg-amber-600/10 px-3 py-2.5 text-sm text-ink-900"
-        >
-          <strong>Todavía no está conectada.</strong> El servidor aún no manda el código —está
-          pedido—. Esta pantalla ya está hecha para cuando lo haga.
-        </p>
-      )}
-
       {error && (
         <p id="recover__error" role="alert" className="recover__error mb-3 text-sm text-red-600">
           {error}
@@ -256,15 +318,21 @@ export function RecoverPage() {
             No recuerdo mi nombre de usuario
           </button>
 
-          <fieldset className="recover__via">
-            <legend className="recover__via-label mb-1.5 text-sm font-medium text-ink-800">
-              ¿Por dónde te avisamos?
-            </legend>
-            <div className="recover__via-options flex gap-2">
-              {opcionVia('phone', <Smartphone size={15} aria-hidden="true" />, 'Teléfono')}
-              {opcionVia('email', <Mail size={15} aria-hidden="true" />, 'Correo')}
-            </div>
-          </fieldset>
+          {/* El selector solo aparece si de verdad hay algo que elegir: con una
+              sola vía sería una pregunta con una respuesta. */}
+          {hayQueElegirVia && (
+            <fieldset className="recover__via">
+              <legend className="recover__via-label mb-1.5 text-sm font-medium text-ink-800">
+                ¿Por dónde te avisamos?
+              </legend>
+              <div className="recover__via-options flex gap-2">
+                {VIAS_DISPONIBLES.includes('phone') &&
+                  opcionVia('phone', <Smartphone size={15} aria-hidden="true" />, 'Teléfono')}
+                {VIAS_DISPONIBLES.includes('email') &&
+                  opcionVia('email', <Mail size={15} aria-hidden="true" />, 'Correo')}
+              </div>
+            </fieldset>
+          )}
 
           {via === 'email' ? (
             <Input
@@ -308,9 +376,22 @@ export function RecoverPage() {
 
           <button
             type="button"
+            onClick={reenviarCodigo}
+            disabled={esperaParaReenviar > 0 || enviando}
+            id="recover-code__resend"
+            className="recover-code__resend mx-auto block rounded-lg py-1 text-sm text-primary hover:underline disabled:text-ink-400 disabled:no-underline"
+          >
+            {esperaParaReenviar > 0
+              ? `Puedes pedir otro código en ${esperaParaReenviar} s`
+              : 'No me llegó, mándame otro'}
+          </button>
+
+          <button
+            type="button"
             onClick={() => {
               setPaso('datos');
               setError('');
+              setAviso('');
             }}
             className="recover-code__back mx-auto block rounded-lg py-1 text-sm text-ink-500 hover:text-ink-900"
           >
@@ -340,7 +421,8 @@ export function RecoverPage() {
         <div id="recover-done" className="recover-done space-y-4">
           <p className="recover-done__text flex items-start gap-2 text-sm text-ink-700">
             <Check size={18} className="mt-0.5 shrink-0 text-primary" aria-hidden="true" />
-            Tu contraseña quedó cambiada. Si no fuiste tú quien la pidió, escríbenos.
+            Tu contraseña quedó cambiada y se cerraron las sesiones que hubiera abiertas. Si no
+            fuiste tú quien la pidió, escríbenos.
           </p>
           <Button className="w-full" size="lg" onClick={() => navigate('/iniciar-sesion')}>
             Iniciar sesión
