@@ -27,6 +27,7 @@ import { HoverHint } from "@/components/ui/HoverHint";
 
 import { LoginPage } from "@/pages/auth/LoginPage";
 import { RegisterPage } from "@/pages/auth/RegisterPage";
+import { RecoverPage } from "@/pages/auth/RecoverPage";
 import { ExplorePage } from "@/pages/explore/ExplorePage";
 import { BusinessesPage } from "@/pages/business/BusinessesPage";
 import { FavoritesPage } from "@/pages/favorites/FavoritesPage";
@@ -178,6 +179,10 @@ export default function App() {
                     <Route element={<SoloSinSesion />}>
                       <Route path="iniciar-sesion" element={<LoginPage />} />
                       <Route path="registrarse" element={<RegisterPage />} />
+                      {/* Se llega desde el acceso. Se deja montada aunque el
+                          servidor no la sirva todavia: asi se puede ver y
+                          probar, que es como se acordo lo de los planes. */}
+                      <Route path="recuperar" element={<RecoverPage />} />
                     </Route>
                   </Routes>
                 </FavoritesProvider>

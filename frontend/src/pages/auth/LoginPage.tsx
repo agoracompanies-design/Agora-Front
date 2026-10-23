@@ -12,7 +12,9 @@ import { baneoDeError } from '@/lib/baneo';
 import type { InfoBaneo } from '@/lib/baneo';
 import { BannedScreen } from '@/components/layout/BannedGate';
 import { enlaceParaRecuperarAcceso } from '@/lib/contacto';
-import { MessageCircle } from 'lucide-react';
+import { KeyRound, MessageCircle } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { RECUPERACION_LISTA } from '@/api/recuperacion';
 
 /**
  * El servidor responde distinto según el caso: «Usuario no encontrado» (404)
@@ -65,17 +67,32 @@ export function LoginPage() {
       // Abajo del todo, recuperar la contraseña: es la salida de emergencia,
       // no el camino que se espera que siga nadie. El de registrarse va pegado
       // al botón, que es la acción alternativa de verdad.
+      // Mientras el servidor no sepa mandar el código, esto sigue llevando a
+      // WhatsApp: funciona y hay alguien contestando. Cambiarlo antes dejaría a
+      // quien no puede entrar peor que ahora, con una pantalla que no hace
+      // nada. En cuanto `RECUPERACION_LISTA` valga `true`, lleva a la pantalla.
       footer={
-        <a
-          href={enlaceParaRecuperarAcceso(username)}
-          target="_blank"
-          rel="noreferrer"
-          id="login__recover"
-          className="login__recover mx-auto mt-4 flex w-fit items-center gap-1.5 rounded-lg py-1.5 text-base text-ink-500 transition-colors hover:text-ink-900"
-        >
-          <MessageCircle size={14} aria-hidden="true" />
-          ¿Olvidaste tu contraseña?
-        </a>
+        RECUPERACION_LISTA ? (
+          <Link
+            to="/recuperar"
+            id="login__recover"
+            className="login__recover mx-auto mt-4 flex w-fit items-center gap-1.5 rounded-lg py-1.5 text-base text-ink-500 transition-colors hover:text-ink-900"
+          >
+            <KeyRound size={14} aria-hidden="true" />
+            ¿Olvidaste tu contraseña?
+          </Link>
+        ) : (
+          <a
+            href={enlaceParaRecuperarAcceso(username)}
+            target="_blank"
+            rel="noreferrer"
+            id="login__recover"
+            className="login__recover mx-auto mt-4 flex w-fit items-center gap-1.5 rounded-lg py-1.5 text-base text-ink-500 transition-colors hover:text-ink-900"
+          >
+            <MessageCircle size={14} aria-hidden="true" />
+            ¿Olvidaste tu contraseña?
+          </a>
+        )
       }
     >
       {/* React 19 sube estas etiquetas al <head>: cada ruta con su título. */}
