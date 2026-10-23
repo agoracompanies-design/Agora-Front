@@ -198,6 +198,7 @@ export function RecoverPage() {
 
   return (
     <AuthLayout
+      conIntro={false}
       title={titulos[paso].title}
       subtitle={titulos[paso].subtitle}
       footer={

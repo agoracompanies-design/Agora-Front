@@ -9,6 +9,19 @@ interface AuthLayoutProps {
   subtitle: string;
   children: ReactNode;
   footer: ReactNode;
+  /**
+   * Si se enseña la columna que cuenta qué es Agora.
+   *
+   * En entrar y registrarse sí: quien llega puede no saber dónde está y eso le
+   * ayuda a decidir. En recuperar la contraseña **no**: ahí ya se sabe de sobra
+   * qué sitio es, y lo único que importa es volver a entrar. Contarle el
+   * producto a alguien que está bloqueado fuera es ruido.
+   *
+   * Sin esa columna, el titular de la marca desaparece con ella, así que el
+   * saludo pasa a ser el `h1` de la página: una página sin `h1` queda sin
+   * encabezado para quien navega con lector de pantalla.
+   */
+  conIntro?: boolean;
 }
 
 const POINTS = [
@@ -17,7 +30,14 @@ const POINTS = [
   { icon: Search, title: 'Para qué sirve', description: 'Buscar, comparar y localizar lo que necesitas, hoy.' },
 ];
 
-export function AuthLayout({ title, subtitle, children, footer }: AuthLayoutProps) {
+export function AuthLayout({ title, subtitle, children, footer, conIntro = true }: AuthLayoutProps) {
+  /**
+   * Con la columna de la marca, el `h1` es su titular y el saludo va de `h2`.
+   * Sin ella no hay otro encabezado en la página, así que el saludo sube a
+   * `h1`: dejarla sin ninguno la deja sin índice para un lector de pantalla.
+   */
+  const Heading = conIntro ? 'h2' : 'h1';
+
   return (
     <div id="auth" className="auth relative flex min-h-screen flex-col bg-ink-100">
       {/* Decoración pura: fuera del árbol de accesibilidad. */}
@@ -28,11 +48,18 @@ export function AuthLayout({ title, subtitle, children, footer }: AuthLayoutProp
           de la página, incluido el h1. El pie queda fuera para que cuente como
           contentinfo. */}
       <main id="auth__stage" className="auth__stage relative flex flex-1 items-center justify-center p-4 sm:p-8">
-        <div id="auth__card" className="auth__card glass-card grid w-full max-w-5xl grid-cols-1 overflow-hidden rounded-3xl lg:grid-cols-2">
+        <div
+          id="auth__card"
+          className={
+            'auth__card glass-card grid w-full grid-cols-1 overflow-hidden rounded-3xl ' +
+            (conIntro ? 'max-w-5xl lg:grid-cols-2' : 'max-w-md')
+          }
+        >
           {/* `section` solo es landmark si tiene nombre accesible: se lo da su
-              propio encabezado con aria-labelledby. */}
-          {/* La divisoria no es un `border`: se dibuja con ::after para poder
+              propio encabezado con aria-labelledby.
+              La divisoria no es un `border`: se dibuja con ::after para poder
               dejarla corta por los extremos. Ver .auth__intro en index.css. */}
+          {conIntro && (
           <section id="auth__intro" className="auth__intro relative flex flex-col justify-center gap-6 p-8 xl:p-10" aria-labelledby="auth-title">
             <Logo className="auth__brand" />
 
@@ -64,15 +91,23 @@ export function AuthLayout({ title, subtitle, children, footer }: AuthLayoutProp
               ))}
             </dl>
           </section>
+          )}
+
 
           <section id="access" className="access flex flex-col p-8 xl:p-10" aria-labelledby="access-title">
             {/* El contenido se queda centrado y el pie cae al fondo: por eso el
                 panel crece con flex-1 en vez de centrar la sección entera. */}
             <div id="access__panel" className="access__panel flex flex-1 items-center">
               <div id="access__content" className="access__content w-full">
-                <h2 id="access-title" className="access__title text-3xl font-semibold text-ink-900 sm:text-4xl">
+                {/* La marca vivía en la columna de al lado: sin ella hay que
+                    poner aquí de qué sitio es esto. */}
+                {!conIntro && <Logo className="access__brand mb-6" />}
+                <Heading
+                  id="access-title"
+                  className="access__title text-3xl font-semibold text-ink-900 sm:text-4xl"
+                >
                   {title}
-                </h2>
+                </Heading>
                 <p id="access__subtitle" className="access__subtitle mt-2 text-sm text-ink-500">{subtitle}</p>
                 <div id="access__body" className="access__body mt-8">{children}</div>
               </div>
