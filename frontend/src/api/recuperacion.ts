@@ -3,8 +3,11 @@ import { ApiError, apiClient } from './client';
 /**
  * Recuperar la contraseña: código de seis dígitos por correo o por SMS.
  *
- * El contrato es el que está probado contra la API; las rutas van en inglés
- * como el resto (`/auth/login`, `/auth/refresh`).
+ * Contrato comprobado contra la API en local el 2026-10-23, sobre el commit
+ * `642851a`: las rutas y los campos van en español —`via`, `contacto`,
+ * `codigo`—, que es como quedó implementado. No sigue el criterio del resto de
+ * la API, pero coincidir con el servidor importa más que la coherencia del
+ * nombre.
  *
  * No hay ninguna otra vía, y no es un descuido: devolverle el acceso a alguien
  * hablando con un moderador significa que **una persona pone o ve la contraseña
@@ -34,7 +37,22 @@ export const MINUTOS_DEL_CODIGO = 10;
 /** Cuántas veces se puede fallar antes de tener que pedir otro. */
 export const INTENTOS_DEL_CODIGO = 5;
 
-/** Lo que el servidor obliga a esperar entre un código y el siguiente. */
+/**
+ * Cuántos códigos se pueden pedir y en cuánto rato.
+ *
+ * El servidor admite **3 por cada 15 minutos** y por encima de eso responde 200
+ * sin mandar nada, así que la pantalla tiene que llevar la cuenta: si no, pedir
+ * el cuarto parecería funcionar y no llegaría nada.
+ */
+export const CODIGOS_POR_VENTANA = 3;
+export const MINUTOS_DE_LA_VENTANA = 15;
+
+/**
+ * La espera entre un código y el siguiente, que es cosa de la pantalla.
+ *
+ * El servidor no exige ninguna —solo el tope de arriba—, pero sin esto un doble
+ * toque gasta dos de los tres intentos de la ventana sin que nadie se entere.
+ */
 export const SEGUNDOS_ENTRE_CODIGOS = 60;
 
 /**
@@ -58,11 +76,7 @@ export function esServidorSinRecuperacion(error: unknown): boolean {
  */
 export function pedirCodigo(input: { username: string; via: Via; contacto: string }) {
   return apiClient
-    .post<void>('/auth/password-reset/request', {
-      username: input.username,
-      channel: input.via,
-      contact: input.contacto,
-    })
+    .post<{ mensaje: string }>('/auth/recuperar/solicitar', input)
     .then((r) => r.data);
 }
 
@@ -78,21 +92,13 @@ export function pedirCodigo(input: { username: string; via: Via; contacto: strin
  */
 export function verificarCodigo(input: { username: string; codigo: string }) {
   return apiClient
-    .post<{ ticket: string }>('/auth/password-reset/verify', {
-      username: input.username,
-      code: input.codigo,
-    })
+    .post<{ ticket: string }>('/auth/recuperar/verificar', input)
     .then((r) => r.data);
 }
 
 /** Pone la contraseña nueva. El permiso muere aquí y caen las sesiones abiertas. */
 export function cambiarPassword(input: { ticket: string; password: string }) {
-  return apiClient
-    .post<void>('/auth/password-reset/confirm', {
-      ticket: input.ticket,
-      password: input.password,
-    })
-    .then((r) => r.data);
+  return apiClient.post<void>('/auth/recuperar/cambiar', input).then((r) => r.data);
 }
 
 /**
@@ -104,9 +110,6 @@ export function cambiarPassword(input: { ticket: string; password: string }) {
  */
 export function recordarUsuario(input: { via: Via; contacto: string }) {
   return apiClient
-    .post<void>('/auth/password-reset/username', {
-      channel: input.via,
-      contact: input.contacto,
-    })
+    .post<{ mensaje: string }>('/auth/recuperar/usuario', input)
     .then((r) => r.data);
 }

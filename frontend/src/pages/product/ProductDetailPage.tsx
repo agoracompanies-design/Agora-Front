@@ -191,7 +191,7 @@ export function ProductDetailPage() {
     <div id="product-detail" className="product-detail mx-auto max-w-5xl px-4 sm:px-6 py-8">
       {/* React 19 lo sube al <head>. Lleva el producto y el negocio porque es
           el título que se ve al compartir el enlace y en la pestaña. */}
-      <title>{`${product.name}${enterprise ? ` · ${enterprise.companyName}` : ''} · Agora`}</title>
+      <title>{`${product.name}${enterprise ? ` · ${enterprise.companyName}` : ''} · Ágora`}</title>
       {product.description && <meta name="description" content={product.description.slice(0, 160)} />}
       <Link to="/" id="product-detail__back" className="product-detail__back mb-6 inline-flex items-center gap-1.5 text-sm text-ink-500 hover:text-ink-900">
         <ArrowLeft size={14} /> Volver a explorar

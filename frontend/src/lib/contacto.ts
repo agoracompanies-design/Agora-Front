@@ -1,5 +1,5 @@
 /**
- * Datos de contacto de Agora.
+ * Datos de contacto de Ágora.
  *
  * OJO: el número es un marcador de posición hasta que Nelson dé el definitivo.
  * Formato para wa.me: código de país + número, sin signos ni espacios.
@@ -83,5 +83,5 @@ export function enlaceWhatsapp(telefono: string | null | undefined, mensaje: str
 /** El saludo con el que se abre WhatsApp, ya con el producto por delante. */
 export function mensajeDeInteres(producto: string, negocio?: string): string {
   const donde = negocio ? ` de ${negocio}` : '';
-  return `Hola, buenas. Vi «${producto}»${donde} en Agora y me interesa. ¿Está disponible?`;
+  return `Hola, buenas. Vi «${producto}»${donde} en Ágora y me interesa. ¿Está disponible?`;
 }

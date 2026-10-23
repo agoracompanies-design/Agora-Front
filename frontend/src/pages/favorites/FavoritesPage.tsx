@@ -57,7 +57,7 @@ export function FavoritesPage() {
   return (
     <div id="favorites" className="favorites mx-auto max-w-6xl px-4 sm:px-6 py-10">
       {/* React 19 lo sube al <head>: cada ruta con su título. */}
-      <title>Tus favoritos · Agora</title>
+      <title>Tus favoritos · Ágora</title>
       <h1 id="favorites__title" className="favorites__title text-2xl font-semibold text-ink-900">Tus favoritos</h1>
       <p id="favorites__subtitle" className="favorites__subtitle mt-1 text-sm text-ink-500">Lo que guardaste para revisar más tarde.</p>
 

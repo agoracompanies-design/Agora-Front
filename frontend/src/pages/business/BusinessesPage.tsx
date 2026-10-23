@@ -23,13 +23,13 @@ export function BusinessesPage() {
   return (
     <div id="businesses" className="businesses mx-auto max-w-6xl px-4 sm:px-6 py-8">
       {/* React 19 lo sube al <head>: cada ruta con su título. */}
-      <title>Negocios · Agora</title>
+      <title>Negocios · Ágora</title>
       <Link to="/" className="businesses__back mb-4 inline-flex items-center gap-1.5 text-sm text-ink-500 hover:text-ink-900">
         <ArrowLeft size={14} aria-hidden="true" /> Volver a explorar
       </Link>
       <h1 id="businesses__title" className="businesses__title text-2xl font-semibold text-ink-900">Negocios</h1>
       <p id="businesses__count" className="businesses__count mt-1.5 text-sm text-ink-500">
-        {isLoading ? 'Cargando…' : `${businesses.length} negocio${businesses.length === 1 ? '' : 's'} publicando en Agora`}
+        {isLoading ? 'Cargando…' : `${businesses.length} negocio${businesses.length === 1 ? '' : 's'} publicando en Ágora`}
       </p>
 
       {!isLoading && favoritos.length > 0 && (

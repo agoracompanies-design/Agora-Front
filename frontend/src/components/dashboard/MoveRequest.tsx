@@ -30,7 +30,7 @@ export function MoveRequest({ enterprise }: { enterprise: UserEnterprise }) {
    * dirección registrada, que es con lo que se busca.
    */
   const mensaje = [
-    'Cambio de ubicación en Agora',
+    'Cambio de ubicación en Ágora',
     '',
     `Negocio: ${enterprise.companyName}`,
     ...(enterprise.code ? [`Código: ${enterprise.code}`] : []),

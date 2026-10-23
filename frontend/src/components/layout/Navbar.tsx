@@ -198,7 +198,7 @@ export function Navbar() {
                       onClick={() => setMenuOpen(false)}
                       id="navbar__menu-publish" className="navbar__menu-publish flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-ink-700 hover:bg-ink-50"
                     >
-                      <Store size={15} /> Vender en Agora
+                       <Store size={15} /> Vender en Ágora
                     </Link>
                   )}
                   <Link
@@ -307,9 +307,9 @@ export function Navbar() {
                     Mi negocio
                   </Link>
                 ) : (
-                  <Link to="/vender" onClick={() => setMobileOpen(false)} id="navbar__mobile-sell" className="navbar__mobile-sell rounded-lg px-3 py-2.5 text-sm font-medium text-ink-700 hover:bg-ink-50">
-                    Vender en Agora
-                  </Link>
+                    <Link to="/vender" onClick={() => setMobileOpen(false)} id="navbar__mobile-sell" className="navbar__mobile-sell rounded-lg px-3 py-2.5 text-sm font-medium text-ink-700 hover:bg-ink-50">
+                      Vender en Ágora
+                    </Link>
                 )}
                 <Link to="/cuenta" onClick={() => setMobileOpen(false)} id="navbar__mobile-account" className="navbar__mobile-account rounded-lg px-3 py-2.5 text-sm font-medium text-ink-700 hover:bg-ink-50">
                   Mi cuenta

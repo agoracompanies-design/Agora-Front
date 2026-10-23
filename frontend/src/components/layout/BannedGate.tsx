@@ -51,14 +51,14 @@ export function BannedScreen({
 }) {
   const telefono = info.telefono ?? WHATSAPP_MODERACION;
   const mensaje =
-    'Hola, mi cuenta de Agora' +
+    'Hola, mi cuenta de Ágora' +
     (usuario ? ' (' + usuario + ')' : '') +
     ' está bloqueada y quiero saber cómo resolverlo.';
   const wa = enlaceWhatsapp(telefono, mensaje);
 
   return (
     <main id="banned" className="banned flex min-h-screen flex-col items-center justify-center bg-ink-100 px-4 text-center">
-      <title>Cuenta bloqueada · Agora</title>
+      <title>Cuenta bloqueada · Ágora</title>
 
       <span id="banned__icon" className="banned__icon flex h-16 w-16 items-center justify-center rounded-2xl bg-red-500/15 text-red-600 dark:text-red-400">
         <Ban size={30} aria-hidden="true" />
@@ -67,7 +67,7 @@ export function BannedScreen({
         Tu cuenta está bloqueada
       </h1>
       <p id="banned__text" className="banned__text mt-3 max-w-lg text-base leading-relaxed text-ink-700">
-        {info.motivo ?? 'Se bloqueó por incumplir las normas de Agora después de haberte avisado.'}
+        {info.motivo ?? 'Se bloqueó por incumplir las normas de Ágora después de haberte avisado.'}
       </p>
       {info.desde && (
         <p id="banned__date" className="banned__date mt-1 text-sm text-ink-500">

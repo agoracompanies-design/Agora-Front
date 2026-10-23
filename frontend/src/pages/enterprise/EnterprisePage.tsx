@@ -127,7 +127,7 @@ export function EnterprisePage() {
   return (
     <div>
       {/* React 19 lo sube al <head>: el negocio da nombre a la pestaña. */}
-      <title>{`${enterprise.companyName} · Agora`}</title>
+      <title>{`${enterprise.companyName} · Ágora`}</title>
       <header ref={heroRef} id="business-hero" className="business-hero relative overflow-hidden border-b border-ink-200/70 bg-ink-100">
         {/* El mapa real del negocio hace de fondo. Se dibuja más ancho que el
             contenedor y anclado a la izquierda, así su centro —el marcador—

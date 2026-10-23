@@ -94,7 +94,7 @@ export function ModerationPage() {
 
   return (
     <div id="moderation" className="moderation mx-auto max-w-4xl px-4 sm:px-6 py-8">
-      <title>Moderación · Agora</title>
+      <title>Moderación · Ágora</title>
 
       <header id="moderation__header" className="moderation__header mb-6">
         <span

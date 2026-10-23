@@ -34,14 +34,14 @@ export function PlansPage() {
   return (
     <div id="plans-page" className="plans-page mx-auto max-w-2xl px-4 sm:px-6 py-12">
       {/* React 19 lo sube al <head>: cada ruta con su título. */}
-      <title>Planes · Agora</title>
+      <title>Planes · Ágora</title>
       <div id="plans-page__intro" className="plans-page__intro mb-10 text-center">
         <div id="plans-page__icon" className="plans-page__icon mx-auto mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-ink-100 text-ink-700">
           <ShoppingBag size={19} />
         </div>
         <h1 id="plans-page__title" className="plans-page__title text-2xl font-semibold text-ink-900">
           {tieneAcceso
-            ? `Elige tu ${isSeller ? 'plan de vendedor' : 'membresía de comprador'}`
+            ? `Elige tu ${isSeller ? 'plan de proveedor' : 'membresía de comprador'}`
             : 'Tu suscripción ya no está activa'}
         </h1>
         <p id="plans-page__subtitle" className="plans-page__subtitle mt-2 text-sm text-ink-500">
@@ -49,7 +49,7 @@ export function PlansPage() {
             ? 'Un paso más y podrás buscar en todo el catálogo de tu ciudad.'
             : isSeller
               ? 'Actívala y tu negocio vuelve a estar en línea, con su catálogo tal como lo dejaste.'
-              : 'Agora se usa con una membresía al día. Actívala y vuelves justo donde estabas.'}
+               : 'Ágora se usa con una membresía al día. Actívala y vuelves justo donde estabas.'}
         </p>
       </div>
 

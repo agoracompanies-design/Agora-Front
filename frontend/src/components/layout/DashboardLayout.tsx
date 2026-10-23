@@ -24,12 +24,12 @@ export function DashboardLayout() {
     <div id="dashboard" className="dashboard mx-auto max-w-6xl px-4 sm:px-6 py-8">
       <div id="dashboard__header" className="dashboard__header mb-6 flex items-center justify-between">
         <div>
-          <NavLink to="/" id="dashboard__back" className="dashboard__back mb-2 inline-flex items-center gap-1.5 text-sm text-ink-500 hover:text-ink-900">
-            <ArrowLeft size={14} /> Volver a Agora
-          </NavLink>
-          <h1 id="dashboard__title" className="dashboard__title text-2xl font-semibold text-ink-900">
-            {sinNegocio ? 'Vender en Agora' : enterprise?.companyName ?? 'Mi negocio'}
-          </h1>
+            <NavLink to="/" id="dashboard__back" className="dashboard__back mb-2 inline-flex items-center gap-1.5 text-sm text-ink-500 hover:text-ink-900">
+              <ArrowLeft size={14} /> Volver a Ágora
+            </NavLink>
+            <h1 id="dashboard__title" className="dashboard__title text-2xl font-semibold text-ink-900">
+              {sinNegocio ? 'Vender en Ágora' : enterprise?.companyName ?? 'Mi negocio'}
+            </h1>
         </div>
       </div>
 

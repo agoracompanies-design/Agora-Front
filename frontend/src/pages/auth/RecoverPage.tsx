@@ -9,8 +9,10 @@ import { PhoneField, telefonoListo } from '@/components/ui/PhoneField';
 import { PAIS_POR_DEFECTO, telefonoCompleto } from '@/lib/paises';
 import { Button } from '@/components/ui/Button';
 import {
+  CODIGOS_POR_VENTANA,
   INTENTOS_DEL_CODIGO,
   MINUTOS_DEL_CODIGO,
+  MINUTOS_DE_LA_VENTANA,
   SEGUNDOS_ENTRE_CODIGOS,
   VIAS_DISPONIBLES,
   cambiarPassword,
@@ -68,9 +70,10 @@ export function RecoverPage() {
   const [ticket, setTicket] = useState('');
   const [password, setPassword] = useState('');
 
-  // Cuenta atrás para poder pedir otro código. El servidor descarta los que
-  // llegan demasiado seguidos sin decirlo —responde 200 igual—, así que si no se
-  // enseñara aquí, volver a pulsar parecería funcionar y no llegaría nada.
+  // El servidor admite 3 códigos por cada 15 minutos y, pasado ese tope,
+  // responde 200 sin mandar nada. Así que la cuenta se lleva aquí: sin esto,
+  // pedir el cuarto parecería funcionar y no llegaría ningún mensaje.
+  const [pedidos, setPedidos] = useState(0);
   const [esperaParaReenviar, setEsperaParaReenviar] = useState(0);
   const reloj = useRef<number | undefined>(undefined);
 
@@ -84,6 +87,19 @@ export function RecoverPage() {
   }, [esperaParaReenviar]);
 
   const hayQueElegirVia = VIAS_DISPONIBLES.length > 1;
+  const sinMasCodigos = pedidos >= CODIGOS_POR_VENTANA;
+
+  // La ventana del servidor caduca, así que el contador también. Se cuenta
+  // desde el último código y no desde el primero, que es de donde cuenta el
+  // servidor: así se espera de más y nunca se promete un código que no saldría.
+  useEffect(() => {
+    if (!sinMasCodigos) return;
+    const id = window.setTimeout(
+      () => setPedidos(0),
+      MINUTOS_DE_LA_VENTANA * 60_000,
+    );
+    return () => window.clearTimeout(id);
+  }, [sinMasCodigos]);
   const contacto = via === 'email' ? correo.trim() : telefonoCompleto(pais, telefono);
   const contactoListo = via === 'email' ? pareceCorreo(correo) : telefonoListo(pais, telefono);
 
@@ -131,6 +147,10 @@ export function RecoverPage() {
 
     setFallos(0);
     setCodigo('');
+    // Se suma, no se pone a 1: volver atrás con «me equivoqué de datos» y
+    // enviar otra vez es un código más para el servidor, aunque aquí parezca
+    // que se empieza de nuevo.
+    setPedidos((n) => n + 1);
     setEsperaParaReenviar(SEGUNDOS_ENTRE_CODIGOS);
     setPaso('codigo');
   }
@@ -145,6 +165,7 @@ export function RecoverPage() {
 
     setFallos(0);
     setCodigo('');
+    setPedidos((n) => n + 1);
     setEsperaParaReenviar(SEGUNDOS_ENTRE_CODIGOS);
     setAviso('Te mandamos otro código.');
   }
@@ -377,13 +398,15 @@ export function RecoverPage() {
           <button
             type="button"
             onClick={reenviarCodigo}
-            disabled={esperaParaReenviar > 0 || enviando}
+            disabled={esperaParaReenviar > 0 || enviando || sinMasCodigos}
             id="recover-code__resend"
-            className="recover-code__resend mx-auto block rounded-lg py-1 text-sm text-primary hover:underline disabled:text-ink-400 disabled:no-underline"
+            className="recover-code__resend mx-auto block rounded-lg py-1 text-center text-sm text-primary hover:underline disabled:text-ink-400 disabled:no-underline"
           >
-            {esperaParaReenviar > 0
-              ? `Puedes pedir otro código en ${esperaParaReenviar} s`
-              : 'No me llegó, mándame otro'}
+            {sinMasCodigos
+              ? `Ya pediste ${CODIGOS_POR_VENTANA} códigos. Espera ${MINUTOS_DE_LA_VENTANA} minutos para pedir otro.`
+              : esperaParaReenviar > 0
+                ? `Puedes pedir otro código en ${esperaParaReenviar} s`
+                : 'No me llegó, mándame otro'}
           </button>
 
           <button

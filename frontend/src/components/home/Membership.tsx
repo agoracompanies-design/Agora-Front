@@ -25,7 +25,7 @@ export function Membership() {
       <div id="plans__intro" className="plans__intro mb-8 max-w-lg">
         <span id="plans__eyebrow" className="plans__eyebrow text-xs font-semibold uppercase tracking-wider text-ink-500">Membresías</span>
         <h2 id="plans__title" className="plans__title mt-2 text-2xl sm:text-3xl font-semibold text-ink-900">
-          Elige cómo usar <span className="font-bold">Agora</span>
+          Elige cómo usar <span className="font-bold">Ágora</span>
         </h2>
       </div>
 
@@ -95,7 +95,7 @@ export function Membership() {
           <div id="plans__seller-icon" className="plans__seller-icon mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-white">
             <Store size={19} />
           </div>
-          <h3 id="plans__seller-title" className="plans__seller-title text-lg font-semibold text-ink-900">Vendedor</h3>
+          <h3 id="plans__seller-title" className="plans__seller-title text-lg font-semibold text-ink-900">Proveedor</h3>
           <p id="plans__seller-subtitle" className="plans__seller-subtitle mt-1 text-sm text-ink-500">Publica tu catálogo y que te encuentren.</p>
           <div id="plans__seller-price" className="plans__seller-price mt-5 flex items-baseline gap-2">
             <span id="plans__seller-cost" className="plans__seller-cost text-3xl font-semibold text-ink-900">${sellerTier.cost}</span>

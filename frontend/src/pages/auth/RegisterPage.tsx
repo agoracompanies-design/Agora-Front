@@ -87,8 +87,8 @@ export function RegisterPage() {
       }
     >
       {/* React 19 sube estas etiquetas al <head>: cada ruta con su título. */}
-      <title>Crear cuenta · Agora</title>
-      <meta name="description" content="Crea tu cuenta en Agora para buscar productos de las mypimes y mercados de tu ciudad, o para publicar tu catálogo." />
+      <title>Crear cuenta · Ágora</title>
+      <meta name="description" content="Crea tu cuenta en Ágora para buscar productos de las mypimes y mercados de tu ciudad, o para publicar tu catálogo." />
 
       <form onSubmit={handleSubmit} id="register" className="register space-y-4">
         <Input

@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Target, Users } from 'lucide-react';
+import { Target } from 'lucide-react';
 import { Logo } from './Logo';
 
 interface AuthLayoutProps {
@@ -25,9 +25,7 @@ interface AuthLayoutProps {
 }
 
 const POINTS = [
-  { icon: Users, title: 'Qué hacemos', description: 'Reunimos lo que ofrecen las mypimes y mercados de tu ciudad.' },
-  { icon: Target, title: 'Nuestro objetivo', description: 'Ahorrarte tiempo: nada de recorrer tienda por tienda.' },
-  { icon: Search, title: 'Para qué sirve', description: 'Buscar, comparar y localizar lo que necesitas, hoy.' },
+  { icon: Target, title: 'Nuestro objetivo', description: 'Encontrar en breve tiempo todo lo que tu necesites y este a tu alcance' },
 ];
 
 export function AuthLayout({ title, subtitle, children, footer, conIntro = true }: AuthLayoutProps) {
@@ -70,7 +68,7 @@ export function AuthLayout({ title, subtitle, children, footer, conIntro = true 
             {/* En móvil la card se queda en marca + titular + formulario: el
                 resto del argumentario sobra cuando lo que toca es entrar. */}
             <p id="auth__lead" className="auth__lead hidden text-sm leading-relaxed text-ink-500 lg:block">
-              Agora es el buscador de tu ciudad: encuentra en segundos lo que venden las mypimes y mercados locales, sin recorrerlos uno a uno.
+              Ágora es el buscador de tu ciudad: encuentra en segundos lo que ofertan las mipymes y mercados locales (con el precio), sin recorrerlos uno a uno.
             </p>
 
             {/* Cada punto es un término y su definición, no una lista suelta. */}
@@ -122,7 +120,7 @@ export function AuthLayout({ title, subtitle, children, footer, conIntro = true 
             {/* Pie de esta sección, no del documento: por eso no lleva rol de
                 contentinfo (un `footer` solo es landmark si cuelga del body). */}
             <footer id="access__legal" className="access__legal mt-3 text-center">
-              <small id="auth__copyright" className="auth__copyright text-xs text-ink-500">© {new Date().getFullYear()} Agora</small>
+              <small id="auth__copyright" className="auth__copyright text-xs text-ink-500">© {new Date().getFullYear()} Ágora</small>
             </footer>
           </section>
         </div>
