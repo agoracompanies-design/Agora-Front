@@ -7,10 +7,15 @@
 export const WHATSAPP_VENTAS = '5350000000';
 
 /**
- * Moderación: a este número llegan las solicitudes para crear una categoría.
- * Puede ser el mismo que el de ventas o uno aparte; también es un marcador.
+ * Moderación: aquí llegan las solicitudes para crear una categoría y quien no
+ * puede entrar en su cuenta.
+ *
+ * Este **sí es un número real**, el de Joel, puesto el 2026-10-22 porque
+ * recuperar la contraseña se hace hablando con una persona y hasta entonces el
+ * enlace abría un chat con un número que no existe. El de ventas de arriba
+ * sigue siendo un marcador.
  */
-export const WHATSAPP_MODERACION = '5350000000';
+export const WHATSAPP_MODERACION = '5350926557';
 
 /**
  * Recuperar el acceso: un chat de WhatsApp con un moderador.

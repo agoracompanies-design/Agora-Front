@@ -9,7 +9,22 @@ export function listRatingsByService(serviceId: string) {
   return apiClient.get<Rating[]>(`/ratings/service/${serviceId}`).then((res) => res.data);
 }
 
-export function createRating(input: { quantity: number; userId: string; productId?: string; serviceId?: string }) {
+/**
+ * Califica un producto o un servicio, o **cambia** la nota ya puesta.
+ *
+ * Dos cosas cambiaron en el servidor con el commit `392c430` y las dos importan
+ * aquí:
+ *
+ * - **`userId` ya no va en el cuerpo**, sale del token. Mandarlo responde
+ *   `400 property userId should not exist`, así que con el código anterior no
+ *   entraba ni una calificación. Que lo decida el token es lo correcto: antes
+ *   se podía calificar en nombre de otra persona.
+ * - **Volver a mandarla no crea otra fila**: reescribe la de uno. Por eso esta
+ *   misma función sirve para calificar y para cambiar la nota, y no hace falta
+ *   el `PATCH` —que además pide un permiso que las cuentas normales no
+ *   tienen—.
+ */
+export function createRating(input: { quantity: number; productId?: string; serviceId?: string }) {
   return apiClient.post<Rating>('/ratings', input).then((res) => res.data);
 }
 
