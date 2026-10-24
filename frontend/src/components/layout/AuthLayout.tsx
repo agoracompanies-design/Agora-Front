@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { Target } from 'lucide-react';
 import { Logo } from './Logo';
+import { AgoraVertical } from '@/components/brand';
 
 interface AuthLayoutProps {
   /** Saludo de la pantalla. Es el h2: el h1 lo ocupa el titular de la página. */
@@ -98,8 +99,23 @@ export function AuthLayout({ title, subtitle, children, footer, conIntro = true 
             <div id="access__panel" className="access__panel flex flex-1 items-center">
               <div id="access__content" className="access__content w-full">
                 {/* La marca vivía en la columna de al lado: sin ella hay que
-                    poner aquí de qué sitio es esto. */}
-                {!conIntro && <Logo className="access__brand mb-6" />}
+                    poner aquí de qué sitio es esto.
+
+                    Va la combinación vertical y no la horizontal de `Logo`:
+                    esta columna es estrecha, y con el símbolo encima de la
+                    palabra el dibujo crece sin comerse el ancho, que es para lo
+                    que está pensada. Enlaza a la portada igual, porque quien no
+                    puede entrar tiene que poder salir de aquí. */}
+                {!conIntro && (
+                  <Link
+                    to="/"
+                    id="access__brand"
+                    aria-label="Ágora, ir a la portada"
+                    className="access__brand mb-6 inline-block text-primary dark:text-white"
+                  >
+                    <AgoraVertical className="access__brand-mark h-28 w-auto" />
+                  </Link>
+                )}
                 <Heading
                   id="access-title"
                   className="access__title text-3xl font-semibold text-ink-900 sm:text-4xl"
