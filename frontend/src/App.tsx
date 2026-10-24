@@ -124,6 +124,19 @@ export default function App() {
                               path="vender"
                               element={<BecomeSellerPage />}
                             />
+                            {/* La pantalla se llamó `/crear-empresa` y pasó a
+                                `/vender`, pero el backend sigue mandando el
+                                nombre viejo en el `href` de la promoción «Vende
+                                lo que ya tienes en el mostrador» —comprobado
+                                contra la API—, así que el enlace moría en un
+                                404. Se pide que lo actualice; mientras tanto
+                                esto lo recoge, porque una dirección que ya se
+                                publicó no debería dejar de funcionar solo
+                                porque la hayamos renombrado. */}
+                            <Route
+                              path="crear-empresa"
+                              element={<Navigate to="/vender" replace />}
+                            />
                             <Route path="cuenta" element={<AccountPage />} />
                             <Route path="planes" element={<PlansPage />} />
 

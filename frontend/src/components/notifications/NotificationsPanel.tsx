@@ -99,19 +99,28 @@ function Fila({ aviso, onLeer }: { aviso: Aviso; onLeer: () => void }) {
       {/* La bandeja es de solo lectura, pero un aviso que pide responder y no
           deja hacerlo obliga a salir a buscar el número. */}
       {enlaceSeguro(aviso.enlace) && (
-        <a
-          href={enlaceSeguro(aviso.enlace)!}
-          target="_blank"
-          rel="noreferrer"
-          id={`inbox__item-link--${aviso.id}`}
-          // El `py` no es estética: sin él el enlace medía 16 px de alto y en
-          // un teléfono se falla al tocarlo. Con el relleno pasa de los 24 px
-          // que pide la WCAG 2.5.8, y el `-ml-1` lo devuelve a su sitio para
-          // que el texto siga alineado con el del aviso.
-          className="inbox__item-link mx-3 mb-2 -ml-1 inline-flex w-fit items-center gap-1.5 rounded-lg px-1 py-1.5 text-xs font-medium text-primary hover:underline"
-        >
-          <MessageCircle size={14} aria-hidden="true" /> {aviso.enlaceTexto ?? 'Abrir WhatsApp'}
-        </a>
+        // Al borde del contenido, como los enlaces de las tarjetas de
+        // promoción de más abajo: son la misma clase de acción y tienen que
+        // leerse a la misma altura. Antes llevaba `mx-3 -ml-1`, y como las dos
+        // escriben `margin-left` ganaba la segunda: el margen quedaba en −4 px
+        // y el enlace se salía de la tarjeta.
+        <div className="inbox__item-actions flex px-4 pb-2">
+          <a
+            href={enlaceSeguro(aviso.enlace)!}
+            target="_blank"
+            rel="noreferrer"
+            id={`inbox__item-link--${aviso.id}`}
+            // El `py` no es estética: sin él el enlace medía 16 px de alto y en
+            // un teléfono se falla al tocarlo. Con el relleno pasa de los 24 px
+            // que pide la WCAG 2.5.8. El relleno lateral se lo queda el
+            // contenedor en vez del enlace: así el texto empieza justo en el
+            // borde del contenido y no hay que compensarlo con un margen
+            // negativo, que es lo que lo sacaba de sitio.
+            className="inbox__item-link inline-flex w-fit items-center gap-1.5 rounded-lg py-1.5 text-xs font-medium text-primary hover:underline"
+          >
+            <MessageCircle size={14} aria-hidden="true" /> {aviso.enlaceTexto ?? 'Abrir WhatsApp'}
+          </a>
+        </div>
       )}
     </li>
   );
