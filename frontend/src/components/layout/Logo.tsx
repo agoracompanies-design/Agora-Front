@@ -9,10 +9,12 @@ import { cn } from '@/lib/utils';
  * cuadro como hasta ahora. Va la combinación horizontal, que es la que pide el
  * sitio donde se usa: barras y cabeceras, donde sobra ancho y falta alto.
  *
- * **El alto no es decorativo.** El logotipo se lee desde 120 px de ancho, y en
- * esta combinación la palabra ocupa dos tercios del dibujo: por debajo de unos
- * 44 px de alto las estrías de la columna empiezan a empastarse. De ahí el
- * `h-11`, que es más de lo que ocupaba el marcador anterior.
+ * **El alto no es decorativo.** En esta combinación la palabra ocupa dos
+ * tercios del dibujo, y la columna de la R —la variante que eligió el cliente—
+ * va estriada como la del isotipo. Medido a ocho tamaños sobre claro y sobre
+ * oscuro: por debajo de 44 px las estrías son una mancha, a 44 están al límite
+ * y desde 48 se distinguen. En oscuro se empasta antes, porque el blanco
+ * engorda. De ahí el `h-12`.
  *
  * El color lo pone este componente y lo hereda el dibujo por `currentColor`:
  * azul de marca sobre fondo claro, blanco sobre fondo oscuro. No hay dos
@@ -43,7 +45,7 @@ export function Logo({
     >
       {/* Sin `title`: el nombre accesible ya lo da el `aria-label` del enlace,
           y dos nombres para la misma cosa se leen dos veces. */}
-      <AgoraHorizontal className="logo__mark h-11 w-auto" />
+      <AgoraHorizontal className="logo__mark h-12 w-auto" />
     </Link>
   );
 }
