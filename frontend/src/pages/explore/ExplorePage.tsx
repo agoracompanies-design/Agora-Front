@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/Button';
 import { Pagination } from '@/components/ui/Pagination';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { BottomSheet } from '@/components/ui/BottomSheet';
+import { Contadores } from '@/components/home/Contadores';
 import { HowItWorks } from '@/components/home/HowItWorks';
 import { Membership } from '@/components/home/Membership';
 import { CatalogSearch } from '@/components/explore/CatalogSearch';
@@ -553,6 +554,9 @@ export function ExplorePage() {
         </div>
       )}
 
+      {/* Cuántos negocios y cuántos clientes hay. Hoy no se ve: la ruta
+          pública está pedida y hasta que exista el bloque no pinta nada. */}
+      <Contadores />
       <HowItWorks />
       {/* Se enseña también a quien ya paga: si sale una promoción de un plan
           superior, es justo a quien tiene uno activo a quien hay que avisar.
