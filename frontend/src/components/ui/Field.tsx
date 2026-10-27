@@ -51,23 +51,50 @@ function describe(id: string, hint?: string, error?: string) {
 const baseInputClasses =
   'w-full rounded-xl border bg-ink-50 px-3.5 py-2.5 text-sm text-ink-900 placeholder:text-ink-400 transition-colors outline-none focus:border-ink-500 focus:ring-4 focus:ring-ink-900/5 disabled:bg-ink-100 disabled:text-ink-400';
 
-interface InputProps extends InputHTMLAttributes<HTMLInputElement>, Omit<WrapperProps, 'children' | 'id'> {}
+interface InputProps extends InputHTMLAttributes<HTMLInputElement>, Omit<WrapperProps, 'children' | 'id'> {
+  /**
+   * Algo que va **encima del control**, pegado a su derecha: el ojo de una
+   * contraseña, una unidad, un botón de limpiar.
+   *
+   * Existe porque colocarlo desde fuera obligaba a adivinar a qué altura cae el
+   * control —el rótulo de arriba y la pista de abajo cambian de tamaño—, y se
+   * hacía con un `top` en píxeles que solo acertaba en un caso. Aquí se centra
+   * contra el propio control, así que da igual lo que lleve alrededor.
+   */
+  adorno?: ReactNode;
+}
 
-export function Input({ label, hint, error, className, id, ...props }: InputProps) {
+export function Input({ label, hint, error, className, id, adorno, ...props }: InputProps) {
   const generado = useId();
   const idCampo = id ?? generado;
+
+  // `required` viaja con el resto de props hasta el control nativo: antes se
+  // quedaba aquí solo para pintar un asterisco y el navegador nunca llegaba a
+  // validar el campo.
+  const control = (
+    <input
+      id={idCampo}
+      aria-describedby={describe(idCampo, hint, error)}
+      aria-invalid={error ? true : undefined}
+      className={cn('field__control', baseInputClasses, error ? 'border-red-300' : 'border-ink-200', className)}
+      {...props}
+    />
+  );
+
   return (
     <FieldWrapper id={idCampo} label={label} hint={hint} error={error}>
-      {/* `required` viaja con el resto de props hasta el control nativo: antes se
-          quedaba aquí solo para pintar un asterisco y el navegador nunca llegaba
-          a validar el campo. */}
-      <input
-        id={idCampo}
-        aria-describedby={describe(idCampo, hint, error)}
-        aria-invalid={error ? true : undefined}
-        className={cn('field__control', baseInputClasses, error ? 'border-red-300' : 'border-ink-200', className)}
-        {...props}
-      />
+      {adorno ? (
+        // `block` y no `flex`: el input ya ocupa todo el ancho, y lo único que
+        // hace falta es algo contra lo que posicionar el adorno.
+        <span className="field__with-adornment relative block">
+          {control}
+          <span className="field__adornment absolute right-3 top-1/2 flex -translate-y-1/2 items-center">
+            {adorno}
+          </span>
+        </span>
+      ) : (
+        control
+      )}
     </FieldWrapper>
   );
 }
