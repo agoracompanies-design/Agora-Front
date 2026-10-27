@@ -39,6 +39,12 @@ function politica(origenesDeApi: string[]): string {
     // calcula del propio HTML: así no se queda viejo si alguien lo toca.
     "script-src 'self' SCRIPT_HASH",
 
+    // El service worker de la navegación sin conexión. Se dice aparte aunque
+    // `script-src` ya lo permitiría: cuando no está, cada navegador decide por
+    // su cuenta de dónde hereda, y eso no es algo que convenga averiguar en
+    // producción.
+    "worker-src 'self'",
+
     // `unsafe-inline` aquí no se puede evitar, y conviene saber por qué: React
     // pinta estilos en línea (`style={{…}}`) y Leaflet coloca las piezas del
     // mapa con `style=`. Un estilo en línea no ejecuta código; lo que se
