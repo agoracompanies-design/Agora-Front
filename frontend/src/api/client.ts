@@ -14,7 +14,7 @@ import { tryMockResponse } from './mockFallback';
  * apuntando a `localhost` no falla —se queda en blanco— y eso no se ve hasta
  * que alguien lo abre.
  */
-export const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000/api';
+
 export const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'https://backend-production-36b1.up.railway.app/api';
 
 export const apiClient = axios.create({
