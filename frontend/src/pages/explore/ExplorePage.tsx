@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { SlidersHorizontal, PackageSearch, Store, ArrowRight, X } from 'lucide-react';
+import { SlidersHorizontal, PackageSearch, Store, ArrowRight, X, ChevronDown } from 'lucide-react';
 import { listProducts } from '@/api/product';
 import type { Product } from '@/types';
 import { ProductCard } from '@/components/product/ProductCard';
@@ -369,6 +369,43 @@ export function ExplorePage() {
   const filtrosPuestos =
     (minPrice || maxPrice ? 1 : 0) + (nearMe ? 1 : 0) + (category ? 1 : 0) + (provincia ? 1 : 0);
 
+  /**
+   * Si el panel de escritorio está desplegado. **Nace plegado**: la primera
+   * pantalla es para los productos, y quien quiera afinar lo abre.
+   *
+   * No se recuerda entre visitas a propósito: es una preferencia de un rato,
+   * no un ajuste, y guardarla haría que quien lo dejó abierto una vez volviera
+   * siempre a media pantalla de filtros sin saber por qué.
+   */
+  const [filtrosAbiertos, setFiltrosAbiertos] = useState(false);
+  const cajaFiltros = useRef<HTMLDivElement>(null);
+
+  /*
+   * Se cierra con Escape y pulsando fuera, que es lo que ya hace todo lo que
+   * se superpone: si no, el panel tapa los productos y la única forma de
+   * quitarlo es acordarse de volver al botón.
+   *
+   * El efecto solo se engancha mientras está abierto; cerrado no hay nada que
+   * escuchar.
+   */
+  useEffect(() => {
+    if (!filtrosAbiertos) return;
+
+    const alPulsarFuera = (e: MouseEvent) => {
+      if (!cajaFiltros.current?.contains(e.target as Node)) setFiltrosAbiertos(false);
+    };
+    const alTeclear = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setFiltrosAbiertos(false);
+    };
+
+    document.addEventListener('mousedown', alPulsarFuera);
+    document.addEventListener('keydown', alTeclear);
+    return () => {
+      document.removeEventListener('mousedown', alPulsarFuera);
+      document.removeEventListener('keydown', alTeclear);
+    };
+  }, [filtrosAbiertos]);
+
   function clearFilters() {
     setMinPrice('');
     setMaxPrice('');
@@ -431,29 +468,63 @@ export function ExplorePage() {
               quitar de un toque: si no, hay que abrir el panel para recordar
               qué había puesto y otro toque más para limpiarlo. */}
           {hasActiveFilters && (
-            <span id="explore__active-filters" className="explore__active-filters inline-flex items-center gap-1 rounded-full bg-primary/15 py-1 pl-3 pr-1 text-xs font-medium text-ink-900">
-              {filtrosPuestos} {filtrosPuestos === 1 ? 'filtro' : 'filtros'}
-              <button
-                type="button"
-                onClick={clearFilters}
-                aria-label="Quitar los filtros"
-                id="explore__clear-filters"
-                className="explore__clear-filters flex h-5 w-5 items-center justify-center rounded-full text-ink-700 hover:bg-primary/25 hover:text-ink-900"
-              >
-                <X size={13} aria-hidden="true" />
-              </button>
-            </span>
+            <PildoraDeFiltros cuantos={filtrosPuestos} onClear={clearFilters} ambito="mobile" />
           )}
           <Button variant="outline" size="sm" onClick={() => setFiltersOpen(true)} icon={<SlidersHorizontal size={15} />}>
             Filtros
           </Button>
         </div>
 
-        {/* Los filtros, en barra sobre los resultados. Antes era una columna
-            lateral: se comía 264 px de ancho en una pantalla donde lo que
-            importa es que quepan productos. */}
-        <div id="explore__filters" className="explore__filters mb-5 hidden rounded-2xl border border-ink-200 bg-ink-50 px-4 py-3.5 lg:block">
-          <FiltersPanel {...filtersProps} ambito="bar" orientacion="horizontal" />
+        {/* Los filtros, plegados y en barra. Antes era una columna lateral
+            —se comía 264 px de ancho— y luego una barra siempre abierta, que
+            seguía robando alto a los productos en la primera pantalla.
+            Desplegado **se superpone**: no empuja nada, así que abrirlos no
+            mueve la rejilla de sitio ni obliga a buscar otra vez dónde estaba
+            el producto que se estaba mirando. */}
+        <div
+          ref={cajaFiltros}
+          id="explore__filters"
+          className="explore__filters relative z-20 mb-5 hidden lg:block"
+        >
+          <div id="explore__filters-bar" className="explore__filters-bar flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setFiltrosAbiertos((v) => !v)}
+              icon={<SlidersHorizontal size={15} />}
+              aria-expanded={filtrosAbiertos}
+              aria-controls="explore__filters-panel"
+              id="explore__filters-toggle"
+              className="explore__filters-toggle"
+            >
+              Filtros
+              <ChevronDown
+                size={14}
+                aria-hidden="true"
+                className={cn('ms-1 transition-transform', filtrosAbiertos && 'rotate-180')}
+              />
+            </Button>
+
+            {/* Plegado y con filtros puestos, lo que no se puede es dejar a
+                alguien mirando una rejilla vacía sin saber por qué: aquí se
+                dice cuántos hay y se quitan de un clic, sin abrir el panel.
+                Abierto no hace falta, que el propio panel lleva su «Limpiar». */}
+            {hasActiveFilters && !filtrosAbiertos && (
+              <PildoraDeFiltros cuantos={filtrosPuestos} onClear={clearFilters} ambito="desktop" />
+            )}
+          </div>
+
+          {filtrosAbiertos && (
+            <div
+              id="explore__filters-panel"
+              className="explore__filters-panel absolute inset-x-0 top-full z-30 mt-2 rounded-2xl border border-ink-200 bg-ink-50 px-4 py-3.5 shadow-xl"
+            >
+              {/* Sin título: el botón que acaba de abrirlo ya dice «Filtros» y
+                  repetirlo dentro solo gasta alto. El «Limpiar» del panel se
+                  queda, alineado a la derecha. */}
+              <FiltersPanel {...filtersProps} ambito="bar" orientacion="horizontal" conTitulo={false} />
+            </div>
+          )}
         </div>
 
         <div id="explore__layout" className="explore__layout flex flex-col gap-8">
@@ -578,6 +649,46 @@ export function ExplorePage() {
       )}
 
     </div>
+  );
+}
+
+/**
+ * «2 filtros ✕»: cuántos hay puestos y un botón para quitarlos.
+ *
+ * Sale en los dos sitios donde los filtros están guardados —el botón del móvil
+ * y la barra plegada de escritorio—, porque en ambos pasa lo mismo: si no se
+ * dice, alguien se queda mirando una rejilla medio vacía sin saber que tiene
+ * un filtro puesto de hace dos pantallas.
+ *
+ * El `ambito` solo distingue los identificadores: dos elementos no pueden
+ * compartir `id` y los dos están en el documento a la vez, aunque uno de ellos
+ * esté oculto por el ancho.
+ */
+function PildoraDeFiltros({
+  cuantos,
+  onClear,
+  ambito,
+}: {
+  cuantos: number;
+  onClear: () => void;
+  ambito: 'mobile' | 'desktop';
+}) {
+  return (
+    <span
+      id={`explore__active-${ambito}`}
+      className="explore__active inline-flex items-center gap-1 rounded-full bg-primary/15 py-1 pl-3 pr-1 text-xs font-medium text-ink-900"
+    >
+      {cuantos} {cuantos === 1 ? 'filtro' : 'filtros'}
+      <button
+        type="button"
+        onClick={onClear}
+        aria-label="Quitar los filtros"
+        id={`explore__clear-${ambito}`}
+        className="explore__clear flex h-5 w-5 items-center justify-center rounded-full text-ink-700 hover:bg-primary/25 hover:text-ink-900"
+      >
+        <X size={13} aria-hidden="true" />
+      </button>
+    </span>
   );
 }
 
