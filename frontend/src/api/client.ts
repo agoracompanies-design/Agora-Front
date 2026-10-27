@@ -15,6 +15,7 @@ import { tryMockResponse } from './mockFallback';
  * que alguien lo abre.
  */
 export const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3000/api';
+export const API_BASE_URL = import.meta.env.VITE_API_URL ?? 'https://backend-production-36b1.up.railway.app/api';
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,  
