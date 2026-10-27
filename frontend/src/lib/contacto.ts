@@ -106,8 +106,33 @@ export function enlaceWhatsapp(telefono: string | null | undefined, mensaje: str
   return internacional ? `https://wa.me/${internacional}?text=${encodeURIComponent(mensaje)}` : null;
 }
 
-/** El saludo con el que se abre WhatsApp, ya con el producto por delante. */
-export function mensajeDeInteres(producto: string, negocio?: string): string {
+/** Un precio como se escribe en un mensaje: `60,00 CUP`. */
+function precioEscrito(importe: number, moneda: string): string {
+  return `${importe.toLocaleString('es', { minimumFractionDigits: 2 })} ${moneda}`;
+}
+
+/**
+ * El saludo con el que se abre WhatsApp, con el producto **y su precio**.
+ *
+ * El precio va porque es la mitad de la conversación: quien escribe quiere ese
+ * producto a ese precio, y el negocio necesita saber de cuál de sus precios
+ * habla sin tener que preguntarlo. Si el producto tiene los dos, se mandan los
+ * dos —el negocio cobra en uno o en otro y quien pregunta no tiene por qué
+ * saber cuál—.
+ *
+ * Un producto sin ningún precio es raro pero posible; entonces se pregunta por
+ * él sin más, que es mejor que escribir «cuesta 0».
+ */
+export function mensajeDeInteres(
+  producto: string,
+  negocio?: string,
+  precios?: { cup?: number | null; usd?: number | null },
+): string {
   const donde = negocio ? ` de ${negocio}` : '';
-  return `Hola, buenas. Vi «${producto}»${donde} en Ágora y me interesa. ¿Está disponible?`;
+  const lista = [
+    precios?.cup != null ? precioEscrito(precios.cup, 'CUP') : null,
+    precios?.usd != null ? precioEscrito(precios.usd, 'USD') : null,
+  ].filter(Boolean);
+  const cuanto = lista.length > 0 ? ` a ${lista.join(' o ')}` : '';
+  return `Hola, buenas. Vi «${producto}»${donde} en Ágora${cuanto} y me interesa. ¿Está disponible?`;
 }

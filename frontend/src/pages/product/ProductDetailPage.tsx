@@ -182,7 +182,12 @@ export function ProductDetailPage() {
           legible: telefonoLegible(enterprise?.contact?.phone),
           whatsapp: enlaceWhatsapp(
             enterprise?.contact?.phone,
-            mensajeDeInteres(product.name, enterprise?.companyName),
+            // Con el precio: el negocio tiene que saber de cuál de sus
+            // productos y a qué precio le están escribiendo.
+            mensajeDeInteres(product.name, enterprise?.companyName, {
+              cup: product.priceCup,
+              usd: product.priceUsd,
+            }),
           ),
         }
       : null;
