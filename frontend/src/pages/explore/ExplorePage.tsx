@@ -60,6 +60,11 @@ function mismoLugar(a: string | undefined | null, b: string): boolean {
 }
 
 
+/** La moneda del enlace; CUP si no la trae, que es en la que se vende aquí. */
+function monedaDeUrl(valor: string | null): MonedaPrincipal {
+  return valor === 'USD' ? 'USD' : 'CUP';
+}
+
 export function ExplorePage() {
   const { notify } = useToast();
   const { isSeller } = useAuth();
@@ -75,7 +80,10 @@ export function ExplorePage() {
   const [maxPrice, setMaxPrice] = useState(() => searchParams.get('max') ?? '');
   const [category, setCategory] = useState<string | null>(() => searchParams.get('cat'));
   const [sortOrder, setSortOrder] = useState<SortOrder>(() => (searchParams.get('sort') === 'desc' ? 'desc' : 'asc'));
-  const [moneda, setMoneda] = useState<MonedaPrincipal>(() => (searchParams.get('moneda') === 'CUP' ? 'CUP' : 'USD'));
+  // CUP de entrada: casi todo se vende aquí en pesos, así que abrir en dólares
+  // obligaba a cambiar la moneda antes de mirar nada. La URL sigue mandando por
+  // encima, para que un enlace compartido se vea como quien lo mandó lo veía.
+  const [moneda, setMoneda] = useState<MonedaPrincipal>(() => monedaDeUrl(searchParams.get('moneda')));
   const [provincia, setProvincia] = useState(() => provinciaDeUrl(searchParams.get('prov')));
   const [municipio, setMunicipio] = useState(() =>
     municipioDeUrl(provinciaDeUrl(searchParams.get('prov')), searchParams.get('mun')),
@@ -114,7 +122,7 @@ export function ExplorePage() {
   // set before navigating.
   useEffect(() => {
     setSearch(searchParams.get('q') ?? '');
-    setMoneda(searchParams.get('moneda') === 'CUP' ? 'CUP' : 'USD');
+    setMoneda(monedaDeUrl(searchParams.get('moneda')));
     setMinPrice(searchParams.get('min') ?? '');
     setMaxPrice(searchParams.get('max') ?? '');
     setCategory(searchParams.get('cat'));

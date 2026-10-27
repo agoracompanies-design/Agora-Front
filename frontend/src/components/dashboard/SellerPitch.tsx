@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Building2, Check, LayoutDashboard, MessageCircle, Package, Store, Wrench } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
-import { SELLER_PLAN, enlaceParaSolicitar, getTier, monthlyEquivalent } from '@/lib/plans';
+import { enlaceParaSolicitar, getTier, monthlyEquivalent } from '@/lib/plans';
+import { comoConfig, usePlanes } from '@/hooks/usePlanes';
 import type { BillingCycle } from '@/lib/plans';
 import { cn } from '@/lib/utils';
 
@@ -44,6 +45,9 @@ export function SellerPitch({
   yaTienePlan?: boolean;
 }) {
   const { user } = useAuth();
+  // De la base, con los del código de respaldo si la API no responde.
+  const { planes } = usePlanes();
+  const SELLER_PLAN = comoConfig(planes, 'seller');
   const [cycle, setCycle] = useState<BillingCycle>('quarterly');
   const tier = getTier(SELLER_PLAN, cycle);
 

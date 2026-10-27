@@ -29,17 +29,43 @@ export const WHATSAPP_MODERACION = '5350926557';
 const CUBA = '53';
 
 /**
+ * La primera cosa que parece un teléfono dentro de lo que se escribió.
+ *
+ * El campo es libre y la gente mete de todo: dos números separados por una
+ * barra, un «ext. 2» detrás, un «o llama al…». Quedarse con **todos** los
+ * dígitos del texto los pega en un número que no existe, o —peor— en uno que sí
+ * existe y es de otra persona.
+ */
+function primerNumero(texto: string): string {
+  const encontrado = /\+?\d[\d\s().\-+]{5,}/.exec(texto);
+  return (encontrado?.[0] ?? '').replace(/\D/g, '');
+}
+
+/**
  * El número en forma internacional, solo dígitos: `5378324417`.
  *
  * Si vienen ocho dígitos pelados se asume Cuba, que es de donde son todos los
- * negocios. Con cualquier otro largo se deja lo que haya: ya trae su prefijo.
- * Devuelve `null` si no hay ni un dígito, para poder no pintar el botón.
+ * negocios. Devuelve `null` cuando lo que hay no puede ser un número, para
+ * poder **no pintar el botón**: abrir un chat con un desconocido es peor que no
+ * ofrecerlo.
+ *
+ * Lo que se encontró al revisarlo el 2026-10-26, con lo que la gente escribe de
+ * verdad: `0 5092 6557` salía como `050926557`, dos números en el mismo campo
+ * se pegaban en uno solo, y `+53 50926557 ext 2` daba `53509265572` —once
+ * dígitos, que pasaban por válidos y abrían el chat de otra persona—.
  */
 export function telefonoInternacional(telefono: string | null | undefined): string | null {
-  const digitos = (telefono ?? '').replace(/\D/g, '');
+  let digitos = primerNumero(telefono ?? '');
   if (!digitos) return null;
+
+  // Los ceros de marcar —el `0` provincial y el `00` internacional— no viajan
+  // en un número internacional.
+  digitos = digitos.replace(/^0+/, '');
   if (digitos.length === 8) return `${CUBA}${digitos}`;
-  return digitos;
+
+  // Fuera de eso solo vale lo que de verdad puede marcarse: los números de la
+  // E.164 van de diez a quince cifras contando el prefijo de país.
+  return digitos.length >= 10 && digitos.length <= 15 ? digitos : null;
 }
 
 /** El número como se lee: `+53 7 832 4417`. */

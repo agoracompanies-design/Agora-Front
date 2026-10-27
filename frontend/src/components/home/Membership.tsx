@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Check, ShoppingBag, Store } from 'lucide-react';
-import { BUYER_PLAN, SELLER_PLAN, CYCLE_LABELS, esPlanDe, getTier } from '@/lib/plans';
+import { CYCLE_LABELS, esPlanDe, getTier } from '@/lib/plans';
+import { comoConfig, usePlanes } from '@/hooks/usePlanes';
 import type { BillingCycle } from '@/lib/plans';
 import { useAuth } from '@/context/AuthContext';
 import { cn } from '@/lib/utils';
@@ -11,6 +12,12 @@ const CYCLES: BillingCycle[] = ['monthly', 'quarterly', 'yearly'];
 export function Membership() {
   const { isAuthenticated, isSeller, subscription } = useAuth();
   const [cycle, setCycle] = useState<BillingCycle>('monthly');
+
+  // Los precios salen de la base; si no se pueden leer, el hook devuelve los
+  // escritos en el código, que es mejor que una tabla de precios vacía.
+  const { planes } = usePlanes();
+  const BUYER_PLAN = comoConfig(planes, 'buyer');
+  const SELLER_PLAN = comoConfig(planes, 'seller');
 
   const buyerTier = getTier(BUYER_PLAN, cycle);
   const sellerTier = getTier(SELLER_PLAN, cycle);
