@@ -1,5 +1,6 @@
 import { BellOff, CalendarClock, Megaphone, MessageCircle, ShieldAlert, Tags } from 'lucide-react';
 import { enlaceSeguro } from '@/lib/enlaces';
+import { haceCuanto } from '@/lib/tiempo';
 import { useNotifications } from '@/context/NotificationsContext';
 import type { Aviso, TipoAviso } from '@/lib/notificaciones';
 import { cn } from '@/lib/utils';
@@ -10,17 +11,6 @@ const ICONOS: Record<TipoAviso, typeof CalendarClock> = {
   demanda: Megaphone,
   categoria: Tags,
 };
-
-/** «hace 3 h», «ayer»: la fecha exacta de un aviso rara vez importa. */
-function haceCuanto(iso: string) {
-  const minutos = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
-  if (minutos < 1) return 'ahora';
-  if (minutos < 60) return `hace ${minutos} min`;
-  const horas = Math.round(minutos / 60);
-  if (horas < 24) return `hace ${horas} h`;
-  const dias = Math.round(horas / 24);
-  return dias === 1 ? 'ayer' : `hace ${dias} días`;
-}
 
 /**
  * La bandeja, dentro del menú de la cuenta. Es de solo lectura: lo que pide

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { cambiosDeEmpresa, updateEnterprise } from '@/api/userEnterprise';
 import { LogoField } from '@/components/business/LogoField';
+import { QrDelNegocio } from '@/components/business/QrDelNegocio';
 import { Input, Select, TextArea } from '@/components/ui/Field';
 import { PROVINCIAS } from '@/lib/provincias';
 import { municipiosDe } from '@/lib/municipios';
@@ -264,6 +265,14 @@ export function DashboardEnterprise() {
         <Button type="submit" loading={submitting}>Guardar cambios</Button>
       </form>
     </Card>
+
+    {/* El código para repartir. Fuera del formulario: no se guarda, se usa. */}
+    {enterprise && (
+      <QrDelNegocio
+        idUserEnterprise={enterprise.idUserEnterprise}
+        companyName={enterprise.companyName}
+      />
+    )}
 
     {/* Fuera del formulario a propósito: no se guarda con lo demás, se pide. */}
     {enterprise && <MoveRequest enterprise={enterprise} />}

@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Check, Package, ShieldCheck, Tags, X } from 'lucide-react';
+import { Check, Clock, Package, ShieldCheck, Tags, X } from 'lucide-react';
 import { approveCategory, deleteCategory, listPendingCategories, updateCategory } from '@/api/category';
 import { listProducts } from '@/api/product';
 import type { Category, Product } from '@/types';
 import { CATEGORIA_TEMPORAL, categoriaPendiente } from '@/lib/categorias';
+import { pedidaHace } from '@/lib/tiempo';
 import { PageSpinner } from '@/components/ui/Spinner';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Button } from '@/components/ui/Button';
@@ -136,12 +137,23 @@ export function ModerationPage() {
               >
                 <div className="moderation__item-head flex flex-wrap items-baseline justify-between gap-2">
                   <h2 className="moderation__item-name font-medium text-ink-900">«{categoria.name}»</h2>
-                  <p className="moderation__item-count flex items-center gap-1.5 text-xs text-ink-500">
-                    <Package size={12} aria-hidden="true" />
-                    {enEspera.length === 0
-                      ? 'sin productos esperando'
-                      : `${enEspera.length} producto${enEspera.length === 1 ? '' : 's'} en ${CATEGORIA_TEMPORAL}`}
-                  </p>
+                  <div className="moderation__item-meta flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                    {/* Cuándo se pidió: una categoría de hace tres semanas con
+                        productos esperando corre más que una de ayer, y sin la
+                        fecha no hay forma de saber cuál es cuál. */}
+                    {categoria.createdAt && (
+                      <p className="moderation__item-date flex items-center gap-1.5 text-xs text-ink-500">
+                        <Clock size={12} aria-hidden="true" />
+                        <time dateTime={categoria.createdAt}>{pedidaHace(categoria.createdAt)}</time>
+                      </p>
+                    )}
+                    <p className="moderation__item-count flex items-center gap-1.5 text-xs text-ink-500">
+                      <Package size={12} aria-hidden="true" />
+                      {enEspera.length === 0
+                        ? 'sin productos esperando'
+                        : `${enEspera.length} producto${enEspera.length === 1 ? '' : 's'} en ${CATEGORIA_TEMPORAL}`}
+                    </p>
+                  </div>
                 </div>
 
                 {enEspera.length > 0 && (
