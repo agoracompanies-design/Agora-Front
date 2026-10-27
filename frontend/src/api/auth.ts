@@ -22,9 +22,19 @@ export function login(username: string, password: string) {
  */
 export const CONTACTO_EN_REGISTRO_LISTO = true;
 
-export function register(username: string, password: string, contacto?: string) {
+export function register(
+  username: string,
+  password: string,
+  contacto?: string,
+  referralCode?: string,
+) {
   const cuerpo: Record<string, string> = { username, password };
   if (contacto) Object.assign(cuerpo, contactoParaElServidor(contacto));
+  // Quién trajo a esta persona, si vino por el enlace de alguien del equipo.
+  // **El servidor todavía no lo guarda**: está pedido, y mientras tanto lo
+  // ignora sin romper el registro. Mandarlo desde ya evita tener que volver a
+  // tocar esto el día que exista.
+  if (referralCode) cuerpo.referralCode = referralCode;
   return apiClient.post<void>('/user', cuerpo).then((res) => res.data);
 }
 

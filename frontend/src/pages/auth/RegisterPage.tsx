@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthLayout, AuthLink } from '@/components/layout/AuthLayout';
@@ -10,6 +10,7 @@ import { CONTACTO_EN_REGISTRO_LISTO } from '@/api/auth';
 import { PhoneField, telefonoListo } from '@/components/ui/PhoneField';
 import { PAIS_POR_DEFECTO, telefonoCompleto } from '@/lib/paises';
 import { pareceCorreo, soloUsuario } from '@/lib/validacion';
+import { guardarReferidoDeLaUrl, olvidarReferido, referidoGuardado } from '@/lib/referido';
 
 /**
  * Crear cuenta: usuario y contraseña, nada más.
@@ -24,6 +25,13 @@ import { pareceCorreo, soloUsuario } from '@/lib/validacion';
  * empresa desde dentro cuando le toque.
  */
 export function RegisterPage() {
+  // El código de quien trajo a esta persona llega en la URL y se guarda al
+  // entrar: entre esto y terminar el formulario puede ir a ver los planes y
+  // volver, y para entonces la dirección ya no lo lleva.
+  useEffect(() => {
+    guardarReferidoDeLaUrl(window.location.search);
+  }, []);
+
   const { register, login } = useAuth();
   const navigate = useNavigate();
 
@@ -64,9 +72,11 @@ export function RegisterPage() {
     }
     setLoading(true);
     try {
-      await register(username, password, contacto);
+      await register(username, password, contacto, referidoGuardado());
       // La prueba gratuita la crea el servidor al registrar la cuenta (desde el
       // commit `641de2e`); al entrar, el contexto ya la carga con el resto.
+      // Ya cumplió: no tiene por qué seguir ahí para el siguiente registro.
+      olvidarReferido();
       await login(username, password);
       navigate('/', { replace: true });
     } catch (err) {
