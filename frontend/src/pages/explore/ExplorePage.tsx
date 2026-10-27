@@ -109,7 +109,7 @@ export function ExplorePage() {
     if (maxPrice) params.max = maxPrice;
     if (category) params.cat = category;
     if (sortOrder === 'desc') params.sort = 'desc';
-    if (moneda === 'CUP') params.moneda = 'CUP';
+    if (moneda === 'USD') params.moneda = 'USD';
     if (provincia) params.prov = provincia;
     if (municipio) params.mun = municipio;
     if (page > 1) params.page = String(page);
