@@ -24,6 +24,24 @@ import { guardarReferidoDeLaUrl, olvidarReferido, referidoGuardado } from '@/lib
  * Así que la pregunta se quita. Se entra, y quien quiera vender crea su
  * empresa desde dentro cuando le toque.
  */
+/**
+ * El código con el que se abre la pantalla.
+ *
+ * Se mira **la URL primero** y la sesión después: el efecto que guarda el
+ * `?ref=` corre tras el primer render, así que preguntarle solo a
+ * `sessionStorage` dejaría el campo vacío justo cuando alguien acaba de
+ * escanear el QR, que es el caso que importa.
+ */
+function referidoInicial(): string {
+  try {
+    const deLaUrl = new URLSearchParams(window.location.search).get('ref')?.trim();
+    if (deLaUrl) return deLaUrl;
+  } catch {
+    // Una dirección rara no debe impedir abrir el registro.
+  }
+  return referidoGuardado() ?? '';
+}
+
 export function RegisterPage() {
   // El código de quien trajo a esta persona llega en la URL y se guarda al
   // entrar: entre esto y terminar el formulario puede ir a ver los planes y
@@ -50,6 +68,17 @@ export function RegisterPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  /*
+   * El código de quien trae al cliente.
+   *
+   * Nace relleno y con la casilla marcada si se llegó por un QR —que abre
+   * `/registrarse?ref=…`—, y vacío y plegado si no. Así el caso normal no ve
+   * un campo que no le toca, y quien viene con código lo encuentra puesto sin
+   * tener que teclear nada.
+   */
+  const [referido, setReferido] = useState(referidoInicial);
+  const [conReferido, setConReferido] = useState(() => Boolean(referidoInicial()));
+
   /** Lo que se manda: el correo tal cual, o el teléfono en formato internacional. */
   const contacto = usarCorreo ? correo.trim() : telefonoCompleto(pais, numero);
 
@@ -72,7 +101,14 @@ export function RegisterPage() {
     }
     setLoading(true);
     try {
-      await register(username, password, contacto, referidoGuardado());
+      // Lo que haya en el campo, que es lo que la persona ve. Si llegó por un
+      // QR viene ya puesto; si lo tecleó ella, igual de válido.
+      await register(
+        username,
+        password,
+        contacto,
+        conReferido ? referido.trim() || undefined : undefined,
+      );
       // La prueba gratuita la crea el servidor al registrar la cuenta (desde el
       // commit `641de2e`); al entrar, el contexto ya la carga con el resto.
       // Ya cumplió: no tiene por qué seguir ahí para el siguiente registro.
@@ -168,6 +204,39 @@ export function RegisterPage() {
           onChange={(e) => setConfirmPassword(e.target.value)}
           placeholder="••••••••"
         />
+        {/* El código de quien trae al cliente, plegado salvo que haga falta.
+            Casi nadie lo tiene, y un campo más en un registro es una pregunta
+            más que responder; quien llega por el QR lo encuentra ya puesto. */}
+        <div id="register__referral" className="register__referral">
+          <label className="register__referral-check flex cursor-pointer items-center gap-2 text-sm text-ink-700">
+            <input
+              type="checkbox"
+              checked={conReferido}
+              onChange={(e) => setConReferido(e.target.checked)}
+              className="h-4 w-4 accent-primary"
+            />
+            Me trajo alguien de Ágora
+          </label>
+
+          {/* El margen va en el envoltorio y no en el `className` del campo:
+              ahí se lo lleva el `input` y el rótulo se queda pegado a la
+              casilla. */}
+          {conReferido && (
+            <div className="mt-3">
+              <Input
+                label="Código de quien te trajo"
+                hint="Te lo da esa persona, o viene puesto si entraste por su código QR."
+                value={referido}
+                onChange={(e) => setReferido(e.target.value.trim())}
+                placeholder="Pega aquí el código"
+                autoComplete="off"
+                spellCheck={false}
+                className="register__referral-input"
+              />
+            </div>
+          )}
+        </div>
+
         {/* role="alert" para que un lector de pantalla lo anuncie al aparecer. */}
         {error && (
           <p id="register__error" className="register__error text-sm text-red-600" role="alert">
