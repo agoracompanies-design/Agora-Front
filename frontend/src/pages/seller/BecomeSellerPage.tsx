@@ -20,6 +20,22 @@ import { PlanPicker } from '@/components/plans/PlanPicker';
 import { cn } from '@/lib/utils';
 import { SELLER_PLAN, daAccesoDeNegocio, enlaceParaSolicitar } from '@/lib/plans';
 
+/**
+ * El código de plaza con el que se abre la pantalla.
+ *
+ * Se mira la URL porque el QR de la madre apunta a `/vender?afiliada=CODE`:
+ * quien lo escanea se encuentra el campo abierto y relleno, que es justo para
+ * lo que se hizo el QR. Quien llega por su cuenta no ve nada.
+ */
+function afiliadaInicial(): string {
+  try {
+    return new URLSearchParams(window.location.search).get('afiliada')?.trim().toUpperCase() ?? '';
+  } catch {
+    // Una dirección rara no debe impedir dar de alta el negocio.
+    return '';
+  }
+}
+
 export function BecomeSellerPage() {
   const { user, isAuthenticated, isLoading, enterprise, subscription, refreshSellerStatus } = useAuth();
   const { notify } = useToast();
@@ -39,6 +55,13 @@ export function BecomeSellerPage() {
   const [phone, setPhone] = useState('');
   const [website, setWebsite] = useState('');
   const [logo, setLogo] = useState<File | null>(null);
+
+  /*
+   * La plaza de otro negocio tuyo. Plegada salvo que haga falta: casi ninguna
+   * alta la trae, y un campo más es una pregunta más que responder.
+   */
+  const [affiliateCode, setAffiliateCode] = useState(afiliadaInicial);
+  const [conAfiliada, setConAfiliada] = useState(() => Boolean(afiliadaInicial()));
 
   useEffect(() => {
     if (enterprise) setStep(2);
@@ -92,6 +115,9 @@ export function BecomeSellerPage() {
         address: { street, city, state, zipCode, country },
         contact: { email: email.trim(), phone: telefonoCompleto(pais, phone), website: normalizarWeb(website) || undefined },
         logo,
+        // Si el código no vale, el servidor da el alta igual y sin afiliación:
+        // más vale un negocio registrado que nadie fuera por una errata.
+        affiliateCode: conAfiliada ? affiliateCode.trim() || undefined : undefined,
       });
       await refreshSellerStatus();
       notify('Empresa registrada correctamente');
@@ -169,6 +195,38 @@ export function BecomeSellerPage() {
               <PhoneField pais={pais} onPais={setPais} numero={phone} onNumero={setPhone} required />
             </div>
             <Input label="Sitio web (opcional)" type="url" inputMode="url" placeholder="mitienda.cu" maxLength={LARGO.web} value={website} onChange={(e) => setWebsite(e.target.value.trim())} />
+
+            {/* La plaza que reparte otro negocio del mismo dueño. Plegada,
+                como el código de referido del registro: quien llega por el QR
+                de la madre se la encuentra abierta y rellena. */}
+            <div id="sell__affiliate" className="sell__affiliate">
+              <label className="sell__affiliate-check flex w-max cursor-pointer items-center gap-2 text-sm text-ink-700">
+                <input
+                  type="checkbox"
+                  checked={conAfiliada}
+                  onChange={(e) => setConAfiliada(e.target.checked)}
+                  className="h-4 w-4 cursor-pointer accent-primary"
+                />
+                Ya pago un plan por otro negocio mío
+              </label>
+
+              {conAfiliada && (
+                <div className="mt-3">
+                  <Input
+                    label="Código de la plaza"
+                    hint="Lo saca tu otro negocio desde «Mi negocio», o viene puesto si entraste por su código QR."
+                    value={affiliateCode}
+                    onChange={(e) => setAffiliateCode(e.target.value.trim().toUpperCase())}
+                    placeholder="AG7KM2P4"
+                    maxLength={16}
+                    autoComplete="off"
+                    spellCheck={false}
+                    className="sell__affiliate-input font-mono tracking-widest"
+                  />
+                </div>
+              )}
+            </div>
+
             <Button type="submit" className="w-full" size="lg" loading={submitting}>
               Continuar
             </Button>
