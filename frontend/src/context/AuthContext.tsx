@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import type { ReactNode } from 'react';
 import * as authApi from '@/api/auth';
 import { getMyEnterprise } from '@/api/userEnterprise';
-import { estaVigente, getMyActiveSubscription } from '@/api/subscription';
+import { estaVigente, getMyActiveSubscription, vigentePorFecha } from '@/api/subscription';
 import {
   clearRefreshToken,
   clearToken,
@@ -51,6 +51,49 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
+/** Dónde se deja lo último que dijo el servidor, para los cortes de red. */
+const SUSCRIPCION_GUARDADA = 'agora_sub';
+const EMPRESA_GUARDADA = 'agora_enterprise';
+
+/**
+ * Si la petición se cayó por falta de red y no porque el servidor contestara.
+ *
+ * El cliente pone `status: 0` cuando no hubo respuesta —ver `client.ts`—, y
+ * esa es toda la diferencia entre «no te toca» y «no se ha podido preguntar».
+ */
+function sinConexion(error: unknown): boolean {
+  return error instanceof ApiError && error.status === 0;
+}
+
+function guardar(clave: string, valor: unknown) {
+  try {
+    if (valor) localStorage.setItem(clave, JSON.stringify(valor));
+    else localStorage.removeItem(clave);
+  } catch {
+    // Sin sitio o en una ventana privada: se sigue sin copia.
+  }
+}
+
+function leer<T>(clave: string): T | null {
+  try {
+    const guardado = localStorage.getItem(clave);
+    return guardado ? (JSON.parse(guardado) as T) : null;
+  } catch {
+    return null;
+  }
+}
+
+const guardarSuscripcion = (s: Subscription | null) => guardar(SUSCRIPCION_GUARDADA, s);
+const guardarEmpresa = (e: UserEnterprise | null) => guardar(EMPRESA_GUARDADA, e);
+
+/** La copia de la suscripción, solo si no ha llegado su fecha. */
+function suscripcionGuardada(): Subscription | null {
+  const copia = leer<Subscription>(SUSCRIPCION_GUARDADA);
+  return vigentePorFecha(copia) ? copia : null;
+}
+
+const empresaGuardada = () => leer<UserEnterprise>(EMPRESA_GUARDADA);
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [enterprise, setEnterprise] = useState<UserEnterprise | null>(null);
@@ -66,11 +109,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       getMyEnterprise(),
       getMyActiveSubscription(),
     ]);
-    setEnterprise(enterpriseResult.status === 'fulfilled' ? enterpriseResult.value : null);
-    // Una suscripción caducada llega igual, con `status: false`: aquí solo se
-    // guarda la que el backend da por vigente.
-    const suscripcion = subscriptionResult.status === 'fulfilled' ? subscriptionResult.value : null;
-    setSubscription(estaVigente(suscripcion) ? suscripcion : null);
+
+    if (enterpriseResult.status === 'fulfilled') {
+      setEnterprise(enterpriseResult.value);
+      guardarEmpresa(enterpriseResult.value);
+    } else if (sinConexion(enterpriseResult.reason)) {
+      setEnterprise(empresaGuardada());
+    } else {
+      setEnterprise(null);
+      guardarEmpresa(null);
+    }
+
+    if (subscriptionResult.status === 'fulfilled') {
+      // Una suscripción caducada llega igual, con `status: false`: aquí solo se
+      // guarda la que el backend da por vigente.
+      const suscripcion = estaVigente(subscriptionResult.value) ? subscriptionResult.value : null;
+      setSubscription(suscripcion);
+      guardarSuscripcion(suscripcion);
+    } else if (sinConexion(subscriptionResult.reason)) {
+      /*
+       * No se pudo preguntar, que no es lo mismo que no tener plan.
+       *
+       * Antes las dos cosas acababan en `null`, y el guardia de suscripción
+       * leía eso como «se acabó»: al primer corte de red —aquí, a diario— la
+       * aplicación echaba a la pantalla de planes a quien tenía su plan al
+       * día, y encima con el cartel de «tu suscripción ya no está activa».
+       *
+       * Mientras no haya forma de preguntar vale lo último que dijo el
+       * servidor, y solo hasta la fecha en que ese plan caduca: pasada esa, la
+       * copia tampoco sirve.
+       */
+      setSubscription(suscripcionGuardada());
+    } else {
+      setSubscription(null);
+      guardarSuscripcion(null);
+    }
+
     setDatosListos(true);
   }, []);
 
@@ -124,6 +198,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     clearToken();
     clearRefreshToken();
     localStorage.removeItem('agora_user');
+    // Las copias del plan y del negocio se van con la sesión: son de quien
+    // acaba de salir. Si se quedaran, el siguiente en entrar sin red heredaría
+    // su plan hasta que el servidor pudiera desmentirlo.
+    guardarSuscripcion(null);
+    guardarEmpresa(null);
     // La ubicación es de quien la compartió, no del equipo: se va con la sesión.
     olvidarUbicacion();
     setUser(null);
