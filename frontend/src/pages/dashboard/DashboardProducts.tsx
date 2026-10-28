@@ -7,9 +7,9 @@ import type { Product } from '@/types';
 import { RatingStars } from '@/components/ui/RatingStars';
 import { SegmentedToggle } from '@/components/ui/SegmentedToggle';
 import { InfoTip } from '@/components/ui/InfoTip';
-import { deleteProduct, productImageUrl } from '@/api/product';
+import { deleteProduct, productImageUrl, updateProduct } from '@/api/product';
 import { Button } from '@/components/ui/Button';
-import { Badge } from '@/components/ui/Card';
+import { Switch } from '@/components/ui/Switch';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { PageSpinner } from '@/components/ui/Spinner';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
@@ -32,6 +32,52 @@ const SENTIDO_INICIAL: Record<Criterio, Direccion> = {
   calificacion: 'desc',
   precio: 'desc',
 };
+
+/**
+ * El «hay o no hay» de un producto, cambiable desde la propia lista.
+ *
+ * Antes era una insignia de solo lectura: para marcar algo agotado había que
+ * entrar a editar el producto entero, guardar y volver. Lo que más cambia en
+ * un negocio —lo que queda y lo que no— era lo que más costaba tocar.
+ *
+ * El cambio se pinta antes de que conteste el servidor. Con la conexión de
+ * allá esperar se nota, y si contesta que no, vuelve a donde estaba.
+ */
+function InterruptorDeStock({ product, onCambio }: { product: Product; onCambio: () => void }) {
+  const { notify } = useToast();
+  /** Lo que el usuario acaba de pedir, mientras el servidor no diga otra cosa. */
+  const [pedido, setPedido] = useState<boolean | null>(null);
+  const [guardando, setGuardando] = useState(false);
+  const hay = pedido ?? product.stock;
+
+  async function cambiar(valor: boolean) {
+    setPedido(valor);
+    setGuardando(true);
+    try {
+      await updateProduct(product.idProduct, { stock: valor });
+      onCambio();
+    } catch {
+      setPedido(null);
+      notify('No se pudo cambiar la disponibilidad', 'error');
+    } finally {
+      setGuardando(false);
+    }
+  }
+
+  return (
+    <Switch
+      checked={hay}
+      onChange={cambiar}
+      disabled={guardando}
+      className="dash-products__stock"
+      label={`${product.name}: ${hay ? 'disponible' : 'agotado'}`}
+    >
+      <span className={hay ? 'text-ink-700' : 'text-ink-500'}>
+        {hay ? 'Disponible' : 'Agotado'}
+      </span>
+    </Switch>
+  );
+}
 
 export function DashboardProducts() {
   const { products, isLoading, reload } = useMyProducts();
@@ -180,7 +226,7 @@ export function DashboardProducts() {
                           </span>
                           <RatingStars value={calificaciones[product.idProduct]?.media ?? 0} size={11} />
                         </span>
-                        <Badge variant={product.stock ? 'success' : 'danger'}>{product.stock ? 'Disponible' : 'Agotado'}</Badge>
+                        <InterruptorDeStock product={product} onCambio={reload} />
                       </span>
                     </td>
                     <td className="hidden p-3 text-ink-700 lg:table-cell">
@@ -205,7 +251,7 @@ export function DashboardProducts() {
                       </span>
                     </td>
                     <td className="hidden p-3 lg:table-cell">
-                      <Badge variant={product.stock ? 'success' : 'danger'}>{product.stock ? 'Disponible' : 'Agotado'}</Badge>
+                      <InterruptorDeStock product={product} onCambio={reload} />
                     </td>
                     <td className="p-3 text-right">
                       <div className="inline-flex gap-1">

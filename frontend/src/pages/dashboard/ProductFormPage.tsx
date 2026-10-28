@@ -43,7 +43,6 @@ export function ProductFormPage() {
   const [categoriaPedida, setCategoriaPedida] = useState('');
   /** La que pidió y sigue sin aprobarse, para poder decírselo al editar. */
   const [pendiente, setPendiente] = useState<string | null>(null);
-  const [stock, setStock] = useState(true);
   const [image, setImage] = useState<File | null>(null);
   const [conversion, setConversion] = useState<{ antes: number; despues: number } | null>(null);
   const [convirtiendo, setConvirtiendo] = useState(false);
@@ -86,7 +85,6 @@ export function ProductFormPage() {
         // otra pendiente igual de mal escrita cada vez que se guarda.
         setCategory(nombreDeCategoria(product));
         setPendiente(categoriaPendiente(product));
-        setStock(product.stock);
         setExistingImage(product.image);
       })
       .catch(() => notify('No se pudo cargar el producto', 'error'))
@@ -109,7 +107,6 @@ export function ProductFormPage() {
           description,
           unit,
           category,
-          stock,
           image,
         });
         notify('Producto actualizado');
@@ -125,7 +122,6 @@ export function ProductFormPage() {
           description,
           unit,
           category,
-          stock,
           userEnterpriseId: enterprise.idUserEnterprise,
           image,
         });
@@ -234,10 +230,10 @@ export function ProductFormPage() {
 
           <TextArea label="Descripción" required rows={4} maxLength={LARGO.descripcion} value={description} onChange={(e) => setDescription(e.target.value.slice(0, LARGO.descripcion))} />
 
-          <label className="flex items-center gap-2.5 cursor-pointer">
-            <input type="checkbox" checked={stock} onChange={(e) => setStock(e.target.checked)} className="h-4 w-4 accent-primary" />
-            <span className="text-sm text-ink-700">Disponible en stock</span>
-          </label>
+          {/* «Disponible en stock» se fue de aquí el 2026-10-28: ahora se
+              mueve con un interruptor en la propia lista de productos. Era lo
+              que más cambia en un negocio y lo que más costaba tocar —entrar a
+              editar, guardar, volver—. Un producto nuevo nace disponible. */}
 
           <Button type="submit" className="w-full" size="lg" loading={submitting}>
             {isEditing ? 'Guardar cambios' : 'Publicar producto'}
