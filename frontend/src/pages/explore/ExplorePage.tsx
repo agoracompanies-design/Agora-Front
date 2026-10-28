@@ -458,7 +458,11 @@ export function ExplorePage() {
 
       <div id="explore__catalog" className="explore__catalog mx-auto max-w-6xl px-4 pb-8 pt-4 sm:px-6">
         {/* Lo primero de la página: buscar es a lo que se viene. */}
-        <div id="explore__search" className="explore__search mb-4">
+        {/* `relative z-30`: por encima de la barra de filtros, que va en z-20.
+            Las sugerencias del buscador tenían el mismo z que los filtros, y en
+            un empate gana quien va después en el marcado —los filtros—, así que
+            el botón se dibujaba sobre la lista y las letras se mezclaban. */}
+        <div id="explore__search" className="explore__search relative z-30 mb-4">
           <CatalogSearch productos={rawProducts} valor={search} onBuscar={setSearch} />
         </div>
 
