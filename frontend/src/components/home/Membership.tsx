@@ -5,7 +5,7 @@ import { CYCLE_LABELS, esPlanDe, getTier } from '@/lib/plans';
 import type { BillingCycle } from '@/lib/plans';
 import { familiasDePlanes, usePlanes, type Familia } from '@/hooks/usePlanes';
 import { useAuth } from '@/context/AuthContext';
-import { cn } from '@/lib/utils';
+import { cn, formatPlanPrice } from '@/lib/utils';
 
 const CYCLES: BillingCycle[] = ['monthly', 'quarterly', 'yearly'];
 
@@ -133,9 +133,16 @@ function TarjetaDePlan({
       <h3 className="plans__card-title text-lg font-semibold text-ink-900">{familia.titulo}</h3>
       <p className="plans__card-subtitle mt-1 text-sm text-ink-500">{familia.descripcion}</p>
 
-      <div className="plans__price mt-5 flex items-baseline gap-2">
-        <span className="plans__cost text-3xl font-semibold text-ink-900">{tier.cost}</span>
-        <span className="plans__period text-sm text-ink-500">/ {tier.durationDays} días</span>
+      {/* `flex-wrap`: a 375 px el precio largo del anual no deja sitio al
+          ahorro. Que baje entero antes que partir «/ 365 días» por la mitad. */}
+      <div className="plans__price mt-5 flex flex-wrap items-baseline gap-2">
+        {/* `whitespace-nowrap`: el importe y su moneda son una sola cosa. Con
+            cuatro cifras —«2200 CUP»— la tarjeta destacada los partía en dos
+            líneas y descolocaba el «/ 30 días» de al lado. */}
+        <span className="plans__cost whitespace-nowrap text-3xl font-semibold text-ink-900">
+          {formatPlanPrice(tier.cost, tier.currency)}
+        </span>
+        <span className="plans__period whitespace-nowrap text-sm text-ink-500">/ {tier.durationDays} días</span>
         {/* Un ahorro ES una promoción: aquí el fucsia sí está en su sitio, en
             la variante oscura, que es la que pasa contraste con blanco. */}
         {tier.savingsLabel && (

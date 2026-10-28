@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Check, MessageCircle } from 'lucide-react';
 import type { BillingCycle, PlanConfig, PlanTier } from '@/lib/plans';
 import { CYCLE_LABELS, getTier } from '@/lib/plans';
-import { cn } from '@/lib/utils';
+import { cn, formatPlanPrice } from '@/lib/utils';
 
 const CYCLES: BillingCycle[] = ['monthly', 'quarterly', 'yearly'];
 
@@ -38,7 +38,7 @@ export function PlanPicker({ plan, enlace, ctaLabel = 'Solicitar por WhatsApp' }
       </div>
 
       <div id="plan__price" className="plan__price flex items-baseline gap-2">
-        <span id="plan__cost" className="plan__cost text-3xl font-semibold text-ink-900">{tier.cost} USD</span>
+        <span id="plan__cost" className="plan__cost text-3xl font-semibold text-ink-900">{formatPlanPrice(tier.cost, tier.currency)}</span>
         <span id="plan__period" className="plan__period text-sm text-ink-400">/ {tier.durationDays} días</span>
         {tier.savingsLabel && (
           <span id="plan__savings" className="plan__savings ml-auto rounded-full bg-ink-100 px-2.5 py-1 text-xs font-medium text-ink-700">{tier.savingsLabel}</span>

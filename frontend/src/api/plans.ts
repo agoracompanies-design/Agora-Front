@@ -57,7 +57,14 @@ export function porMes(plan: Plan): number {
  * ahorra nada: una etiqueta de «ahorra 0 %» es peor que ninguna.
  */
 export function ahorroFrenteAlMensual(plan: Plan, todos: Plan[]): number | null {
-  const mensual = todos.find((p) => p.audience === plan.audience && p.cycle === 'monthly');
+  // Contra el mensual **de su mismo grupo**. Sin mirar el asterisco, el mensual
+  // de proveedor (2 200) se comparaba con el VIP (3 300) —el primero que
+  // devolvía la lista— y la tarjeta mensual salía con un «Ahorra 33%» que no
+  // significa nada: el mensual es la referencia, no ahorra frente a sí mismo.
+  const esVip = (p: Plan) => p.name.trim().endsWith('*');
+  const mensual = todos.find(
+    (p) => p.audience === plan.audience && p.cycle === 'monthly' && esVip(p) === esVip(plan),
+  );
   if (!mensual || mensual.idPlan === plan.idPlan) return null;
   const ahorro = 1 - porMes(plan) / porMes(mensual);
   return ahorro > 0.005 ? Math.round(ahorro * 100) : null;

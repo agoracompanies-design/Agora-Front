@@ -1,4 +1,5 @@
 import { WHATSAPP_VENTAS } from './contacto';
+import { formatPlanPrice } from './utils';
 
 export type BillingCycle = 'monthly' | 'quarterly' | 'yearly';
 
@@ -6,6 +7,11 @@ export interface PlanTier {
   cycle: BillingCycle;
   label: string;
   cost: number;
+  /**
+   * En qué moneda está el coste. Viaja con el precio y no se da por supuesta:
+   * la decide la base, y el día que haya un plan en otra el rótulo cambia solo.
+   */
+  currency: string;
   durationDays: number;
   savingsLabel: string | null;
 }
@@ -22,12 +28,21 @@ export const CYCLE_LABELS: Record<BillingCycle, string> = {
   yearly: 'Anual',
 };
 
+/*
+ * Los precios de aquí son **el respaldo**: lo que se enseña si la API no
+ * responde. Los de verdad salen de la tabla `plans` —ver `usePlanes`—, así que
+ * estos solo tienen que estar al día, no ser la fuente.
+ *
+ * Puestos en CUP el 2026-10-28, copiados de la base: antes decían 3 y 10 USD,
+ * cifras de cuando el precio vivía en el código. Un respaldo con el precio
+ * equivocado es peor que ninguno, porque nadie sospecha de él.
+ */
 export const BUYER_PLAN: PlanConfig = {
   name: 'Plan Comprador',
   tiers: [
-    { cycle: 'monthly', label: 'Mensual', cost: 3, durationDays: 30, savingsLabel: null },
-    { cycle: 'quarterly', label: 'Trimestral', cost: 8, durationDays: 90, savingsLabel: 'Ahorra 11%' },
-    { cycle: 'yearly', label: 'Anual', cost: 28, durationDays: 365, savingsLabel: 'Ahorra 22%' },
+    { cycle: 'monthly', label: 'Mensual', cost: 150, currency: 'CUP', durationDays: 30, savingsLabel: null },
+    { cycle: 'quarterly', label: 'Trimestral', cost: 405, currency: 'CUP', durationDays: 90, savingsLabel: 'Ahorra 10%' },
+    { cycle: 'yearly', label: 'Anual', cost: 1530, currency: 'CUP', durationDays: 365, savingsLabel: 'Ahorra 16%' },
   ],
   features: [
     'Búsqueda y filtros ilimitados',
@@ -39,9 +54,9 @@ export const BUYER_PLAN: PlanConfig = {
 export const SELLER_PLAN: PlanConfig = {
   name: 'Plan Proveedor',
   tiers: [
-    { cycle: 'monthly', label: 'Mensual', cost: 10, durationDays: 30, savingsLabel: null },
-    { cycle: 'quarterly', label: 'Trimestral', cost: 27, durationDays: 90, savingsLabel: 'Ahorra 10%' },
-    { cycle: 'yearly', label: 'Anual', cost: 96, durationDays: 365, savingsLabel: 'Ahorra 20%' },
+    { cycle: 'monthly', label: 'Mensual', cost: 2200, currency: 'CUP', durationDays: 30, savingsLabel: null },
+    { cycle: 'quarterly', label: 'Trimestral', cost: 5940, currency: 'CUP', durationDays: 90, savingsLabel: 'Ahorra 10%' },
+    { cycle: 'yearly', label: 'Anual', cost: 22440, currency: 'CUP', durationDays: 365, savingsLabel: 'Ahorra 16%' },
   ],
   features: [
     'Productos, servicios y precios',
@@ -62,7 +77,9 @@ export const SELLER_PLAN: PlanConfig = {
  */
 export const TRIAL_PLAN: PlanConfig = {
   name: 'Prueba gratuita',
-  tiers: [{ cycle: 'monthly', label: 'Prueba', cost: 0, durationDays: 7, savingsLabel: null }],
+  tiers: [
+    { cycle: 'monthly', label: 'Prueba', cost: 0, currency: 'CUP', durationDays: 7, savingsLabel: null },
+  ],
   features: ['Acceso completo durante 7 días', 'Incluye el panel de negocio'],
 };
 
@@ -136,7 +153,7 @@ export function getTier(plan: PlanConfig, cycle: BillingCycle): PlanTier {
  */
 export function enlaceParaSolicitar(plan: PlanConfig, tier: PlanTier, usuario?: string): string {
   const mensaje =
-    `Hola, quiero activar el ${plan.name} de Ágora (${tier.label}, ${tier.cost} USD por ${tier.durationDays} días).` +
+    `Hola, quiero activar el ${plan.name} de Ágora (${tier.label}, ${formatPlanPrice(tier.cost, tier.currency)} por ${tier.durationDays} días).` +
     (usuario ? ` Mi usuario es ${usuario}.` : '');
   return `https://wa.me/${WHATSAPP_VENTAS}?text=${encodeURIComponent(mensaje)}`;
 }
