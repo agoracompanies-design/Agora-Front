@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { cambiosDeEmpresa, updateEnterprise } from '@/api/userEnterprise';
+import { EmpresasAfiliadas } from '@/components/business/EmpresasAfiliadas';
 import { LogoField } from '@/components/business/LogoField';
 import { QrDelNegocio } from '@/components/business/QrDelNegocio';
 import { Input, Select, TextArea } from '@/components/ui/Field';
@@ -273,6 +274,10 @@ export function DashboardEnterprise() {
         companyName={enterprise.companyName}
       />
     )}
+
+    {/* Los otros negocios del mismo dueño. Se pinta sola o no según el plan:
+        sin VIP no sale nada, así que no estorba a quien no puede usarla. */}
+    {enterprise && <EmpresasAfiliadas />}
 
     {/* Fuera del formulario a propósito: no se guarda con lo demás, se pide. */}
     {enterprise && <MoveRequest enterprise={enterprise} />}
