@@ -5,7 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import { enlaceParaSolicitar, getTier, monthlyEquivalent } from '@/lib/plans';
 import { comoConfig, usePlanes } from '@/hooks/usePlanes';
 import type { BillingCycle } from '@/lib/plans';
-import { cn } from '@/lib/utils';
+import { cn, formatPlanPrice } from '@/lib/utils';
 
 /**
  * Lo que verá quien entre al panel sin el plan de vendedor activo. En vez de
@@ -148,10 +148,10 @@ export function SellerPitch({
         </fieldset>
 
         <p id="pitch__price" className="pitch__price mt-6 flex flex-wrap items-baseline gap-2">
-          <span id="pitch__cost" className="pitch__cost text-3xl font-semibold text-ink-900">{tier.cost} USD</span>
+          <span id="pitch__cost" className="pitch__cost text-3xl font-semibold text-ink-900">{formatPlanPrice(tier.cost, tier.currency)}</span>
           <span id="pitch__period" className="pitch__period text-sm text-ink-500">/ {tier.durationDays} días</span>
           <span id="pitch__monthly" className="pitch__monthly text-sm text-ink-500">
-            ({monthlyEquivalent(tier).toFixed(2)} USD al mes)
+            ({formatPlanPrice(monthlyEquivalent(tier), tier.currency)} al mes)
           </span>
           {tier.savingsLabel && (
             <span id="pitch__savings" className="pitch__savings ml-auto rounded-full bg-secondary-dark px-2.5 py-1 text-xs font-semibold text-white">

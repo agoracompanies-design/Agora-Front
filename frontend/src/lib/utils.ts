@@ -29,6 +29,27 @@ export function formatPrice(value: number | null | undefined, currency: 'CUP' | 
   return `${formatted} ${currency}`;
 }
 
+/**
+ * El precio de un plan: `22.440 CUP`.
+ *
+ * La moneda llega como texto porque la decide la base, no el código: hoy todos
+ * los planes están en CUP y mañana puede haber otro.
+ *
+ * Sin los dos decimales de `formatPrice` cuando el importe es entero —y los
+ * planes lo son—: en un número de cinco cifras el «,00» solo estorba. El
+ * equivalente mensual sí los lleva, porque ahí la división deja céntimos.
+ */
+export function formatPlanPrice(value: number | string, currency: string): string {
+  // El coste sale de una columna `numeric`, y eso el conector lo entrega como
+  // texto: sin esto, un «2200.00» se pintaría tal cual, sin separador de miles.
+  const importe = Number(value);
+  const formatted = new Intl.NumberFormat('es-ES', {
+    minimumFractionDigits: Number.isInteger(importe) ? 0 : 2,
+    maximumFractionDigits: 2,
+  }).format(importe);
+  return `${formatted} ${currency}`;
+}
+
 export function initials(name: string): string {
   return name
     .trim()

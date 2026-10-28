@@ -62,7 +62,7 @@ function deRespaldo(): Plan[] {
       cycle: tramo.cycle,
       name: config.name,
       cost: tramo.cost,
-      currency: 'USD',
+      currency: tramo.currency,
       durationDays: tramo.durationDays,
       features: config.features,
       active: true,
@@ -176,6 +176,9 @@ export function comoConfig(planes: Plan[], audience: Publico, vip = false): Plan
         cycle: p.cycle as PlanConfig['tiers'][number]['cycle'],
         label: nombreDeCiclo(p.cycle),
         cost: p.cost,
+        // La que diga el servidor; si una fila viniera sin ella, CUP, que es en
+        // lo que está todo hoy. Un precio sin moneda no se puede pintar.
+        currency: p.currency || 'CUP',
         durationDays: p.durationDays,
         savingsLabel: ahorro ? `Ahorra ${ahorro}%` : null,
       };
