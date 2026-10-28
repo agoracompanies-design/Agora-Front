@@ -316,8 +316,8 @@ export function ProductDetailPage() {
                   id="product-detail__whatsapp"
                   className="product-detail__whatsapp block"
                 >
-                  <Button variant="outline" className="w-full" size="lg" icon={<MessageCircle size={16} />}>
-                    WhatsApp <span className="product-detail__whatsapp-number font-normal text-ink-500">· {telefono.legible}</span>
+                  <Button variant="whatsapp" className="w-full" size="lg" icon={<MessageCircle size={16} />}>
+                    WhatsApp <span className="product-detail__whatsapp-number font-normal opacity-80">· {telefono.legible}</span>
                   </Button>
                 </a>
               )}

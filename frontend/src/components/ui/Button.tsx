@@ -2,7 +2,13 @@ import type { ButtonHTMLAttributes, ReactNode } from 'react';
 import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-type Variant = 'primary' | 'secondary' | 'ghost' | 'outline' | 'danger';
+type Variant =
+  | 'primary'
+  | 'secondary'
+  | 'ghost'
+  | 'outline'
+  | 'danger'
+  | 'whatsapp';
 type Size = 'sm' | 'md' | 'lg';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -18,6 +24,11 @@ const variantClasses: Record<Variant, string> = {
   outline: 'border border-ink-300 text-ink-900 hover:border-primary hover:text-primary disabled:text-ink-300',
   ghost: 'text-ink-700 hover:bg-ink-100 disabled:text-ink-300',
   danger: 'bg-ink-50 border border-red-200 text-red-600 hover:bg-red-50 dark:border-red-900/50 dark:hover:bg-red-950/40 disabled:text-ink-300',
+  /* Solo para WhatsApp. Es el único botón que lleva el color de otra marca, y
+     lo lleva porque es por donde se reconoce: un botón de WhatsApp azul se
+     busca más tiempo del que nadie le dedica. */
+  whatsapp:
+    'bg-whatsapp text-white shadow-soft hover:brightness-95 disabled:bg-ink-300 disabled:shadow-none',
 };
 
 const sizeClasses: Record<Size, string> = {

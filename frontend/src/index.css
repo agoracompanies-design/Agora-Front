@@ -63,6 +63,13 @@
   --color-success: #047857;
   --color-danger: #c81e4a;
 
+  /* El verde de WhatsApp. No sale de nuestra paleta: es el color con el que la
+     gente reconoce ese botón, y cambiarlo solo serviría para que costara más
+     encontrarlo. El tono oscuro es para el texto sobre fondo claro, donde el
+     verde de marca no llega al contraste necesario para leerse. */
+  --color-whatsapp: #25d366;
+  --color-whatsapp-ink: #0f7a3d;
+
   --shadow-soft: 0 2px 8px 0 rgb(0 0 0 / 0.06);
   --shadow-card: 0 4px 20px -2px rgb(0 0 0 / 0.08);
   --shadow-lift: 0 8px 40px -4px rgb(0 0 0 / 0.12);
