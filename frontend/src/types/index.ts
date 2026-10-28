@@ -154,6 +154,7 @@ export interface ProductFilters {
   latitude?: number;
   longitude?: number;
   radius?: number;
+  userEnterpriseId?: string;
 }
 
 export interface Paginated<T> {

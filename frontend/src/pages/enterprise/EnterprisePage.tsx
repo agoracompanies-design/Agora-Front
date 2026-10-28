@@ -76,13 +76,13 @@ export function EnterprisePage() {
     setIsLoading(true);
     Promise.allSettled([
       getEnterprise(id),
-      listProducts({ limit: 100 }),
+      listProducts({ userEnterpriseId: id }),
       listServicesByEnterprise(id),
     ])
       .then(([enterpriseResult, productsResult, servicesResult]) => {
         const propios =
           productsResult.status === 'fulfilled'
-            ? productsResult.value.products.filter((p) => p.userEnterpriseId === id)
+            ? productsResult.value.products
             : [];
         setProducts(propios);
 
@@ -97,6 +97,7 @@ export function EnterprisePage() {
           if (desdeCatalogo) setEnterprise(desdeCatalogo);
           else notify('No se pudo cargar este negocio', 'error');
         }
+
 
         if (servicesResult.status === 'fulfilled') setServices(servicesResult.value);
       })
