@@ -183,7 +183,10 @@ export function BecomeSellerPage() {
                 textoDeshabilitado="Elige primero la provincia"
               />
               <Input label="Calle" required autoComplete="address-line1" maxLength={LARGO.direccion} value={street} onChange={(e) => setStreet(texto(e.target.value, LARGO.direccion))} />
-              <Input label="Código postal" required inputMode="numeric" autoComplete="postal-code" value={zipCode} onChange={(e) => setZipCode(soloDigitos(e.target.value))} />
+              {/* Opcional desde el 2026-10-28: aquí mucha gente no se lo sabe,
+                  y por un dato que casi nadie usa se quedaban altas a medias.
+                  El servidor deja de exigirlo también. */}
+              <Input label="Código postal (opcional)" inputMode="numeric" autoComplete="postal-code" value={zipCode} onChange={(e) => setZipCode(soloDigitos(e.target.value))} />
             </div>
             <Input label="País" required autoComplete="country-name" maxLength={LARGO.pais} value={country} onChange={(e) => setCountry(texto(e.target.value, LARGO.pais))} />
             {/* Uno debajo del otro en el teléfono. Antes era `grid-rows-2`, que

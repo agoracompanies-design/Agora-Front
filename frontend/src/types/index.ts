@@ -155,6 +155,13 @@ export interface ProductFilters {
   longitude?: number;
   radius?: number;
   userEnterpriseId?: string;
+  /**
+   * Traer también lo agotado. Solo lo pide quien administra su catálogo: en la
+   * parte pública, un producto apagado no sale.
+   *
+   * No viaja al servidor —todavía no lo entiende—; lo aplica `listProducts`.
+   */
+  incluirAgotados?: boolean;
 }
 
 export interface Paginated<T> {

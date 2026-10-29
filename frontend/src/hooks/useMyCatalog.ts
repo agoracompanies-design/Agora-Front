@@ -62,7 +62,13 @@ export function useMyProducts() {
          */
         let data;
         try {
-          data = await listProducts({ limit: POR_VUELTA, page: pagina });
+          /*
+           * Con los agotados dentro, por dos razones: aquí es donde el dueño
+           * los vuelve a encender, y el corte del bucle mira si el lote vino
+           * corto. Filtrados, una página con agotados parecería la última y se
+           * dejarían productos sin traer.
+           */
+          data = await listProducts({ limit: POR_VUELTA, page: pagina, incluirAgotados: true });
         } catch {
           break;
         }

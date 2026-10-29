@@ -74,6 +74,8 @@ export function ExplorePage() {
 
   const [rawProducts, setRawProducts] = useState<Product[]>([]);
   const [total, setTotal] = useState(0);
+  /** Cuántos productos ha mandado el servidor, agotados incluidos. */
+  const [recibidos, setRecibidos] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
   const [search, setSearch] = useState(() => searchParams.get('q') ?? '');
@@ -151,6 +153,7 @@ export function ExplorePage() {
         if (cancelled) return;
         setRawProducts(data.products);
         setTotal(data.total);
+        setRecibidos(data.recibidos);
         setBloques(1);
       })
       .catch(() => {
@@ -180,6 +183,7 @@ export function ExplorePage() {
         return [...previos, ...data.products.filter((p) => !vistos.has(p.idProduct))];
       });
       setTotal(data.total);
+      setRecibidos((n) => n + data.recibidos);
       setBloques((n) => n + 1);
     } catch {
       notify('No se pudieron cargar más productos', 'error');
@@ -352,8 +356,14 @@ export function ExplorePage() {
   }
 
   // Las páginas salen de los resultados filtrados, no del total del catálogo.
-  /** Si el servidor guarda más de lo que hay en pantalla. */
-  const quedanPorTraer = rawProducts.length < total;
+  /*
+   * Si el servidor guarda más de lo que ya nos ha mandado.
+   *
+   * Se compara con lo **recibido**, no con lo que hay en pantalla: los
+   * agotados se quitan al llegar, así que midiendo lo pintado el botón de
+   * «traer más» no se apagaría nunca, aunque el catálogo estuviera entero.
+   */
+  const quedanPorTraer = recibidos < total;
   const totalPages = Math.max(1, Math.ceil(visibleProducts.length / PAGE_SIZE));
   const paginaActual = Math.min(page, totalPages);
   const productosDeLaPagina = visibleProducts.slice((paginaActual - 1) * PAGE_SIZE, paginaActual * PAGE_SIZE);

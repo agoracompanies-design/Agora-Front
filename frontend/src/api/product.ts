@@ -33,10 +33,35 @@ function toFormData(input: ProductInput): FormData {
   return form;
 }
 
+/**
+ * El catálogo, **sin lo que está agotado**.
+ *
+ * Apagar la disponibilidad de un producto sirve justamente para que deje de
+ * salir; hasta ahora seguía apareciendo con una etiqueta de «Agotado», que es
+ * casi lo contrario de lo que se pide al apagarlo.
+ *
+ * Se filtra aquí y no en cada pantalla para que valga en todas: explorar, el
+ * buscador, la ficha del negocio y las categorías beben de esta misma función.
+ * Quien administra su propio catálogo pasa `incluirAgotados` y los ve: ahí hay
+ * que verlos para poder volver a encenderlos.
+ *
+ * **Esto es un remiendo mientras el servidor no sepa filtrarlo.** Está pedido,
+ * porque hacerlo aquí tiene un coste que desde el cliente no se puede evitar:
+ * el servidor pagina antes de que nosotros quitemos nada, así que una página
+ * de 24 puede quedarse en 20. Por eso se devuelve también `recibidos` —lo que
+ * mandó el servidor antes de filtrar—, que es lo único comparable con `total`
+ * para saber si queda algo por traer.
+ */
 export function listProducts(filters: ProductFilters = {}) {
-  return apiClient
-    .get<Paginated<Product>>('/products', { params: filters })
-    .then((res) => res.data);
+  const { incluirAgotados, ...params } = filters;
+  return apiClient.get<Paginated<Product>>('/products', { params }).then((res) => {
+    const { products, total } = res.data;
+    return {
+      products: incluirAgotados ? products : products.filter((p) => p.stock !== false),
+      total,
+      recibidos: products.length,
+    };
+  });
 }
 
 export function getProduct(id: string) {
