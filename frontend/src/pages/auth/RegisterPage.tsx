@@ -215,7 +215,7 @@ export function RegisterPage() {
               onChange={(e) => setConReferido(e.target.checked)}
               className="h-4 w-4 accent-primary"
             />
-            Me trajo alguien de Ágora
+            Insertar código de referido
           </label>
 
           {/* El margen va en el envoltorio y no en el `className` del campo:
@@ -224,7 +224,7 @@ export function RegisterPage() {
           {conReferido && (
             <div className="mt-3">
               <Input
-                label="Código de quien te trajo"
+                label="Código de referido"
                 hint="Te lo da esa persona, o viene puesto si entraste por su código QR."
                 value={referido}
                 onChange={(e) => setReferido(e.target.value.trim())}
